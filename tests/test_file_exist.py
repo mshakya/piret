@@ -1,23 +1,14 @@
 #! /usr/bin/env python
 
-"""
-    A suite to test file_exist.
-
-    test
-"""
-
+"""A suite to test file_exist."""
+import unittest
 import sys
 sys.path.append('../')
-import unittest
-from pypiret import file_exist
+from pypiret import file_exist # noqa
 
 
 class TestFileExist(unittest.TestCase):
-    """
-    Unittest testcase.
-
-    a test case
-    """
+    """Unittest testcase."""
 
     def test_true(self):
         """Test if true."""
