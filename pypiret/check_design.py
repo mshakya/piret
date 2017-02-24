@@ -2,12 +2,13 @@
 
 import sys
 
+
 class CheckDesign():
     """Check experimental design are tab delimited."""
 
-    def __init__(self, design_file):
+    def __init__(self):
         """Initialize."""
-        self.design_file = design_file
+        # self.design_file = design_file
 
     def check_tab(self, design_file):
         """Check if the file is tab delimited and has more than 2 columns."""
@@ -93,5 +94,3 @@ class CheckDesign():
                 sys.exit('There must be at least two groups for comparisons!')
             else:
                 return True
-
-
