@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+"""Check design."""
 import sys
 
 
@@ -50,7 +51,7 @@ class CheckDesign():
                 return False
                 sys.exit('The second column header must be labeled as Files!')
 
-            if header.split("\t")[2] == "group":
+            if header.split("\t")[2] == "Group":
                 pass
             else:
                 return False
@@ -94,3 +95,18 @@ class CheckDesign():
                 sys.exit('There must be at least two groups for comparisons!')
             else:
                 return True
+
+    def extract_sample_fastqs(self, design_file):
+        """Extract sample and fastqc from design file."""
+        with open(design_file, 'r') as dfile:
+            next(dfile)
+            sample = []
+            sample_fastqs = {}
+            for line in dfile:
+                sample = line.split("\t")[0]
+                if ';' in line.split("\t")[1]:
+                    fastq_pairs = line.split("\t")[1].split(";")
+                else:
+                    fastq_pairs = line.split("\t")[1]
+                sample_fastqs[sample] = fastq_pairs
+        return sample_fastqs
