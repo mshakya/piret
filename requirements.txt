@@ -5,3 +5,4 @@ Biopython
 argparse
 logging
 subprocess
+itertools
