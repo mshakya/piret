@@ -1,0 +1,4 @@
+runPipeline_rRNA_noqsub_commandline.sublime-workspace
+.DS_Store
+*.pyc
+pypiret/__init__.pyc
