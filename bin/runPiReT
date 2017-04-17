@@ -1,0 +1,160 @@
+#!/usr/bin/env python
+"""
+RNA seq pipeline.
+
+wrapper for running RNASeq pipeline
+
+"""
+from __future__ import print_function
+import luigi
+import sys # noqa
+sys.path.append('.')
+import argparse # noqa
+import os # noqa
+import logging # noqa
+from pypiret import CheckDesign
+from pypiret import FastQC
+from pypiret import Map
+from pypiret import logger
+
+
+def cmdline_parser():
+    """
+    Create an argparse instance.
+
+    Combination of different options for this script.
+    """
+    parser = argparse.ArgumentParser(description="""Wrapper for running RNASeq
+        pipeline""")
+
+    parser.add_argument("-c", "--CPU", help="""number of CPU for multiprocessor
+        runs""", required=False, default=2)
+
+    parser.add_argument("-d", "--WORKDIR", help="""working directory where all
+        output files will be processed and written""", required=True)
+
+    parser.add_argument("-e", "--EXPDSN", help="""tab delimited experimental
+        design file""", required=True)
+
+    parser.add_argument("-ge", "--GFF_EUK", help="""path to gff files for eukar
+        yotic organism""", required=False, default=None)
+
+    parser.add_argument("-gp", "--GFF_PROK", help="""path to gff files for prokar
+        yotic organism""", required=False, default=None)
+
+    parser.add_argument("-i", "--INDEX_HISAT", help="""index hisat2 file""",
+                        required=True)
+
+    parser.add_argument("-k", "--TEST_KINGDOM", help="""which kingdom to test
+        """, required=False, default='both', choices=['prokarya', 'eukarya',
+                                                      'both'])
+
+    parser.add_argument("-m", "--METHOD", help="""Method to use for detecting
+        differentially expressed genes""", required=False, default='both',
+                        choices=['EdgeR', 'Deseq2', 'both'])
+
+    parser.add_argument("-p", "--P_VALUE", help="""P-Value to consider if genes
+        are significantly different""", required=False, default=0.001,
+                        type=float)
+
+    parser.add_argument("-fe", "--FASTA_EUK", help="""fasta for Eukaryotic Refe
+        rence""", required=False, default=None)
+
+    parser.add_argument("-fp", "--FASTA_PROK", help="""fasta for Prokaryotic Ref
+        erence""", required=False, default=None)
+
+    return parser
+
+
+def main():
+    """
+    Main function.
+
+    All functions are called here.
+    """
+    parser = cmdline_parser()
+    args = parser.parse_args()
+
+    # process = logger.create_logger(args.WORKDIR, 'process', 'DEBUG')
+    # error = logger.create_logger(args.WORKDIR, 'error', 'ERROR')
+
+    if check_exp_design(args.EXPDSN) is True:
+        no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
+        print("Experimental design file looks great!")
+        samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
+        if check_method(args.METHOD, args.EXPDSN) is True:
+            if args.TEST_KINGDOM == 'prokarya':
+                if check_refs(ref_gff=args.GFF_PROK,
+                              ref_fasta=args.FASTA_PROK) is True:
+                    luigi.build([FastQC.RunAllQC(fastq_dic=samp_dic,
+                                 numCPUs=args.CPU,
+                                 workdir=args.WORKDIR),
+                                 Map.HisatIndex(args.FASTA_PROK)],
+                                local_scheduler=True,
+                                workers=no_of_jobs)
+            elif args.TEST_KINGDOM == 'eukarya':
+                if check_refs(ref_gff=args.GFF_EUK,
+                              ref_fasta=args.FASTA_EUK) is True:
+                    luigi.build([FastQC.RunAllQC(fastq_dic=samp_dic,
+                                 numCPUs=args.CPU,
+                                 workdir=args.WORKDIR),
+                                 Map.HisatIndex()],
+                                local_scheduler=True,
+                                workers=no_of_jobs)
+            if args.TEST_KINGDOM == 'both':
+                if all(check_refs(ref_gff=args.GFF_PROK,
+                                  ref_fasta=args.FASTA_PROK),
+                        check_refs(ref_gff=args.GFF_EUK,
+                                   ref_fasta=args.FASTA_EUK)) is True:
+                    luigi.build(FastQC.RunAllQC(fastq_dic=samp_dic,
+                                numCPUs=args.CPU,
+                                workdir=args.WORKDIR))
+
+
+def check_exp_design(exp_design_file):
+    """A function that checks different aspects of experimental des. file.
+
+    it returns True if all checked conditions are True. This is the first step
+    of the pipeline.
+    """
+    exp_desn = CheckDesign(exp_design_file)
+    if all([exp_desn.tab(),
+            exp_desn.header(),
+            exp_desn.sample_name(),
+            exp_desn.file_name(),
+            exp_desn.group_name(),
+            exp_desn.sample_name(),
+            exp_desn.fastq_exists()]) is True:
+        return True
+
+
+def check_index_file(indexfile):
+    """Check if index file is present."""
+    hisat_file = indexfile + '.6.ht2l'
+    if os.path.exists(hisat_file):
+        return True
+    else:
+        return False
+
+
+def check_method(method, exp_design_file):
+    """Based on chosen method, if enough samples are present."""
+    exp_desn = CheckDesign(exp_design_file)
+    if method in ('deseq2', 'both') and exp_desn.sample_suff(method='Deseq'):
+        return True
+    elif method in ('edger'):
+        return True
+    else:
+        sys.exit("Deseq2 requires at least three replicates within a group!")
+
+
+def check_refs(ref_fasta=None, ref_gff=None):
+    """Check if ref_fasta are present."""
+    if os.path.exists(ref_gff) and os.path.exists(ref_fasta):
+        return True
+    else:
+        sys.exit("Reference(s) do not exist!")
+
+
+if __name__ == '__main__':
+    main()
