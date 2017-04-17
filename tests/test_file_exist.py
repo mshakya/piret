@@ -12,7 +12,7 @@ class TestFileExist(unittest.TestCase):
 
     def test_true(self):
         """Test if true."""
-        self.assertTrue(file_exist("__init__.py"))
+        self.assertTrue(file_exist("tests/__init__.py"))
 
     def test_fail(self):
         """Test if false."""
