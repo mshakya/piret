@@ -40,7 +40,7 @@ use File::Basename;
 use Getopt::Long;
 use Data::Dumper;
 use FindBin qw($Bin);
-# use lib "$Bin/../lib";
+use lib "$Bin/../ext/lib/perl5";
 use Parallel::ForkManager;
 use String::Approx;
 
