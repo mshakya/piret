@@ -7,16 +7,15 @@ wrapper for running RNASeq pipeline
 """
 from __future__ import print_function
 import luigi
-import sys # noqa
+import sys  # noqa
 sys.path.append('.')
-import argparse # noqa
-import os # noqa
-import logging # noqa
+import argparse  # noqa
+import os  # noqa
+import logging  # noqa
 from pypiret import CheckDesign
 from pypiret import FastQC
 from pypiret import Map, Count
 from pypiret import logger
-from luigi.contrib.external_program import ExternalProgramTask
 
 
 def cmdline_parser():
@@ -86,7 +85,6 @@ def main():
     # Getting absolute path of some directories
     workdir = os.path.abspath(args.WORKDIR)
     bindir = os.path.abspath("bin")
-    print(bindir)
 
     if check_exp_design(args.EXPDSN) is True:
         no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
@@ -94,12 +92,13 @@ def main():
         if check_method(args.METHOD, args.EXPDSN) is True:
             # USER STORY 1A (SGE)
             if all([args.TEST_KINGDOM == 'prokarya',
-                   check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK),
-                   args.qsub]) is True:
+                    check_ref(ref_gff=args.GFF_PROK,
+                              ref_fasta=args.FASTA_PROK),
+                    args.qsub]) is True:
                 luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-                                       numCPUs=args.CPU,
-                                       workdir=args.WORKDIR,
-                                       shared_tmp_dir=workdir + "/.tmp"),
+                                                          numCPUs=args.CPU,
+                                                          workdir=args.WORKDIR,
+                                                          shared_tmp_dir=workdir + "/.tmp"),
                                        Map.HisatIndex(args.FASTA_PROK,
                                                       args.INDEX_HISAT)],
                                       local_scheduler=True,
@@ -110,146 +109,102 @@ def main():
                                  ref_fasta=args.FASTA_PROK)]) is True and
                   args.qsub is False):
                 luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
-                                       numCPUs=args.CPU,
-                                       workdir=workdir),
-                                      Map.HisatIndex(fasta=args.FASTA_PROK,
-                                       hi_index=args.INDEX_HISAT,
-                                       bindir=bindir),
+                                                       numCPUs=args.CPU,
+                                                       workdir=workdir),
+                                       Map.HisatIndex(fasta=args.FASTA_PROK,
+                                                      hi_index=args.INDEX_HISAT,
+                                                      bindir=bindir),
                                        Map.RunAllProkMapping(fastq_dic=samp_dic,
-                                       gff_file=args.GFF_PROK,
-                                       gtf_file=workdir + "/" + "prok.gtf",
-                                       numCPUs=args.CPU,
-                                       indexfile=args.INDEX_HISAT,
-                                       bindir=bindir,
-                                       workdir=args.WORKDIR),
+                                                             gff_file=args.GFF_PROK,
+                                                             gtf_file=workdir + "/" + "prok.gtf",
+                                                             numCPUs=args.CPU,
+                                                             indexfile=args.INDEX_HISAT,
+                                                             bindir=bindir,
+                                                             workdir=args.WORKDIR),
                                        Count.FeatureCount(gff=args.GFF_PROK)
                                        ],
                                       local_scheduler=True,
                                       workers=1)
             # USER STORY 2A (SGE)
             elif all([args.TEST_KINGDOM == 'eukarya',
-                     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK),
-                     args.qsub]) is True:
+                      check_ref(ref_gff=args.GFF_EUK,
+                                ref_fasta=args.FASTA_EUK),
+                      args.qsub]) is True:
                 luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-                                       numCPUs=args.CPU,
-                                       workdir=workdir,
-                                       shared_tmp_dir=workdir + "/.tmp"),
+                                                          numCPUs=args.CPU,
+                                                          workdir=workdir,
+                                                          shared_tmp_dir=workdir + "/.tmp"),
                                        Map.HisatIndex(args.FASTA_EUK)],
                                       local_scheduler=True,
                                       workers=no_of_jobs)
             # USER STORY 2B
             elif (all([args.TEST_KINGDOM == 'eukarya',
-                      check_ref(ref_gff=args.GFF_EUK,
-                                ref_fasta=args.FASTA_EUK)]) is True and
+                       check_ref(ref_gff=args.GFF_EUK,
+                                 ref_fasta=args.FASTA_EUK)]) is True and
                     args.qsub is False):
                 luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
-                                       numCPUs=args.CPU,
-                                       workdir=workdir)],
+                                                       numCPUs=args.CPU,
+                                                       workdir=workdir)],
                                       # Map.HisatIndex(args.FASTA_PROK)],
                                       local_scheduler=True,
                                       workers=no_of_jobs)
             # USER STORY 3A (SGE)
             elif all([args.TEST_KINGDOM == 'both',
-                     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK),
-                     check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK),
-                     args.qsub]) is True:
+                      check_ref(ref_gff=args.GFF_EUK,
+                                ref_fasta=args.FASTA_EUK),
+                      check_ref(ref_gff=args.GFF_PROK,
+                                ref_fasta=args.FASTA_PROK),
+                      args.qsub]) is True:
                 luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-                                       numCPUs=args.CPU,
-                                       workdir=workdir,
-                                       shared_tmp_dir=workdir + "/.tmp"),
+                                                          numCPUs=args.CPU,
+                                                          workdir=workdir,
+                                                          shared_tmp_dir=workdir + "/.tmp"),
                                        Map.HisatIndex(args.FASTA_PROK)],
                                       local_scheduler=True,
                                       workers=no_of_jobs)
             # USER STORY 3B
             elif (all([args.TEST_KINGDOM == 'both',
-                       check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK),
+                       check_ref(ref_gff=args.GFF_EUK,
+                                 ref_fasta=args.FASTA_EUK),
                        check_ref(ref_gff=args.GFF_PROK,
                                  ref_fasta=args.FASTA_PROK)]) is True and
                     args.qsub is False):
                 luigi.interface.build([
-                                      #FastQC.RunAllQC(fastq_dic=samp_dic,
-                                      # numCPUs=args.CPU,
-                                      # workdir=workdir),
+                                      FastQC.RunAllQC(fastq_dic=samp_dic,
+                                                      numCPUs=args.CPU,
+                                                      workdir=workdir),
 
-                                       Map.ConcatF(prok_ref=os.path.abspath(args.FASTA_PROK),
-                                                   euk_ref=os.path.abspath(args.FASTA_EUK),
-                                                   ref=workdir + "/" +
-                                                   "refs.fna"),
+                                      Map.HisatIndex(fasta=",".join([args.FASTA_PROK, args.FASTA_EUK]),
+                                                     hi_index=args.INDEX_HISAT,
+                                                     bindir=bindir),
+                                      Map.GFF2GTF(gff_file=args.GFF_EUK,
+                                                  bindir=bindir,
+                                                  workdir=workdir),
 
-                                       # Map.ConcatF(prok_ref=args.GFF_PROK,
-                                       #             euk_ref=args.GFF_EUK,
-                                       #             ref=workdir + "/" +
-                                       #             "refs.gff"),
+                                      Map.CreateSplice(gff_file=args.GFF_EUK,
+                                                       bindir=bindir,
+                                                       workdir=workdir),
 
-                                       #Map.HisatIndex(fasta=workdir + "/" +
-                                       #"refs.fna", hi_index=args.INDEX_HISAT,
-                                       #               bindir=bindir),
+                                      Map.RunAllEukMap(fastq_dic=samp_dic,
+                                                       gff_file=args.GFF_EUK,
+                                                       gtf_file=workdir + "/" + "refs.gtf",
+                                                       numCPUs=args.CPU,
+                                                       indexfile=args.INDEX_HISAT,
+                                                       bindir=bindir,
+                                                       workdir=workdir),
 
-                                       #Map.RunAllEukMap(fastq_dic=samp_dic,
-                                       ##gff_file=workdir + "/" + "refs.gff",
-                                       #gtf_file=workdir + "/" + "refs.gtf",
-                                       #numCPUs=args.CPU,
-                                       #indexfile=args.INDEX_HISAT,
-                                       #bindir=bindir,
-                                       #workdir=args.WORKDIR),
+                                      Map.GetChromName(prok_ref=args.FASTA_PROK,
+                                                       euk_ref=args.FASTA_EUK,
+                                                       workdir=workdir),
 
-                                       ],
+                                      Map.RunSplitBothMap(fastq_dic=samp_dic,
+                                                          numCPUs=args.CPU,
+                                                          indexfile=args.INDEX_HISAT,
+                                                          workdir=workdir)
+
+                                      ],
                                       local_scheduler=True,
                                       workers=1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # if check_exp_design(args.EXPDSN) is True:
-    #     no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
-    #     samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
-    #     if check_method(args.METHOD, args.EXPDSN) is True:
-    #         if args.TEST_KINGDOM == 'prokarya':
-    #             if check_ref(ref_gff=args.GFF_PROK,
-    #                           ref_fasta=args.FASTA_PROK) is True:
-    #                 if args.qsub is True:
-    #                     luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-    #                                            numCPUs=args.CPU,
-    #                                            workdir=args.WORKDIR,
-    #                                            shared_tmp_dir=args.WORKDIR + "/.tmp"),
-    #                                            Map.HisatIndex(args.FASTA_PROK)],
-    #                                            local_scheduler=True,
-    #                                            workers=no_of_jobs)
-    #                 elif args.qsub is False:
-    #                     luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
-    #                                           numCPUs=args.CPU,
-    #                                           workdir=args.WORKDIR),
-    #                                           Map.HisatIndex(args.FASTA_PROK)],
-    #                                           local_scheduler=True,
-    #                                           workers=no_of_jobs)
-    #         elif args.TEST_KINGDOM == 'eukarya':
-    #             if check_ref(ref_gff=args.GFF_EUK,
-    #                           ref_fasta=args.FASTA_EUK) is True:
-    #                 luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-    #                              numCPUs=args.CPU,
-    #                              workdir=args.WORKDIR),
-    #                              Map.HisatIndex()],
-    #                             local_scheduler=True,
-    #                             workers=no_of_jobs)
-    #         if args.TEST_KINGDOM == 'both':
-    #             if all(check_ref(ref_gff=args.GFF_PROK,
-    #                               ref_fasta=args.FASTA_PROK),
-    #                     check_ref(ref_gff=args.GFF_EUK,
-    #                                ref_fasta=args.FASTA_EUK)) is True:
-    #                 luigi.interface.build(FastQC.SGERunAllQC(fastq_dic=samp_dic,
-    #                             numCPUs=args.CPU,
-    #                             workdir=args.WORKDIR))
 
 
 def check_exp_design(exp_design_file):
@@ -290,11 +245,22 @@ def check_method(method, exp_design_file):
 
 
 def check_ref(ref_fasta=None, ref_gff=None):
-    """Check if ref_fasta are present."""
-    if os.path.exists(ref_gff) and os.path.exists(ref_fasta):
-        return True
+    """Check if refs are present."""
+    if ',' in ref_fasta:
+        if all([os.path.exists(f) for f in ref_fasta.split(",")]) is True:
+            pass
+        else:
+            sys.exit("Reference(s) do not exist!")
+    if ',' in ref_gff:
+        if all([os.path.exists(f) for f in ref_gff.split(",")]) is True:
+            return True
+        else:
+            sys.exit("Reference(s) do not exist!")
     else:
-        sys.exit("Reference(s) do not exist!")
+        if os.path.exists(ref_gff) and os.path.exists(ref_fasta):
+            return True
+        else:
+            sys.exit("Reference(s) do not exist!")
 
 
 if __name__ == '__main__':

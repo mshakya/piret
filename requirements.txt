@@ -6,3 +6,5 @@ argparse
 logging
 subprocess
 itertools
+cPickle
+re

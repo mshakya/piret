@@ -1,7 +1,10 @@
 #! /usr/bin/env python
 
 """Check fasta."""
-from Bio import SeqIO
+import Bio
+import re
+import pandas as pd
+import sys
 
 
 class CheckFasta():
@@ -35,10 +38,34 @@ class CheckFasta():
 
     def duplicate(self, fasta_file):
         """Check if a fasta file has duplicate sequences (based on name)."""
-        seqs = SeqIO.parse(fasta_file)
+        seqs = Bio.SeqIO.parse(fasta_file)
         seq_header = []
         for seq in seqs:
             seq_header.append(seq.description)
         if len(seq_header) != len(set(seq_header)):
             raise ValueError("duplicate sequences found")
 
+
+def remove_special_chars(self, fasta_file, out_fasta):
+    """Remove special characters from sequence name."""
+    seqs = Bio.SeqIO.parse(fasta_file)
+    for seq in seqs:
+        seq_id = re.sub('[|]', '_', seq.id)
+        seq.id = seq_id
+        Bio.SeqIO.write(seq, out_fasta, "fasta")
+
+
+def gff_fasta(fasta_file, gff_file):
+    """Check if gff file and fasta file are compatible."""
+    seqs = Bio.SeqIO.parse(fasta_file)
+    df = pd.read_csv(gff_file, sep="\t", comment='#', header=None)
+
+    seq_header = []
+    for seq in seqs:
+        fa_id = set(seq_header.append(seq.id))
+
+    gff_id = set(df[0].tolist())
+    if fa_id == gff_id:
+        pass
+    else:
+        sys.exit('GFF file and Reference fasta do not have same ids!')
