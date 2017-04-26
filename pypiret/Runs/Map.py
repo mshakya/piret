@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 
-"""Check design."""
+"""Luigi Tasks to perform various RNA seq functions, from Mapping to Counting.
+
+Mapping is done using hisat2 and counting is done using featurecounts and stringtie
+"""
 from __future__ import print_function
 import os
 import luigi
@@ -23,7 +26,7 @@ class RefFile(ExternalTask):
 
 
 class HisatIndex(ExternalProgramTask):
-    """Create Hisat Indeices from given fasta file"""
+    """Create Hisat Indeices from given fasta file."""
 
     fasta = Parameter()
     hi_index = Parameter()
@@ -193,7 +196,7 @@ class MapHisat(ExternalProgramTask):
                     "2>", self.mappingLogFile]
 
 
-class ConvSAMfile(ExternalProgramTask):
+class SAM2BAMfile(ExternalProgramTask):
     """Convert SAM file to BAM file with only mapped reads."""
 
     fastq1 = Parameter()
@@ -242,8 +245,8 @@ class SortBAMfile(ExternalProgramTask):
     sorted_bam_file = Parameter()
 
     def requires(self):
-        """Require ConvSAMfile to finish."""
-        return [ConvSAMfile(fastq1=self.fastq1,
+        """Require SAM2BAMfile to finish."""
+        return [SAM2BAMfile(fastq1=self.fastq1,
                             fastq2=self.fastq2,
                             numCPUs=self.numCPUs,
                             indexfile=self.indexfile,
@@ -384,7 +387,7 @@ class SplitBAMfile(luigi.Task):
 
     def run(self):
         """Split BAM file based on chromosome."""
-        bam_cmd = "bin/bamtools split -reference -in %s 2> %s" % (
+        bam_cmd = "bamtools split -reference -in %s 2> %s" % (
             self.sorted_bam_file, self.split_logfile)
         subprocess.Popen(bam_cmd, shell=True)
 
@@ -516,16 +519,46 @@ class MergeBAMfile(ExternalProgramTask):
         if self.kingdom == 'prokarya':
             prok_list = self.map_dir + "/" + "prokarya_chromos.fullpath"
             prok_bam = self.map_dir + "/" + "prokarya.bam"
-            return["bin/bamtools", "merge", "-list", prok_list,
+            return["bamtools", "merge", "-list", prok_list,
                    "-out", prok_bam]
         elif self.kingdom == 'eukarya':
             euk_list = self.map_dir + "/" + "eukarya_chromos.fullpath"
             euk_bam = self.map_dir + "/" + "eukarya.bam"
-            return["bin/bamtools", "merge", "-list",
+            return["bamtools", "merge", "-list",
                    euk_list, "-out", euk_bam]
 
 
-class RunAllProkMap(luigi.WrapperTask):
+class FeatureCount(ExternalProgramTask):
+    """Count Features."""
+
+    gff = luigi.Parameter()
+    count_file = luigi.Parameter()
+    bam_file = luigi.Parameter()
+    bindir = luigi.Parameter()
+
+    def requires(self):
+        """Require reference fasta format file."""
+        return [RefFile(self.gff), RefFile(self.bam_file)]
+
+    def output(self):
+        """Index output."""
+        return LocalTarget(self.count_file)
+
+    def program_args(self):
+        """Run hisat2-build command."""
+        return ["featureCounts",
+                "-a", self.gff,
+                "-s", 1,
+                "-p", "-P",
+                "-o", self.count_file,
+                self.bam_file]
+
+    def program_environment(self):
+        """Environmental variables for this program."""
+        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
+
+
+class AllProk(luigi.WrapperTask):
     """Run all Mapping steps from Prokarya genome."""
 
     fastq_dic = luigi.DictParameter()
@@ -555,10 +588,33 @@ class RunAllProkMap(luigi.WrapperTask):
                            unalned=map_dir + "/unligned.fastq",
                            mappingLogFile=map_dir + "/mapping.log",
                            outsam=map_dir + "/" + samp + ".mapped.sam")
+            yield SAM2BAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                              fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                              numCPUs=self.numCPUs,
+                              indexfile=self.indexfile,
+                              spliceFile=None,
+                              mappingLogFile=map_dir + "/mapping.log",
+                              unalned=map_dir + "/unligned.fastq",
+                              outsam=map_dir + "/" + samp + ".sam",
+                              bam_file=map_dir + "/" + samp + "_map.bam")
+            yield SortBAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                              fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                              numCPUs=self.numCPUs,
+                              indexfile=self.indexfile,
+                              spliceFile=None,
+                              mappingLogFile=map_dir + "/mapping.log",
+                              unalned=map_dir + "/unligned.fastq",
+                              outsam=map_dir + "/" + samp + ".sam",
+                              bam_file=map_dir + "/" + samp + "_map.bam",
+                              sorted_bam_file=map_dir + "/" + samp + "_sort_map.bam")
+            yield FeatureCount(gff=self.gtf_file,
+                               count_file=map_dir + "/" + samp + "_prok.count",
+                               bam_file=map_dir + "/" + samp + "_sort_map.bam",
+                               bindir=self.bindir)
 
 
-class RunAllEukMap(luigi.WrapperTask):
-    """Run all Mapping steps."""
+class AllEuk(luigi.WrapperTask):
+    """From Mapping to Counting step for Eukaryotic reference."""
 
     gff_file = Parameter()
     gtf_file = Parameter()
@@ -589,7 +645,7 @@ class RunAllEukMap(luigi.WrapperTask):
                            mappingLogFile=map_dir + "/mapping.log",
                            unalned=map_dir + "/unligned.fastq",
                            outsam=map_dir + "/" + samp + ".sam")
-            yield ConvSAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+            yield SAM2BAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                               fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                               numCPUs=self.numCPUs,
                               indexfile=self.indexfile,
@@ -608,18 +664,25 @@ class RunAllEukMap(luigi.WrapperTask):
                               outsam=map_dir + "/" + samp + ".sam",
                               bam_file=map_dir + "/" + samp + "_map.bam",
                               sorted_bam_file=map_dir + "/" + samp + "_sort_map.bam")
+            yield FeatureCount(gff=self.gtf_file,
+                               count_file=map_dir + "/" + samp + "_euk.count",
+                               bam_file=map_dir + "/" + samp + "_sort_map.bam",
+                               bindir=self.bindir)
 
 
-class RunSplitBothMap(luigi.WrapperTask):
-    """Split the mapped reads to euk and prok."""
+class AllBoth(luigi.WrapperTask):
+    """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
 
     fastq_dic = luigi.DictParameter()
     numCPUs = luigi.IntParameter()
     indexfile = Parameter()
+    prok_gff = Parameter()
+    euk_gff = Parameter()
+    bindir = Parameter()
     workdir = Parameter()
 
     def requires(self):
-        """A wrapper for splitting to euk and prok."""
+        """A pipeline that runs from mapping to count for euk and prok."""
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
@@ -629,6 +692,33 @@ class RunSplitBothMap(luigi.WrapperTask):
         for samp, fastq in self.fastq_dic.iteritems():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
+            yield MapHisat(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                           fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                           numCPUs=self.numCPUs,
+                           indexfile=self.indexfile,
+                           spliceFile=splice_file,
+                           mappingLogFile=map_dir + "/mapping.log",
+                           unalned=map_dir + "/unligned.fastq",
+                           outsam=map_dir + "/" + samp + ".sam")
+            yield SAM2BAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                              fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                              numCPUs=self.numCPUs,
+                              indexfile=self.indexfile,
+                              spliceFile=splice_file,
+                              mappingLogFile=map_dir + "/mapping.log",
+                              unalned=map_dir + "/unligned.fastq",
+                              outsam=map_dir + "/" + samp + ".sam",
+                              bam_file=map_dir + "/" + samp + "_map.bam")
+            yield SortBAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                              fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                              numCPUs=self.numCPUs,
+                              indexfile=self.indexfile,
+                              spliceFile=splice_file,
+                              mappingLogFile=map_dir + "/mapping.log",
+                              unalned=map_dir + "/unligned.fastq",
+                              outsam=map_dir + "/" + samp + ".sam",
+                              bam_file=map_dir + "/" + samp + "_map.bam",
+                              sorted_bam_file=map_dir + "/" + samp + "_sort_map.bam")
             yield RefNames(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                            fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                            numCPUs=self.numCPUs,
@@ -697,3 +787,11 @@ class RunSplitBothMap(luigi.WrapperTask):
                                map_dir=map_dir,
                                split_logfile=map_dir + "/" + samp + ".splitlog",
                                kingdom='eukarya')
+            yield FeatureCount(gff=self.prok_gff,
+                               count_file=map_dir + "/" + samp + "_prok.count",
+                               bam_file=map_dir + "/" + "prokarya.bam",
+                               bindir=self.bindir)
+            yield FeatureCount(gff=self.euk_gff,
+                               count_file=map_dir + "/" + samp + "_euk.count",
+                               bam_file=map_dir + "/" + "eukarya.bam",
+                               bindir=self.bindir)
