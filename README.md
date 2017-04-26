@@ -9,31 +9,25 @@ Pipeline for Reference based Transcriptomics.
 
 ## Installing PiReT
 
-**If you DO NOT HAVE git installed in your machine**
-Please download PiReT directly from the [github](https://github.com/mshakya/PiReT). However, we recommend that a user install `git`, which is require for obtaining dependencies that are not yet available in bioconda.
-
-**If you HAVE git installed in your machine**
-Use `git clone` from command line.
+Please download PiReT directly from the [github](https://github.com/mshakya/PyPiReT).
 
 ```
-git clone https://github.com/mshakya/PiReT.git
+git clone https://github.com/mshakya/PyPiReT.git
 ```
 
-`cd` into the `PiReT` directory
+`cd` into the `PyPiReT` directory
 
 ```
-cd PiReT
-./bioconda_INSTALL.SH
+cd PyPiReT
+./INSTALL.SH
 ```
 
 PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `bioconda_INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`
 
 ##Test
-We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `test_data/fastqs` and corresponding reference fasta files are found in `test_data/data`. To run the test, from within `PiReT` directory:
+We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `PyPiReT` directory:
 
 ```
-cd test_data
-
 # if you are in a LINUX system:
 sh ./test_pipeline_linux.sh
 
@@ -42,18 +36,9 @@ sh ./test_pipeline_MacOSX.sh
 ```
 These shell script automatically creates `experimental_design.txt` and runs the pipeline.
 
-Pipeline run status can be checked in either `process.log` or `error.log`. If the pipeline runs completely a file called `process_current.log` is generated.
-
-
-| System | OS | Date | Time |
-|--------|----|------|------|
-|    MacBook Pro (2.8 GHz Intel COre i7)    |  OS X El Capitan v10.11.6  |   12/01/2016   |  27m20.219s    |
-|    MacBook Pro (2.8GHz Intel Core i7)    |  OS X Yosemite v10.10.5 |  12/01/2016    |   31m57.352s   |
-|Virtual Machine|CentOS Linux release 7.1.1503 (Core)|12/07/2016|46m56.558s|
-
 
 ##Dependencies
-PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `bioconda_INSTALL.sh`.
+PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
 
 ### Programming/Scripting languages
 - [Python >=v2.7](https://www.python.org/downloads/release/python-2712/)
@@ -61,16 +46,6 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [Perl >=v5.16.3](https://www.perl.org/get.html)
     - The pipeline has only been tested in v5.16.3 and v5.22.0
 - [R >=v3.3.1](https://www.r-project.org)
-
-
-### Unix
-- sed
-- awk
-- find
-- curl/wget
-- make
-- git
-
 
 ### Installing dependencies
 This is the core list of dependencies. However, there are secondary dependencies for many of the listed tools, which will also be installed by `bioconda`.
@@ -81,7 +56,6 @@ This is the core list of dependencies. However, there are secondary dependencies
 - [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
 - [samtools (v1.3.1)](http://www.htslib.org)
 - [bowtie2 (v2.2.8)](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
-- [bwa (v0.7.15-r1140)](http://bio-bwa.sourceforge.net)
 - [HTseq (v0.6.1p1)](http://www-huber.embl.de/HTSeq/doc/overview.html)
 - [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
 - [bedtools (v2.26.0)](http://bedtools.readthedocs.io/en/latest/index.html)
@@ -89,19 +63,10 @@ This is the core list of dependencies. However, there are secondary dependencies
 
 ### R packages
 - [edgeR (v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
-    - [limma (v3.28.21)](https://bioconductor.org/packages/release/bioc/html/limma.html)
 - [DEseq2 (v1.12.4)](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
-    - [BiocGenerics (>= 0.7.5)](https://bioconductor.org/packages/release/bioc/html/BiocGenerics.html)
-    - [Biobase (v2.32.0)](https://bioconductor.org/packages/release/bioc/html/Biobase.html)
-    - [BiocParallel (v1.6.6)](https://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
-    - [genefilter (v1.54.2)](http://bioconductor.org/packages/release/bioc/html/genefilter.html)
-    - [locfit (v1.5-9.1)](https://cran.rstudio.com/web/packages/locfit/index.html)
-    - [geneplotter (v1.50.0)](https://www.bioconductor.org/packages/release/bioc/html/geneplotter.html)
-    - [ggplot2 (v1.0.9001 )](http://ggplot2.tidyverse.org)
-    - [Hmisc (v4.0-0)](https://cran.r-project.org/web/packages/Hmisc/index.html)
-    - [Rcpp (>= 0.11.0)](https://cran.r-project.org/web/packages/Rcpp/index.html)
 
 ### Python packages
+- [luigi](https://github.com/spotify/luigi)
 - [numpy (v1.1.12)](http://www.numpy.org)
 - [matplotlib (v1.5.3)](http://matplotlib.org)
 
@@ -111,11 +76,9 @@ This is the core list of dependencies. However, there are secondary dependencies
 
 ## Running PiReT
 
-The pipeline can be run in a multiprocessor server with the ability to submit jobs in a queue system through `qsub` or in a single processor system where all jobs are run sequentially. The former requires a `qsub` system. Also, the current state of pipeline only works for a single processor.
-
 
 ```
-    perl ../scripts/runPiReT.pl -test_kingdom both \
+    bin/runPiReT -test_kingdom both \
     -significant_pvalue 0.001 -exp experimental_design.txt \
     -d pipeline_test_both \
     -prokaryote_fasta data/test_prok.fa \
@@ -192,10 +155,6 @@ ls -R | grep ":$" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's
 - `sum_exp_stats.txt`: Summary table of number of reads after each major processing (filtering and mapping) of files.
 - `RPKM_all_gene.txt`: A table of RPKM calculated per features for each samples.
 - `reads.table.txt` : A table of reads mapped to features for each samples.
-- `prokaryote.genedesc.rRNA.txt`: subset of `gff` files only containing `rRNA` features.
-- `prokaryote.gff`: the whole `gff` file.
-- `prokaryote.NonrRNA.genedesc.txt`: subset of `gff` files that only has gene description.
-- `prokaryote.NonrRNA.gff`: `gff` file with no rRNA.
 - `readcounts.experiment.txt`: table similar to experimental design file with location of `htseq-count` results full path.
 
 `process.log`: report of all the commands/scripts/ that were ran as part of the pipeline.
@@ -227,8 +186,8 @@ For removal, since all dependencies that are not in your system are installed in
 
 
 ##Contributions
-- Shihai Feng
 - Migun Shakya
+- Shihai Feng
 
 ## Citations:
 If you use PiReT please cite following papers:
