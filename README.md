@@ -1,4 +1,6 @@
 
+[![Build Status](https://travis-ci.org/mshakya/PyPiReT.svg?branch=master)](https://travis-ci.org/mshakya/PyPiReT)
+
 #PiReT
 
 Pipeline for Reference based Transcriptomics.
