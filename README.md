@@ -1,5 +1,6 @@
 
 [![Build Status](https://travis-ci.org/mshakya/PyPiReT.svg?branch=master)](https://travis-ci.org/mshakya/PyPiReT)
+[![Build Status](https://travis-ci.org/mshakya/PyPiReT.svg?branch=master)](https://travis-ci.org/mshakya/PyPiReT)
 
 #PiReT
 
