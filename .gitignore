@@ -2,3 +2,8 @@ runPipeline_rRNA_noqsub_commandline.sublime-workspace
 .DS_Store
 *.pyc
 pypiret/__init__.pyc
+bin/JBrowse
+bin/bowtie2
+bin/htseq-count
+PyPiReT.sublime-workspace
+.cache/

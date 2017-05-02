@@ -94,7 +94,7 @@ class CheckDesign():
                         print(f)
                         sys.exit('^ Fastq does not exist')
             elif isinstance(fastqs, list):
-                for pairs in files:
+                for pairs in fastqs:
                     files = pairs.split(":")
                     for f in files:
                         if os.path.isfile(f):

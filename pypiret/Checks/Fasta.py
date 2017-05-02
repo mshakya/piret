@@ -69,3 +69,17 @@ def gff_fasta(fasta_file, gff_file):
         pass
     else:
         sys.exit('GFF file and Reference fasta do not have same ids!')
+
+
+def match_gff_fasta(fasta_file, gff_file, out_fasta):
+    """Rename the sequence baesd on the GFF file."""
+    seqs = Bio.SeqIO.parse(fasta_file)
+    df = pd.read_csv(gff_file, sep="\t", comment='#', header=None)
+
+    acc_ids = set(df[0].tolist())
+
+    for seq in seqs:
+        for acc in acc_ids:
+            if acc in seq.id:
+                seq.description = acc + " " + seq.description
+                Bio.SeqIO.write(seq, out_fasta, "fasta")
