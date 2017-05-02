@@ -30,6 +30,7 @@ class PairedRunQC(ExternalProgramTask):
     sample = Parameter()
     numCPUs = IntParameter()
     outdir = Parameter()
+    scriptdir = Parameter()
 
     def requires(self):
         """Require pair of fastq."""
@@ -43,7 +44,7 @@ class PairedRunQC(ExternalProgramTask):
     def program_args(self):
         """Run the perl script."""
         return ["perl",
-                "scripts/illumina_fastq_QC.pl",
+                self.scriptdir + "/illumina_fastq_QC.pl",
                 "-min_L", "60",
                 "-n", "5",
                 "-q", "15",
@@ -54,6 +55,9 @@ class PairedRunQC(ExternalProgramTask):
                 "-p"
                 ] + list(self.fastqs)
 
+    def program_environment(self):
+        """Environmental variables for this program."""
+        return {'PATH': os.environ["PATH"] + ":" + self.scriptdir}
 
 # class SGEPairedRunQC(SGEJobTask):
 #     """Running the perl script for QC."""
@@ -117,6 +121,7 @@ class RunAllQC(WrapperTask):
     fastq_dic = DictParameter()
     workdir = Parameter()
     numCPUs = IntParameter()
+    scriptdir = Parameter()
 
     def requires(self):
         """A wrapper for running the QC."""
@@ -130,7 +135,8 @@ class RunAllQC(WrapperTask):
                 yield PairedRunQC(fastqs=fqs,
                                   sample=samp,
                                   numCPUs=self.numCPUs,
-                                  outdir=trim_dir)
+                                  outdir=trim_dir,
+                                  scriptdir=self.scriptdir)
 
             else:
                 if os.path.isdir(trim_dir) is False:
@@ -139,7 +145,8 @@ class RunAllQC(WrapperTask):
                 yield PairedRunQC(fastqs=fqs,
                                   sample=samp,
                                   numCPUs=self.numCPUs,
-                                  outdir=trim_dir)
+                                  outdir=trim_dir,
+                                  scriptdir=self.scriptdir)
 
 
 # class SGERunAllQC(WrapperTask):
