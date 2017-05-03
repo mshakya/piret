@@ -58,8 +58,6 @@ This is the core list of dependencies. However, there are secondary dependencies
 ### Third party softwares/packages
 - [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
 - [samtools (v1.3.1)](http://www.htslib.org)
-- [bowtie2 (v2.2.8)](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
-- [HTseq (v0.6.1p1)](http://www-huber.embl.de/HTSeq/doc/overview.html)
 - [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
 - [bedtools (v2.26.0)](http://bedtools.readthedocs.io/en/latest/index.html)
 - [gffread (v0.9.6)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
