@@ -63,8 +63,8 @@ class TestCheckDesign(unittest.TestCase):
         self.assertEqual(get_fastqs.extract_sample_fastqs()['samp2'],
                          ["tests/data/fastqs/BTT_test25_R1.fastq:"
                           "tests/data/fastqs/BTT_test25_R2.fastq",
-                          "tests/data/fastqs/BTT_test22_R1.fastq:"
-                          "tests/data/fastqs/BTT_test22_R2.fastq"])
+                          "tests/data/fastqs/BTT_test15_R1.fastq:"
+                          "tests/data/fastqs/BTT_test15_R2.fastq"])
 
     def test_fastq_notexists(self):
         """Test if Fastq files in experimental design are not present."""
