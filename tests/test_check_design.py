@@ -72,11 +72,6 @@ class TestCheckDesign(unittest.TestCase):
         with self.assertRaises(SystemExit):
             see_fastqs.fastq_exists()
 
-    def test_fastq_exists(self):
-        """Test if Fastq files in experimental design are present."""
-        see_fastqs = CheckDesign(test_exp_file)
-        self.assertTrue(see_fastqs.fastq_exists())
-
     def test_sample_suff(self):
         """Test if there are enough samples, when both method is chosen."""
         design = CheckDesign(test_exp_file)
