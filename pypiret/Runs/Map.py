@@ -551,7 +551,6 @@ class SplitRefProkEuk(luigi.Task):
             elif ref.split('REF_')[1].split('.bam')[0] in euk_refs:
                 ref1 = self.map_dir + "/" + ref
                 euk_list.append(ref1)
-        print(prok_list)
         euk_chroms_fp = self.map_dir + "/" + "eukarya_chromos.fullpath"
         prok_chroms_fp = self.map_dir + "/" + "prokarya_chromos.fullpath"
         with open(euk_chroms_fp, 'w') as ecf:
@@ -676,19 +675,19 @@ class MergeBAMfileBoth(luigi.WrapperTask):
                                )
 
 
+@inherits(SortBAMfile)
 class StringTieScores(ExternalProgramTask):
     """Calculate scores using string tie."""
 
-    gff = luigi.Parameter()
+    gtf = luigi.Parameter()
     out_gtf = luigi.Parameter()
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
-    bam_file = luigi.Parameter()
-    bindir = luigi.Parameter()
+    in_bam_file = luigi.Parameter()
 
     def requires(self):
         """Require reference fasta format file."""
-        return [RefFile(self.gff), RefFile(self.bam_file)]
+        return [RefFile(self.gtf), RefFile(self.in_bam_file)]
 
     def output(self):
         """Index output."""
@@ -698,14 +697,71 @@ class StringTieScores(ExternalProgramTask):
         """Run hisat2-build command."""
         return ["stringtie",
                 "-o", self.out_gtf,
-                "-G", self.gff,
+                "-G", self.gtf,
                 "-C", self.out_cover,
                 "-A", self.out_abun,
-                self.bam_file]
+                self.in_bam_file]
 
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
+
+@inherits(SortBAMfileAll)
+class StringTieScoresBoth(luigi.WrapperTask):
+    """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
+
+    euk_gff = Parameter()
+    prok_gff = Parameter()
+
+    def requires(self):
+        """A pipeline that runs from mapping to count for euk and prok."""
+        splice_list = [self.workdir + "/" +
+                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
+        if len(splice_list) > 1:
+            splice_file = ','.join([splice_list])
+        else:
+            splice_file = splice_list[0]
+
+        euk_gtf = self.workdir + "/" + \
+            self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+        prok_gtf = self.workdir + "/" + \
+            self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+        for samp, fastq in self.fastq_dic.iteritems():
+            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            trim_dir = self.workdir + "/" + samp + "/trimming_results"
+            yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                  fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                                  numCPUs=self.numCPUs,
+                                  indexfile=self.indexfile,
+                                  spliceFile=splice_file,
+                                  mappingLogFile=map_dir + "/mapping.log",
+                                  unalned=map_dir + "/unligned.fastq",
+                                  outsam=map_dir + "/" + samp + ".sam",
+                                  bam_file=map_dir + "/" + samp + ".bam",
+                                  sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                  scriptdir=self.scriptdir,
+                                  ref_file=self.ref_file,
+                                  gtf=euk_gtf,
+                                  out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
+                                  out_cover=map_dir + "/" + samp + "_euk_covered_sTie.gtf",
+                                  out_abun=map_dir + "/" + samp + "_euk_sTie.tab",
+                                  in_bam_file=map_dir + "/" + "eukarya.bam",
+                                  bindir=self.bindir)
+            yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                  fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                                  numCPUs=self.numCPUs,
+                                  indexfile=self.indexfile,
+                                  spliceFile=splice_file,
+                                  mappingLogFile=map_dir + "/mapping.log",
+                                  unalned=map_dir + "/unligned.fastq",
+                                  outsam=map_dir + "/" + samp + ".sam",
+                                  bam_file=map_dir + "/" + samp + ".bam",
+                                  sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                  scriptdir=self.scriptdir,
+                                  ref_file=self.ref_file,
+                                  gtf=prok_gtf,
+                                  out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
+                                  out_cover=map_dir + "/" + samp + "_prok_covered_sTie.gtf",
+                                  out_abun=map_dir + "/" + samp + "_prok_sTie.tab",
+                                  in_bam_file=map_dir + "/" + "prokarya.bam",
+                                  bindir=self.bindir)
 
 
 class AllProk(luigi.WrapperTask):
@@ -800,37 +856,4 @@ class StringTieScoresAllEuk(luigi.WrapperTask):
                                   out_cover=map_dir + "/" + samp + "_covered_sTie.gtf",
                                   out_abun=map_dir + "/" + samp + "_sTie.tab",
                                   bam_file=map_dir + "/" + "eukarya.bam",
-                                  bindir=self.bindir)
-
-
-@inherits(MergeBAMfileBoth)
-class StringTieScoresBoth(luigi.WrapperTask):
-    """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
-
-    def requires(self):
-        """A pipeline that runs from mapping to count for euk and prok."""
-        euk_gtf = self.workdir + "/" + \
-            self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-        prok_gtf = self.workdir + "/" + \
-            self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
-        else:
-            splice_file = splice_list[0]
-        for samp, fastq in self.fastq_dic.iteritems():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
-            yield StringTieScores(gff=euk_gtf,
-                                  out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
-                                  out_cover=map_dir + "/" + samp + "_euk_covered_sTie.gtf",
-                                  out_abun=map_dir + "/" + samp + "_euk_sTie.tab",
-                                  bam_file=map_dir + "/" + "eukarya.bam",
-                                  bindir=self.bindir)
-            yield StringTieScores(gff=prok_gtf,
-                                  out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
-                                  out_cover=map_dir + "/" + samp + "_prok_covered_sTie.gtf",
-                                  out_abun=map_dir + "/" + samp + "_prok_sTie.tab",
-                                  bam_file=map_dir + "/" + "prokarya.bam",
                                   bindir=self.bindir)
