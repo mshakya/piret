@@ -3,7 +3,7 @@
 import sys
 import unittest
 sys.path.append('../')
-from pypiret.Checks import Map  # noqa
+from pypiret.Runs import Map  # noqa
 
 
 class TestMap(unittest.TestCase):
@@ -14,9 +14,9 @@ class TestMap(unittest.TestCase):
         design = Map.HisatIndex(fasta="tests/data/test_prok.fa",
                                 hi_index="tests/test_index",
                                 bindir="bin")
-    
 
     def tearDown(self):
+        """Tear down."""
         self.widget.dispose()
 
 # class Test
