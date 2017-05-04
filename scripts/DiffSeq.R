@@ -6,6 +6,7 @@
 
 library(optparse)
 library(edgeR)
+library(pheatmap)
 library(rtracklayer)
 library(dplyr)
 
@@ -51,9 +52,13 @@ get_samp_name <- function(col_name) {
     }
 }
 
+
 # read experimental design file
 group_table <- read.delim(group_file)
 group_table <- select(group_table, ID, Group)
+
+# max for column position of samples
+samp_cols <- as.numeric(nrow(group_table)) + 6
 
 # read count table
 reads_table <- read.table(reads_file,
@@ -62,15 +67,55 @@ reads_table <- read.table(reads_file,
 
 # change the column name to just have sample names
 col_list <- colnames(reads_table)
-colnames(reads_table)<-sapply(col_list, get_samp_name)
+colnames(reads_table) <- sapply(col_list, get_samp_name)
+
+# convert DGE object
+dge_object <- DGEList(counts = reads_table[, 7:samp_cols],
+  genes = reads_table[, 1:6],
+  group = group_table$Group)
+
+# remove features that have less than 1 read per million in 3 samples
+dge_object <- dge_object[rowSums(1e+06 * dge_object$counts / expandAsMatrix(dge_object$samples$lib.size, dim(dge_object)) > 1) >= 3, ]
+# calculate normalization factor
+dge_object <- calcNormFactors( dge_object )
+
+# calculate rpkm and cpm
+rpkm_results <- rpkm(dge_object)
+cpm_results <- cpm(dge_object)
 
 
-# convert to DGE object
-DGE_object <- DGEList(counts = reads_table[, 7:12], genes = reads_table[, 1:6],
-                      group = group_table$Group)
+# et <- exactTest(dge_object, pair=levels(group_table$Group))
+# topTags(et)
+# top <- topTags(et, n=nrow(dge_object$counts))$table
+# head(top)
 
-pdf("~/Desktop/test.pdf")
-plotMDS( DGE_object,  main = "MDS Plot for Count Data", labels = colnames( DGE_object$counts ) )
-plotSmear(DGE_object)
+
+
+
+# y <- exactTest(DGE_object)
+# print(y)
+
+edge_rpkm_out <- paste0(strsplit(reads_file, ".", fixed=TRUE)[[1]][1], ".edge_rpkm")
+write.csv(rpkm_results, file = paste0(strsplit(reads_file, ".", fixed=TRUE)[[1]][1], ".edge_rpkm"))
+
+#RPKM heatmap
+edge_rpm_mat <- read.table(edge_rpkm_out, sep = ",", header=TRUE, row.names=1)
+print(edge_rpm_mat)
+
+
+#CPM heatmap
+# construct_heatmap()
+write.csv(cpm_results, file = paste0(strsplit(reads_file, ".", fixed=TRUE)[[1]][1], ".edge_cpm"))
+
+pdf("~/Desktop/test1.pdf")
+plotMDS( dge_object,  main = "MDS Plot for Count Data", labels = colnames( dge_object$counts ) )
+plotSmear(dge_object)
+edgeR::plotMD.DGEList(dge_object)
 dev.off()
 
+print(group_table)
+rownames(group_table) <- group_table$ID
+group_table$ID <- NULL
+print(group_table)
+heat_obj <- pheatmap::pheatmap(edge_rpm_mat, filename = "~/Desktop/test.pdf",
+  annotation_col = group_table)
