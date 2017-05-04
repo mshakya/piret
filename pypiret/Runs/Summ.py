@@ -63,7 +63,7 @@ class FeatureCounts(ExternalProgramTask):
             return ["featureCounts",
                     "-a", prok_gtf,
                     "-s", 1,
-                    "-B"
+                    "-B",
                     "-p", "-P",
                     "-o", self.workdir + "/prok.count"] + bam_filelist
         elif self.kingdom == 'eukarya':
