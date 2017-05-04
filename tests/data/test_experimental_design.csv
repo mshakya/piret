@@ -1,0 +1,7 @@
+ID,Rawreads_files,group
+samp1,data/fastqs/BTT_test15_R1.fastq:data/fastqs/BTT_test15_R2.fastq,spleen
+samp2,data/fastqs/BTT_test25_R1.fastq:data/fastqs/BTT_test25_R2.fastq,spleen
+samp3,data/fastqs/BTT_test26-079_R1.fastq:data/fastqs/BTT_test26-079_R2.fastq,liver
+samp4,data/fastqs/BTT_test26-090_R1.fastq:data/fastqs/BTT_test26-090_R2.fastq,liver
+samp5,data/fastqs/BTT_test26_R1.fastq:data/fastqs/BTT_test26_R2.fastq,liver
+samp6,data/fastqs/BTT_test27_R1.fastq:fastqs/BTT_test27_R2.fastq,spleen
