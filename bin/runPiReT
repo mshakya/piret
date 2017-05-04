@@ -96,6 +96,7 @@ def main():
         no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
         samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
         if check_method(args.METHOD, args.EXPDSN) is True:
+
             # USER STORY 1A (SGE)
             if args.TEST_KINGDOM == 'prokarya':
                 if all([args.TEST_KINGDOM == 'prokarya',
@@ -120,19 +121,16 @@ def main():
                         FastQC.RunAllQC(fastq_dic=samp_dic,
                                         numCPUs=args.CPU,
                                         workdir=workdir,
-                                        scriptdir=scriptdir)], local_scheduler=False,
-                        workers=no_of_jobs)
-
-                    luigi.interface.build([
+                                        scriptdir=scriptdir),
                         Map.HisatIndex(fasta=args.FASTA_PROK,
                                        hi_index=args.INDEX_HISAT,
                                        bindir=bindir,
                                        numCPUs=args.CPU),
-
                         Map.GFF2GTF(gff_file=args.GFF_PROK,
                                     bindir=bindir,
-                                    workdir=workdir)], local_scheduler=False,
-                        workers=2)
+                                    workdir=workdir)
+                    ], local_scheduler=True,
+                        workers=no_of_jobs)
 
                     luigi.interface.build([
                         Map.AllProk(fastq_dic=samp_dic,
@@ -366,7 +364,33 @@ def main():
                                              bindir=bindir,
                                              workdir=args.WORKDIR,
                                              scriptdir=scriptdir,
-                                             ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))
+                                             ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+                        Map.StringTieScoresBoth(fastq_dic=samp_dic,
+                                                numCPUs=args.CPU,
+                                                indexfile=args.INDEX_HISAT,
+                                                euk_gff=args.GFF_EUK,
+                                                prok_gff=args.GFF_PROK,
+                                                workdir=args.WORKDIR,
+                                                bindir=bindir,
+                                                scriptdir=scriptdir,
+                                                ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+                        Summ.FeatureCounts(fastq_dic=samp_dic,
+                                           numCPUs=args.CPU,
+                                           euk_gff=args.GFF_EUK,
+                                           prok_gff=args.GFF_PROK,
+                                           indexfile=args.INDEX_HISAT,
+                                           kingdom='prokarya',
+                                           workdir=workdir,
+                                           bindir=bindir),
+                        Summ.FeatureCounts(fastq_dic=samp_dic,
+                                           numCPUs=args.CPU,
+                                           euk_gff=args.GFF_EUK,
+                                           prok_gff=args.GFF_PROK,
+                                           indexfile=args.INDEX_HISAT,
+                                           kingdom='eukarya',
+                                           workdir=workdir,
+                                           bindir=bindir)
+
                     ],
                         local_scheduler=True,
                         workers=no_of_jobs)
