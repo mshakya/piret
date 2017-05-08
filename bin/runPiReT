@@ -34,10 +34,6 @@ def cmdline_parser():
     parser.add_argument("-c", "--CPU", help="""number of CPU for multiprocessor
         runs""", required=False, default=1)
 
-    parser.add_argument("--qsub", help="""run the SGE version of the code, it
-        currently is set to SGE with smp""", required=False,
-                        action='store_true', default=False)
-
     parser.add_argument("-d", "--WORKDIR", help="""working directory where all
         output files will be processed and written""", required=True)
 
@@ -70,6 +66,15 @@ def cmdline_parser():
 
     parser.add_argument("-fp", "--FASTA_PROK", help="""fasta for Prokaryotic Ref
         erence""", required=False, default=None)
+
+    parser.add_argument("--scheduler", help="""when specified, will use luigi
+        scheduler which allows you to keep track of task using an url
+        specified through luigid""", required=False, default=True,
+                        action='store_false')
+
+    parser.add_argument("--qsub", help="""run the SGE version of the code, it
+        currently is set to SGE with smp""", required=False,
+                        action='store_true', default=False)
 
     return parser
 
@@ -110,7 +115,7 @@ def main():
                                            Map.HisatIndex(args.FASTA_PROK,
                                                           args.INDEX_HISAT,
                                                           numCPUs=args.CPU)],
-                                          local_scheduler=True,
+                                          local_scheduler=args.scheduler,
                                           workers=no_of_jobs)
             # USER STORY 1B
                 elif (all([args.TEST_KINGDOM == 'prokarya',
@@ -129,20 +134,54 @@ def main():
                         Map.GFF2GTF(gff_file=args.GFF_PROK,
                                     bindir=bindir,
                                     workdir=workdir)
-                    ], local_scheduler=True,
+                    ], local_scheduler=args.scheduler,
                         workers=no_of_jobs)
 
                     luigi.interface.build([
-                        Map.AllProk(fastq_dic=samp_dic,
-                                    gff=args.GFF_PROK,
-                                    numCPUs=args.CPU,
-                                    indexfile=args.INDEX_HISAT,
-                                    bindir=bindir,
-                                    workdir=args.WORKDIR,
-                                    scriptdir=scriptdir,
-                                    ref_file=args.FASTA_PROK)],
-                        local_scheduler=False,
-                        workers=2)
+                        Map.HisatMapW(fastq_dic=samp_dic,
+                                      numCPUs=args.CPU,
+                                      indexfile=args.INDEX_HISAT,
+                                      bindir=bindir,
+                                      workdir=args.WORKDIR,
+                                      scriptdir=scriptdir,
+                                      ref_file=args.FASTA_PROK)],
+                        local_scheduler=args.scheduler,
+                        workers=no_of_jobs)
+
+                    luigi.interface.build([
+                        Map.SAM2BAMfileW(fastq_dic=samp_dic,
+                                          numCPUs=args.CPU,
+                                          indexfile=args.INDEX_HISAT,
+                                          bindir=bindir,
+                                          workdir=args.WORKDIR,
+                                          scriptdir=scriptdir,
+                                          ref_file=args.FASTA_PROK)],
+                                          local_scheduler=args.scheduler,
+                                          workers=no_of_jobs)
+
+                    luigi.interface.build([
+                        Map.SortBAMfileW(fastq_dic=samp_dic,
+                                         numCPUs=args.CPU,
+                                         indexfile=args.INDEX_HISAT,
+                                         bindir=bindir,
+                                         workdir=args.WORKDIR,
+                                         scriptdir=scriptdir,
+                                         ref_file=args.FASTA_PROK)],
+                        local_scheduler=args.scheduler,
+                        workers=no_of_jobs)
+
+                    luigi.interface.build([
+                        Map.StringTieScoresW(fastq_dic=samp_dic,
+                                             numCPUs=args.CPU,
+                                             indexfile=args.INDEX_HISAT,
+                                             bindir=bindir,
+                                             workdir=args.WORKDIR,
+                                             scriptdir=scriptdir,
+                                             ref_file=args.FASTA_PROK,
+                                             gff=args.GFF_PROK)],
+                                          local_scheduler=args.scheduler,
+                                          workers=no_of_jobs),
+
                     luigi.interface.build([
                         Summ.FeatureCounts(fastq_dic=samp_dic,
                                            numCPUs=args.CPU,
@@ -152,7 +191,7 @@ def main():
                                            kingdom='prokarya',
                                            workdir=workdir,
                                            bindir=bindir)],
-                                          local_scheduler=False,
+                                          local_scheduler=args.scheduler,
                                           workers=2)
 
             # USER STORY 2A (SGE)
@@ -166,7 +205,7 @@ def main():
                                                               workdir=workdir,
                                                               shared_tmp_dir=workdir + "/.tmp"),
                                            Map.HisatIndex(args.FASTA_EUK, numCPUs=args.CPU)],
-                                          local_scheduler=True,
+                                          local_scheduler=args.scheduler,
                                           workers=no_of_jobs)
             # USER STORY 2B
                 elif (all([args.TEST_KINGDOM == 'eukarya',
@@ -178,7 +217,7 @@ def main():
                                         numCPUs=args.CPU,
                                         workdir=workdir,
                                         scriptdir=scriptdir)],
-                        local_scheduler=True,
+                        local_scheduler=args.scheduler,
                         workers=no_of_jobs)
                     luigi.interface.build([
                         Map.HisatIndex(fasta=args.FASTA_EUK,
@@ -194,19 +233,19 @@ def main():
                                          bindir=bindir,
                                          workdir=workdir,
                                          scriptdir=scriptdir)],
-                        local_scheduler=True,
+                        local_scheduler=args.scheduler,
                         workers=2)
 
                     luigi.interface.build([
-                        Map.HisatAllEuk(fastq_dic=samp_dic,
-                                        euk_gff=args.GFF_EUK,
-                                        numCPUs=args.CPU,
-                                        indexfile=args.INDEX_HISAT,
-                                        bindir=bindir,
-                                        workdir=args.WORKDIR,
-                                        scriptdir=scriptdir,
-                                        ref_file=args.FASTA_EUK)],
-                        local_scheduler=True,
+                        Map.HisatMapW(fastq_dic=samp_dic,
+                                      euk_gff=args.GFF_EUK,
+                                      numCPUs=args.CPU,
+                                      indexfile=args.INDEX_HISAT,
+                                      bindir=bindir,
+                                      workdir=args.WORKDIR,
+                                      scriptdir=scriptdir,
+                                      ref_file=args.FASTA_EUK)],
+                        local_scheduler=args.scheduler,
                         workers=no_of_jobs)
 
                     luigi.interface.build([
@@ -218,7 +257,7 @@ def main():
                                           workdir=args.WORKDIR,
                                           scriptdir=scriptdir,
                                           ref_file=args.FASTA_EUK)],
-                                          local_scheduler=True,
+                                          local_scheduler=args.scheduler,
                                           workers=no_of_jobs)
 
                     luigi.interface.build([
@@ -230,7 +269,7 @@ def main():
                                            workdir=args.WORKDIR,
                                            scriptdir=scriptdir,
                                            ref_file=args.FASTA_EUK)],
-                                          local_scheduler=True,
+                                          local_scheduler=args.scheduler,
                                           workers=no_of_jobs)
                     luigi.interface.build([
                         Map.GetRefNames(fastq_dic=samp_dic,
@@ -249,7 +288,7 @@ def main():
                                                   workdir=args.WORKDIR,
                                                   scriptdir=scriptdir,
                                                   ref_file=args.FASTA_EUK)],
-                                          local_scheduler=True,
+                                          local_scheduler=args.scheduler,
                                           workers=no_of_jobs),
 
                     luigi.interface.build([
@@ -261,7 +300,7 @@ def main():
                                            kingdom='eukarya',
                                            workdir=workdir,
                                            bindir=bindir)],
-                                          local_scheduler=True,
+                                          local_scheduler=args.scheduler,
                                           workers=1)
 
             # USER STORY 3A (SGE)
@@ -278,7 +317,7 @@ def main():
                                            workdir=workdir,
                                            shared_tmp_dir=workdir + "/.tmp"),
                         Map.HisatIndex(args.FASTA_PROK, numCPUs=args.CPU)],
-                        local_scheduler=True,
+                        local_scheduler=args.scheduler,
                         workers=no_of_jobs)
             # USER STORY 3B
                 elif (all([args.TEST_KINGDOM == 'both',
@@ -309,7 +348,7 @@ def main():
                         Map.GetChromName(prok_ref=args.FASTA_PROK,
                                          euk_ref=args.FASTA_EUK,
                                          workdir=workdir)],
-                        local_scheduler=True,
+                        local_scheduler=args.scheduler,
                         workers=no_of_jobs)
 
                     luigi.interface.build([
@@ -320,7 +359,7 @@ def main():
                                       bindir=bindir,
                                       scriptdir=scriptdir,
                                       ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))],
-                        local_scheduler=True, workers=no_of_jobs)
+                        local_scheduler=args.scheduler, workers=no_of_jobs)
 
                     luigi.interface.build([
                         Map.SAM2BAMAll(fastq_dic=samp_dic,
@@ -392,7 +431,7 @@ def main():
                                            bindir=bindir)
 
                     ],
-                        local_scheduler=True,
+                        local_scheduler=args.scheduler,
                         workers=no_of_jobs)
 
                     # luigi.interface.build([
@@ -413,7 +452,7 @@ def main():
                     #                        workdir=workdir,
                     #                        bindir=bindir)
                     # ],
-                    #     local_scheduler=True,
+                    #     local_scheduler=args.scheduler,
                     #     workers=1)
 
 
