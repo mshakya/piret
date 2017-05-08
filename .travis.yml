@@ -11,8 +11,9 @@ install:
 
 # command to run tests
 script: 
+  - ./INSTALL.sh
+  - sh tests/test_pipeline_linux.sh
   - py.test --cov=./
-
 
 after_success:
   - codecov
