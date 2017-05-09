@@ -471,6 +471,7 @@ class GetRefNames(luigi.WrapperTask):
                            bindir=self.bindir)
 
 
+@inherits(GFF2GTF)
 @inherits(SortBAMfile)
 class StringTieScores(ExternalProgramTask):
     """Calculate scores using string tie."""
@@ -483,7 +484,30 @@ class StringTieScores(ExternalProgramTask):
 
     def requires(self):
         """Require reference fasta format file."""
-        return [RefFile(self.gtf), RefFile(self.in_bam_file)]
+        if ',' in self.gff_file:
+            gffs = self.gff_file.split(",")
+            gff_depen = [GFF2GTF(gff_file=self.gff_file,
+                                 workdir=self.workdir,
+                                 bindir=self.bindir) for gff in gffs]
+        else:
+            gff_depen = [GFF2GTF(gff_file=self.gff_file,
+                                 workdir=self.workdir,
+                                 bindir=self.bindir)]
+        return [
+            # RefFile(self.gtf),
+            SortBAMfile(fastq1=self.fastq1,
+                        fastq2=self.fastq2,
+                        numCPUs=self.numCPUs,
+                        indexfile=self.indexfile,
+                        spliceFile=self.spliceFile,
+                        mappingLogFile=self.mappingLogFile,
+                        unalned=self.unalned,
+                        outsam=self.outsam,
+                        bam_file=self.bam_file,
+                        sorted_bam_file=self.sorted_bam_file,
+                        scriptdir=self.scriptdir,
+                        ref_file=self.ref_file,
+                        bindir=self.bindir)] + gff_depen
 
     def output(self):
         """Index output."""
@@ -499,11 +523,12 @@ class StringTieScores(ExternalProgramTask):
                 self.in_bam_file]
 
 
+@inherits(GFF2GTF)
 @inherits(SortBAMfileW)
 class StringTieScoresW(luigi.WrapperTask):
     """From Mapping to Counting step for Eukaryotic reference."""
 
-    gff = Parameter()
+    gff_file = Parameter()
     kingdom = Parameter()
 
     def requires(self):
@@ -516,16 +541,14 @@ class StringTieScoresW(luigi.WrapperTask):
             splice_file = splice_list[0]
         else:
             splice_file = ''
-
-        gtf = self.workdir + "/" + \
-            self.gff.split("/")[-1].split(".gff")[0] + ".gtf"
         for samp, fastq in self.fastq_dic.iteritems():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
-
+                gtf = self.workdir + "/" + \
+                    self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
                 yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                       fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                                       numCPUs=self.numCPUs,
@@ -539,12 +562,18 @@ class StringTieScoresW(luigi.WrapperTask):
                                       scriptdir=self.scriptdir,
                                       ref_file=self.ref_file,
                                       gtf=gtf,
+                                      gff_file=self.gff_file,
                                       out_gtf=map_dir + "/" + samp + "_sTie.gtf",
                                       out_cover=map_dir + "/" + samp + "_covered_sTie.gtf",
                                       out_abun=map_dir + "/" + samp + "_sTie.tab",
                                       in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      bindir=self.bindir)
+                                      bindir=self.bindir,
+                                      workdir=self.workdir)
             elif self.kingdom == 'both':
+                prok_gtf = self.workdir + "/" + \
+                    self.gff_file.split(";")[0].split("/")[-1].split(".gff")[0] + ".gtf"
+                euk_gtf = self.workdir + "/" + \
+                    self.gff_file.split(";")[1].split("/")[-1].split(".gff")[0] + ".gtf"
                 yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                       fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                                       numCPUs=self.numCPUs,
@@ -557,12 +586,14 @@ class StringTieScoresW(luigi.WrapperTask):
                                       sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                       scriptdir=self.scriptdir,
                                       ref_file=self.ref_file,
-                                      gtf=gtf,
+                                      gtf=prok_gtf,
                                       out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
                                       out_cover=map_dir + "/" + samp + "_prok_covered_sTie.gtf",
                                       out_abun=map_dir + "/" + samp + "_prok_sTie.tab",
                                       in_bam_file=map_dir + "/prokarya.bam",
-                                      bindir=self.bindir)
+                                      bindir=self.bindir,
+                                      workdir=self.workdir,
+                                      gff_file=self.gff_file)
                 yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                       fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                                       numCPUs=self.numCPUs,
@@ -575,12 +606,14 @@ class StringTieScoresW(luigi.WrapperTask):
                                       sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                       scriptdir=self.scriptdir,
                                       ref_file=self.ref_file,
-                                      gtf=gtf,
+                                      gtf=euk_gtf,
                                       out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
                                       out_cover=map_dir + "/" + samp + "_euk_covered_sTie.gtf",
                                       out_abun=map_dir + "/" + samp + "_euk_sTie.tab",
                                       in_bam_file=map_dir + "/eukarya.bam",
-                                      bindir=self.bindir)
+                                      bindir=self.bindir,
+                                      workdir=self.workdir,
+                                      gff_file=self.gff_file)
 
 
 @requires(RefNames)
