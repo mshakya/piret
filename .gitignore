@@ -7,3 +7,4 @@ bin/bowtie2
 bin/htseq-count
 PyPiReT.sublime-workspace
 .cache/
+thirdParty/JBrowse-1.11.6/*.*

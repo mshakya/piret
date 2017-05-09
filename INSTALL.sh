@@ -44,6 +44,7 @@ bwa_VER=0.7.15
 cpanm_VER=1.7039
 miniconda_VER=4.2.12
 samtools_VER=1.3.1
+bamtools_VER=2.4.0
 jellyfish_VER=2.2.6
 bedtools_VER=2.26.0
 R_VER=3.3.1
@@ -176,6 +177,20 @@ ln -sf $ROOTDIR/thirdParty/miniconda/bin/samtools $ROOTDIR/bin/samtools
 echo "
 --------------------------------------------------------------------------------
                            samtools v $samtools_VER installed
+--------------------------------------------------------------------------------
+"
+}
+install_bamtools()
+{
+echo "--------------------------------------------------------------------------
+                           Downloading bamtools v $bamtools_VER
+--------------------------------------------------------------------------------
+"
+conda install --yes -c bioconda bamtools=$bamtools_VER -p $ROOTDIR/thirdParty/miniconda
+ln -sf $ROOTDIR/thirdParty/miniconda/bin/bamtools $ROOTDIR/bin/bamtools
+echo "
+--------------------------------------------------------------------------------
+                           bamtools v $bamtools_VER installed
 --------------------------------------------------------------------------------
 "
 }
@@ -689,7 +704,7 @@ fi
 ################################################################################
 if ( checkSystemInstallation samtools )
 then
-  samtools_installed_VER=`samtools 2>&1| grep 'Version'|perl -nle 'print $& if m{Version: \d+\.\d+.\d+}'`;
+  samtools_installed_VER=`samtools 2>&1| grep 'Version'|perl -nle 'print $& if m{\d+\.\d+.\d+}'`;
     if ( echo $samtools_installed_VER $samtools_VER| awk '{if($2>=$3) exit 0; else exit 1}' )
     then
     echo " - found samtools $samtools_installed_VER"
@@ -700,6 +715,21 @@ then
 else
   echo "samtools was not found"
   install_samtools
+fi
+################################################################################
+if ( checkSystemInstallation bamtools )
+then
+  bamtools_installed_VER=`bamtools -v 2>&1| grep 'bamtools'|perl -nle 'print $& if m{\d+\.\d+.\d+}'`;
+    if ( echo $bamtools_installed_VER $bamtools_VER| awk '{if($2>=$3) exit 0; else exit 1}' )
+    then
+    echo " - found bamtools $bamtools_installed_VER"
+    else
+    echo "Required version of bamtools $bamtools_VER was not found"
+    install_bamtools
+    fi
+else
+  echo "bamtools was not found"
+  install_bamtools
 fi
 
 ################################################################################
