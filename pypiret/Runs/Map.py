@@ -14,6 +14,7 @@ from luigi import Parameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
+from plumbum.cmd import bamtools, touch
 # from Bio import SeqIO
 
 
@@ -601,9 +602,10 @@ class SplitBAMfile(luigi.Task):
 
     def run(self):
         """Split BAM file based on chromosome."""
-        bam_cmd = "bamtools split -reference -in %s 2> %s" % (
-            self.sorted_bam_file, self.split_logfile)
-        subprocess.Popen(bam_cmd, shell=True)
+        bam_cmd_opt = ["split", "-reference", "-in", self.sorted_bam_file]
+        bam_cmd = bamtools[bam_cmd_opt]
+        bam_cmd()
+        touch[self.split_logfile]()
 
 
 @inherits(GetRefNames)
