@@ -18,7 +18,6 @@ cd thirdParty
 # create a directory to add short cuts to dependencies
 mkdir -p $ROOTDIR/bin
 export "PATH=$PATH:$ROOTDIR/bin/"
-printenv
 if [[ "$OSTYPE" == "darwin"* ]]
 then
 {
