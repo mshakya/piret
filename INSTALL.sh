@@ -858,7 +858,7 @@ fi
 echo "
 All done! Please Restart the Terminal Session.
 Run
-./runPiReT.pl
+runPiReT
 for usage.
 Read the README for more information!
 To run a test data set
