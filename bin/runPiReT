@@ -96,6 +96,7 @@ def main():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
     scriptdir = os.path.abspath(os.path.join(dir_path, '..', 'scripts'))
+    os.environ['PATH'] = os.environ['PATH'] + ":" + bindir
 
     if check_exp_design(args.EXPDSN) is True:
         no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
