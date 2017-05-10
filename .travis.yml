@@ -1,19 +1,21 @@
 language: python
+sudo: false
 
 python:
   - "2.7"
 
-cache: pip
+cache:
+  directories:
+    - $HOME/pypiret/thirdParty/miniconda
+    - $HOME/pypiret/bin
 
 install:
   - pip install -r requirements.txt
   - pip install codecov  
   - pip install pytest-cov
-
-
-# command to run tests
-script: 
   - ./INSTALL.sh
+
+script:   
   - sh tests/test_pipeline_linux.sh
   - py.test --cov=./
 
