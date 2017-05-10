@@ -6,8 +6,8 @@ python:
 
 cache:
   directories:
-    - $HOME/PyPiReT/thirdParty/miniconda
-    - $HOME/PyPiReT/bin
+    - $HOME/travis/build/mshakya/PyPiReT/thirdParty/miniconda
+    - $HOME/travis/build/mshakya/PyPiReT/bin
     - $HOME/.cache/pip
 
 install:
