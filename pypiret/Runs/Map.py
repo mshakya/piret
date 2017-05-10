@@ -14,7 +14,7 @@ from luigi import Parameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
-from plumbum.cmd import bamtools, touch
+from plumbum.cmd import touch, bamtools
 # from Bio import SeqIO
 
 
