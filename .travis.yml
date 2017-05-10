@@ -6,8 +6,9 @@ python:
 
 cache:
   directories:
-    - $HOME/PyPiReT/thirdParty/miniconda
-    - $HOME/PyPiReT/bin
+    - $HOME/mshakya/PyPiReT/thirdParty/miniconda
+    - $HOME/mshakya/PyPiReT/bin
+    - $HOME/.cache/pip
 
 install:
   - pip install -r requirements.txt
