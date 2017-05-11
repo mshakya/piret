@@ -63,4 +63,4 @@ printf "${blue}fininshed testing pipeline for prok and euk\n${normal}"
 
 printf "${blue}Cleanning up!!\n${normal}"
 rm -rf test_experimental_design.txt
-# rm -rf tests/test_all
+# rm -rf tests/test_both tests/test_euk tests/test_prok
