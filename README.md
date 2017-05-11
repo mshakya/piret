@@ -52,9 +52,8 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [R >=v3.3.1](https://www.r-project.org)
 
 ### Installing dependencies
-This is the core list of dependencies. However, there are secondary dependencies for many of the listed tools, which will also be installed by `bioconda`.
 - [conda v4.2.13](http://conda.pydata.org/docs/index.html)
-    If conda is not installed, `bioconda_INSTALL.sh` will download and install [miniconda](http://conda.pydata.org/miniconda.html), a "mini" version of `conda` that only installs handful of packages compared to [anaconda](https://docs.continuum.io/anaconda/pkg-docs)
+    If conda is not installed, `INSTALL.sh` will download and install [miniconda](http://conda.pydata.org/miniconda.html), a "mini" version of `conda` that only installs handful of packages compared to [anaconda](https://docs.continuum.io/anaconda/pkg-docs)
 
 ### Third party softwares/packages
 - [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
@@ -62,10 +61,13 @@ This is the core list of dependencies. However, there are secondary dependencies
 - [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
 - [bedtools (v2.26.0)](http://bedtools.readthedocs.io/en/latest/index.html)
 - [gffread (v0.9.6)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
+- [featurecount (v1.5.2)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
+- [stringTie (v1.3.3b)](https://ccb.jhu.edu/software/stringtie/)
 
 ### R packages
 - [edgeR (v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
 - [DEseq2 (v1.12.4)](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+- [ballgown (v2.8.0)](https://bioconductor.org/packages/release/bioc/html/ballgown.html)
 
 ### Python packages
 - [luigi](https://github.com/spotify/luigi)
@@ -79,33 +81,31 @@ This is the core list of dependencies. However, there are secondary dependencies
 ## Running PiReT
 
 
+#Mention requirements, in terms of not having files that have .
 ```
-    bin/runPiReT -test_kingdom both \
-    -significant_pvalue 0.001 -exp experimental_design.txt \
-    -d pipeline_test_both \
-    -prokaryote_fasta data/test_prok.fa \
-    -eukarya_fasta data/eukarya_test.fa -index_ref_bt2 test_index \
-    -gff_eukarya data/eukarya_test.gff3 -gff_prokaryote data/test_prok.gff \
-    -test_method both -gene_coverage_fasta data/test_prok.fa
+runPiReT -d tests/test_euk -e test_experimental_design.txt \
+-ge tests/data/eukarya_test.gff3 \
+-i tests/test_euk/euk_index -k eukarya -m both \
+-fe tests/data/eukarya_test.fa
 ```
 
 `-d`: working directory where all output files/directories will be written, users must have write permission.
 
-`-prokaryote_fasta`: comma-separated list of reference genome (prokaryote) fasta files. [optional]
+`-fp`: comma-separated list of reference genome (prokaryote) fasta files. [optional]
 
-`-gff_prokaryote`: comma-separated list of gff files for corresponding reference genome fasta files (contig names must match reference sequence header). [optional]
+`-e`: A tab delimited file that contains at least 3 columns with following header `ID`, `Files`, and  `Group`. `Files` must have an absolute path.
 
-`-eukarya_fasta` : comma-separated list of reference genome (eukarya) fasta files. [optional]
+`-gp`: comma-separated list of gff files for corresponding reference genome fasta files (contig names must match reference sequence header). [optional]
 
-`-gff_eukarya`: comma-separated list of gff files for corresponding reference genome fasta files (contig names must match reference sequence header). [optional]
+`-fe` : comma-separated list of reference genome (eukarya) fasta files. [optional]
 
-`-index_ref_bt2`: HISAT2 mapping index file, if the file exists, pipeline skips this step. [optional]
+`-ge`: comma-separated list of gff files for corresponding reference genome fasta files (contig names must match reference sequence header). [optional]
 
-`-gene_coverage_fasta`: fasta file  (for directional coverage analysis, sequence  must be part of prokaryote mapping reference sequence). [optional]
+`-i`: HISAT2 mapping index file, pipeline skips this step. [optional]
 
-`-test_kingdom`: desired differential gene expression analysis (`both` (for both eukarya and prokaryote), `prokaryote`, or `eukarya` (default:`prokaryote`));
+`-k`: desired differential gene expression analysis (`both` (for both eukarya and prokaryote), `prokaryote`, or `eukarya` (default:`prokaryote`));
 
-`-test_method`: method for determining differentially expressed genes. Options are `EdgeR`, `DeSeq2` (For Deseq2, must have have at least 3 replicates for each group), and `both`. `default`: `both`. 
+`-m`: method for determining differentially expressed genes. Options are `EdgeR`, `DeSeq2` (For Deseq2, must have have at least 3 replicates for each group), and `both`. `default`: `both`. 
 
 <!-- `-cpu`: number of CPU to be used (default 1) -->
 
@@ -113,7 +113,7 @@ This is the core list of dependencies. However, there are secondary dependencies
 
 `-significant_pvalue`: floating number cutoff to define significant differentially express genes, (default=0.001)
 
-`-exp`: A tab delimited file that contains at least 3 columns with following header `ID`, `Rawread_files`, and  `group`. `Rawread_files` must have an absolute path.
+
 
 `-pair_comparison`: tab delimited file describing pairwise comparison. If the file is not specified, all possible pairwise analysis will be conducted.
 
