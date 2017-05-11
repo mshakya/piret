@@ -67,7 +67,8 @@ class FeatureCounts(ExternalProgramTask):
                     "-a", prok_gtf,
                     "-s", 1,
                     "-B",
-                    "-p", "-P",
+                    "-p", "-P", "-C",
+                    "-g", "transcript_id",
                     "-o", self.workdir + "/prok.count"] + bam_filelist
         elif self.kingdom == 'eukarya':
             euk_gtf = self.workdir + "/" + \
@@ -78,7 +79,8 @@ class FeatureCounts(ExternalProgramTask):
             return ["featureCounts",
                     "-a", euk_gtf,
                     "-s", 1,
-                    "-p", "-P", "-B",
+                    "-p", "-P", "-B", "-C",
+                    "-g", "transcript_id",
                     "-o", self.workdir + "/euk.count"] + bam_filelist
 
     def program_environment(self):
