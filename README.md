@@ -35,10 +35,8 @@ We have provided test data set to check if the installation was successful or no
 # if you are in a LINUX system:
 sh ./test_pipeline_linux.sh
 
-# if you are in Mac OS X:
-sh ./test_pipeline_MacOSX.sh
 ```
-These shell script automatically creates `experimental_design.txt` and runs the pipeline.
+These shell script automatically creates `test_experimental_design.txt` and runs the pipeline.
 
 
 ##Dependencies
@@ -83,40 +81,72 @@ PiReT requires following dependencies, all of which should be installed and in t
 
 #Mention requirements, in terms of not having files that have .
 ```
-runPiReT -d tests/test_euk -e test_experimental_design.txt \
--ge tests/data/eukarya_test.gff3 \
--i tests/test_euk/euk_index -k eukarya -m both \
--fe tests/data/eukarya_test.fa
+usage: runPiReT [-h] [-c CPU] -d WORKDIR -i INDEX_HISAT -e EXPDSN
+                [-fp FASTA_PROK] [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK]
+                [-k {prokarya,eukarya,both}]
+                [-m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}]
+                [-p P_VALUE] [--scheduler] [--qsub]
+
+Luigi based workflow for running RNASeq pipeline
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CPU                number of CPUs/threads to run per task. Here, task
+                        refers to a processing step. For example, number of
+                        CPUs specified here will be used for QC, HISAT index
+                        and mapping steps. Since QC and mapping steps are run
+                        for every sample, be aware that the total number of
+                        CPUs needed are your number of samples times CPU
+                        specified here. (default: 1)
+  -k {prokarya,eukarya,both}
+                        which kingdom to test, when eukarya or both is chosen,
+                        it expects alternative splicing (default: prokarya)
+  -m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}
+                        Method to use for detecting differentially expressed
+                        genes, Deseq2 requires 3 biological replicates and
+                        ballgown only processes eukaryotes (default: ballEdge)
+  -p P_VALUE            P-Value to consider if genes are significantly
+                        different, default is 0.001 (default: 0.001)
+  --scheduler           when specified, will use luigi scheduler which allows
+                        you to keep track of task using an url specified
+                        through luigid (default: True)
+  --qsub                run the SGE version of the code, it currently is set
+                        to SGE with smp (default: False)
+
+required arguments:
+  -d WORKDIR            working directory where all output files will be
+                        processed and written (default: None)
+  -i INDEX_HISAT        hisat2 index file, it only creates index if it does
+                        not exist
+  -e EXPDSN             tab delimited experimental design file
+
+required arguments (for prokaryotes):
+  -fp FASTA_PROK        fasta for Prokaryotic Ref erence (default: None)
+  -gp GFF_PROK          path to gff files for prokar yotic organism (default:
+                        )
+
+required arguments (for eukaryotes):
+  -fe FASTA_EUK         fasta for Eukaryotic Refe rence (default: None)
+  -ge GFF_EUK           path to gff files for eukar yotic organism (default: )
+
+when selecting both kingodm runs, options that are required for both eukaryotes
+and prokaryotes run are required.
+
+Example run for Prokaryotes RNA seq:
+
+        runPiReT -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
+        -k prokarya -m <EdgeR/Deseq2> -fp <FASTA>
+
+Example run for Eukaryotes RNA seq:
+
+        runPiReT -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
+        -k eukarya -m <EdgeR/Deseq2> -fe <FASTA>
+
+Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
+
+        runPiReT -d <workdir> -e <design file>  -gp <gff> -ge <gff> -i <hisat2 index>
+        -k both -m <EdgeR/Deseq2> -fe <FASTA> -fp <FASTA>
 ```
-
-`-d`: working directory where all output files/directories will be written, users must have write permission.
-
-`-fp`: comma-separated list of reference genome (prokaryote) fasta files. [optional]
-
-`-e`: A tab delimited file that contains at least 3 columns with following header `ID`, `Files`, and  `Group`. `Files` must have an absolute path.
-
-`-gp`: comma-separated list of gff files for corresponding reference genome fasta files (contig names must match reference sequence header). [optional]
-
-`-fe` : comma-separated list of reference genome (eukarya) fasta files. [optional]
-
-`-ge`: comma-separated list of gff files for corresponding reference genome fasta files (contig names must match reference sequence header). [optional]
-
-`-i`: HISAT2 mapping index file, pipeline skips this step. [optional]
-
-`-k`: desired differential gene expression analysis (`both` (for both eukarya and prokaryote), `prokaryote`, or `eukarya` (default:`prokaryote`));
-
-`-m`: method for determining differentially expressed genes. Options are `EdgeR`, `DeSeq2` (For Deseq2, must have have at least 3 replicates for each group), and `both`. `default`: `both`. 
-
-<!-- `-cpu`: number of CPU to be used (default 1) -->
-
-`-BAM_ready`: if mapping file are provided for samples by users (`yes` or `no`). default: `no`
-
-`-significant_pvalue`: floating number cutoff to define significant differentially express genes, (default=0.001)
-
-
-
-`-pair_comparison`: tab delimited file describing pairwise comparison. If the file is not specified, all possible pairwise analysis will be conducted.
-
 
 ## Whats in the working directory (-d)?
 
@@ -124,44 +154,6 @@ Here are the list of directories that will be in `working directory`.
 
 ```
 
-ls -R | grep ":$" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'
-
-|-differential_gene
-   |---prokaryote
-   |-----test_prok
-   |-------Deseq
-   |-------EdgeR
-   |-------figures
-   |-------significant_gene
-   |---------pathway
-   |-logdir
-   |-samp2
-   |---mapping_results
-   |---trimming_results
-   |-samp3
-   |---mapping_results
-   |---trimming_results
-   |-sum_gene_count
-   |---read_count
-   |-----prokaryote
-   |-------test_prok
-   |---tmp_count
-   |-----prokaryote
-   |-------test_prok
-
-```
-
-`differential_gene`: contains sub-folders with `EdgeR` and `DeSeq` results (when provided) for `prokaryote` and `eukaryote` or `both`. Direct sub-directory of `differential_gene` can be either `prokaryote`, `eukarya`, or both of those. The folder within it are then named based on the given `gff` files corresponding usually to one organism. The file and directory structure within each folder are mostly similar with few differences, all of which are listed and described below.
-
-- `eukarya/splice_sites_gff.txt`: contains known splice sites, generated using `scripts/extract_splice_sites.py`, a python script part of *HISAT*.
-- `sum_exp_stats.txt`: Summary table of number of reads after each major processing (filtering and mapping) of files.
-- `RPKM_all_gene.txt`: A table of RPKM calculated per features for each samples.
-- `reads.table.txt` : A table of reads mapped to features for each samples.
-- `readcounts.experiment.txt`: table similar to experimental design file with location of `htseq-count` results full path.
-
-`process.log`: report of all the commands/scripts/ that were ran as part of the pipeline.
-
-`error.log`: any error are reported here.
 
 `samp2`: The name of this directory corresponds to sample name. Within this folder there are two sub-folders:
 
@@ -175,12 +167,7 @@ ls -R | grep ":$" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's
 - 2. `trimming_results`
             This folder contains results of quality trimming or filtering. This folder was generated using the same script that filteres reads in [EDGE](https://bioedge.lanl.gov/edge_ui/) pipeline.
 
-
-`sum_gene_count`: directory with results of reads count per sample. Calculated using `htseq-count  -t gene -q -i locus_tag`. Also see `readcounts.experiment.txt`.
-
-`eukarya.fai`: Indexed reference sequence from `eukarya.fa` using `samtools faidx`. A four column table with NAME, LENGTH, OFFSET, LINEBASES, and LINEWIDTH 
-
-`process_current.log`: Created at the end of the pipeline indicating, successful run.
+`ballgown`:
 
 ## Removing PiReT
 
