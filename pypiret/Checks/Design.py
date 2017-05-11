@@ -84,24 +84,26 @@ class CheckDesign():
     def fastq_exists(self):
         """Check if specified fastq files are present."""
         fastq_files = self.extract_sample_fastqs()
+        print(fastq_files)
         for samp, fastqs in fastq_files.iteritems():
             if isinstance(fastqs, str):
                 files = fastqs.split(":")
                 for f in files:
-                    if os.path.isfile(f):
+                    if os.path.exists(f):
+                        print(f)
                         pass
                     else:
-                        print(f)
-                        sys.exit('^ Fastq does not exist')
+                        err_message = "%s does not exist"
+                        sys.exit(err_message % f)
             elif isinstance(fastqs, list):
                 for pairs in fastqs:
                     files = pairs.split(":")
                     for f in files:
-                        if os.path.isfile(f):
+                        if os.path.exists(f):
                             pass
                         else:
-                            print(f)
-                            sys.exit('^ Fastq does not exist')
+                            err_message = "%s does not exist"
+                            sys.exit(err_message % f)
         return True
 
     def extract_sample_fastqs(self):
