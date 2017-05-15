@@ -69,6 +69,8 @@ class FeatureCounts(ExternalProgramTask):
                     "-B",
                     "-p", "-P", "-C",
                     "-g", "transcript_id",
+                    "-t", "CDS",
+                    "-T", self.numCPUs,
                     "-o", self.workdir + "/prok.count"] + bam_filelist
         elif self.kingdom == 'eukarya':
             euk_gtf = self.workdir + "/" + \
