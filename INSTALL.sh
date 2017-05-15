@@ -38,14 +38,11 @@ printenv
 export R_LIBS="$ROOTDIR/ext/lib/R:$R_LIBS:$R_LIBS_USER"
 
 # Minimum Required versions of dependencies
-bowtie2_VER=2.2.8
-bwa_VER=0.7.15
 cpanm_VER=1.7039
 miniconda_VER=4.2.12
 samtools_VER=1.3.1
 bamtools_VER=2.4.0
 jellyfish_VER=2.2.6
-bedtools_VER=2.26.0
 R_VER=3.3.1
 hisat2_VER=2.0.5
 htseq_VER=0.6.1
@@ -59,11 +56,7 @@ python2_VER=2.7.12
 perl_String_Approx_VER=3.27
 perl_Parllel_ForkManager_VER=1.17
 
-#minimum required version of Python modules
-python_numpy_VER=1.1.12
-python_matplotlib_VER=1.5.3
-
-#minimum required version of Python modules
+#minimum required version of R modules
 R_edgeR_VER=3.14.0
 R_DESeq2_VER=1.12.4
 
@@ -135,21 +128,6 @@ echo "
 "
 }
 
-install_bwa()
-{
-echo "--------------------------------------------------------------------------
-                           Downloading bwa v$bwa_VER
---------------------------------------------------------------------------------
-"
-conda install --yes -c bioconda bwa=$bwa_VER -p $ROOTDIR/thirdParty/miniconda
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/bwa $ROOTDIR/bin/bwa
-echo "
---------------------------------------------------------------------------------
-                           bwa v$bwa_VER installed
---------------------------------------------------------------------------------
-"
-}
-
 install_htseq()
 {
 echo "------------------------------------------------------------------------------
@@ -205,23 +183,6 @@ ln -sf $ROOTDIR/thirdParty/miniconda/bin/cpanm $ROOTDIR/bin/cpanm
 echo "
 --------------------------------------------------------------------------------
                            cpanm installed
---------------------------------------------------------------------------------
-"
-}
-
-
-install_bedtools()
-{
-echo "--------------------------------------------------------------------------
-                           Compiling bedtools v $bedtools_VER
---------------------------------------------------------------------------------
-"
-conda install --yes -c bioconda bedtools=$bedtools_VER -p $ROOTDIR/thirdParty/miniconda
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/genomeCoverageBed $ROOTDIR/bin/genomeCoverageBed
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/bedtools $ROOTDIR/bin/bedtools
-echo "
---------------------------------------------------------------------------------
-                           bedtools v $bedtools_VER compiled
 --------------------------------------------------------------------------------
 "
 }
@@ -349,32 +310,6 @@ echo "
 "
 }
 
-install_python_numpy()
-{
-echo "--------------------------------------------------------------------------
-                installing Python module numpy $python_numpy_VER
---------------------------------------------------------------------------------
-"
-conda install --yes -c anaconda numpy=$python_numpy_VER
-echo "
---------------------------------------------------------------------------------
-                           numpy installed
---------------------------------------------------------------------------------
-"
-}
-
-install_python_matplotlib()
-{
-echo "--------------------------------------------------------------------------
-                installing Python module matplotlib $python_matplotlib_VER
---------------------------------------------------------------------------------
-"
-conda install --yes -c anaconda matplotlib=$python_matplotlib_VER
-echo "
---------------------------------------------------------------------------------
-                           matplotlib installed
---------------------------------------------------------------------------------
-"
 }
 
 install_R_edgeR()
@@ -732,23 +667,6 @@ else
 fi
 
 ################################################################################
-if ( checkSystemInstallation bedtools )
-then
-  bedtools_installed_VER=`bedtools --version | perl -nle 'print $& if m{\d+\.\d+\.\d+}'`;
-  if ( echo $bedtools_installed_VER $bedtools_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
-  then
-    echo " - found bedtools $bedtools_installed_VER"
-  else
-    echo "Required version of bedtools $bedtools_VER was not found"
-    install_bedtools
-    fi
-else
-  echo "bedtools is not found"
-  install_bedtools
-fi
-
-
-################################################################################
 #TODO: add a way to check version here as well
 if [ -x $ROOTDIR/bin/JBrowse/bin/prepare-refseqs.pl ]
 then
@@ -774,15 +692,14 @@ else
   install_cpanm
 fi
 
-
-# commenting this out until i figure out what is this actually used for
-#if ( checkSystemInstallation gffread )
-#then
-#  echo "gffread is found"
-#else
-#  echo "gffread is not found"
-#  install_gffread
-#fi
+################################################################################
+if ( checkSystemInstallation gffread )
+then
+ echo "gffread is found"
+else
+ echo "gffread is not found"
+ install_gffread
+fi
 
 ################################################################################
 #                        Perl Modules
@@ -819,41 +736,6 @@ else
   echo "Perl String::Approx was not found"
   install_perl_string_approx
 fi
-################################################################################
-#                        Python Modules
-################################################################################
-if ( checkPythonModule numpy)
-  then
-  python_numpy_installed_VER=`python -c "import numpy; print numpy.__version__" | perl -nle 'print $& if m{\d+\.\d+\.\d+}'`
-  if (echo $python_numpy_installed_VER $python_numpy_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
-  then
-    echo " - found Python module numpy $python_numpy_installed_VER"
-  else
-    echo "Required version of numpy $python_numpy_VER was not found" 
-    install_python_numpy
-  fi
-else
-    echo "numpy was not found"
-    install_python_numpy
-fi
-
-################################################################################
-
-if ( checkPythonModule matplotlib)
-  then
-  python_matplotlib_installed_VER=`python -c "import matplotlib; print matplotlib.__version__" | perl -nle 'print $& if m{\d+\.\d+\.\d+}'`
-  if (echo $python_matplotlib_installed_VER $python_matplotlib_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
-  then
-    echo " - found Python module matplotlib $python_matplotlib_installed_VER"
-  else
-    echo "Required version of matplotlib $python_matplotlib_VER was not found" 
-    install_python_matplotlib
-  fi
-else
-    echo "matplotlib was not found"
-    install_python_matplotlib
-fi
-
 
 echo "
 All done! Please Restart the Terminal Session.
@@ -862,9 +744,7 @@ runPiReT
 for usage.
 Read the README for more information!
 To run a test data set
-cd test_data
+cd tests
 sh test_pipeline_linux.sh
-OR
-sh test_pipeline_MacOSX.sh
 Thanks!
 	"
