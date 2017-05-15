@@ -7,13 +7,9 @@
 
 Pipeline for Reference based Transcriptomics.
 
-#Overview
-
-![alt tag](image/Overview_pipeline.jpg)
-
 ## Installing PiReT
 
-Please download PiReT directly from the [github](https://github.com/mshakya/PyPiReT).
+Please download PiReT from the [github](https://github.com/mshakya/PyPiReT).
 
 ```
 git clone https://github.com/mshakya/PyPiReT.git
@@ -26,7 +22,7 @@ cd PyPiReT
 ./INSTALL.SH
 ```
 
-PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `bioconda_INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`
+PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`
 
 ##Test
 We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `PyPiReT` directory:
@@ -77,9 +73,6 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [String::Approx (v3.27)](http://search.cpan.org/dist/String-Approx/Approx.pm)
 
 ## Running PiReT
-
-
-#Mention requirements, in terms of not having files that have .
 ```
 usage: runPiReT [-h] [-c CPU] -d WORKDIR -i INDEX_HISAT -e EXPDSN
                 [-fp FASTA_PROK] [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK]
@@ -104,8 +97,8 @@ optional arguments:
   -m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}
                         Method to use for detecting differentially expressed
                         genes, Deseq2 requires 3 biological replicates and
-                        ballgown only processes eukaryotes (default: ballEdge)
-  -p P_VALUE            P-Value to consider if genes are significantly
+                        ballgown only works for eukaryotes (default: ballEdge)
+  -p P_VALUE            P-Value to for finding significantly
                         different, default is 0.001 (default: 0.001)
   --scheduler           when specified, will use luigi scheduler which allows
                         you to keep track of task using an url specified
@@ -121,13 +114,13 @@ required arguments:
   -e EXPDSN             tab delimited experimental design file
 
 required arguments (for prokaryotes):
-  -fp FASTA_PROK        fasta for Prokaryotic Ref erence (default: None)
-  -gp GFF_PROK          path to gff files for prokar yotic organism (default:
+  -fp FASTA_PROK        fasta for Prokaryotic Reference (default: None)
+  -gp GFF_PROK          path to gff files for prokaryotic organism (default:
                         )
 
 required arguments (for eukaryotes):
-  -fe FASTA_EUK         fasta for Eukaryotic Refe rence (default: None)
-  -ge GFF_EUK           path to gff files for eukar yotic organism (default: )
+  -fe FASTA_EUK         fasta for Eukaryotic Reference (default: None)
+  -ge GFF_EUK           path to gff files for eukaryotic organism (default: )
 
 when selecting both kingodm runs, options that are required for both eukaryotes
 and prokaryotes run are required.
@@ -153,8 +146,6 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
 Here are the list of directories that will be in `working directory`.
 
 ```
-
-
 `samp2`: The name of this directory corresponds to sample name. Within this folder there are two sub-folders:
 
 - `mapping_results`
@@ -164,11 +155,13 @@ Here are the list of directories that will be in `working directory`.
         - `.bedgraph`: bedgraph summaries of feature coverage produced using`genomeCoverageBed -split -bg -ibam`
         - `.mapping.log`: Alignment summary file from `HISAT2`
 
-- 2. `trimming_results`
+- `trimming_results`
             This folder contains results of quality trimming or filtering. This folder was generated using the same script that filteres reads in [EDGE](https://bioedge.lanl.gov/edge_ui/) pipeline.
 
-`ballgown`:
+- `ballgown`
+  `ballgown` folder. The folder is read by `R` package `ballgown` for finding significantly expressed genes.
 
+```
 ## Removing PiReT
 
 For removal, since all dependencies that are not in your system are installed in `PiReT`, delete (`rm -rf`) `PiReT` folder is sufficient to uninstall the package. **Before removing check if your project files are within `PiReT` directory**.
