@@ -21,12 +21,12 @@ printf "${blue}testing pipeline with prokarya only\n${normal}"
 
 printf "bin/runPiReT -d tests/test_prok -e test_experimental_design.txt \
 -gp tests/data/test_prok.gff \
--i tests/test_prok/prok_index -k prokarya -m both \
+-i tests/test_prok/prok_index -k prokarya -m all \
 -fp tests/data/test_prok.fa"
 
 bin/runPiReT -d tests/test_prok -e test_experimental_design.txt \
 -gp tests/data/test_prok.gff \
--i tests/test_prok/prok_index -k prokarya -m both \
+-i tests/test_prok/prok_index -k prokarya -m all \
 -fp tests/data/test_prok.fa
 
 printf "${blue}fininshed testing pipeline for prokarya only\n${normal}"
@@ -35,12 +35,12 @@ printf "${blue}testing pipeline with eukarya now\n${normal}"
 
 printf "bin/runPiReT -d tests/test_euk -e test_experimental_design.txt \
 -ge tests/data/eukarya_test.gff3 \
--i tests/test_euk/euk_index -k eukarya -m both \
+-i tests/test_euk/euk_index -k eukarya -m all \
 -fe tests/data/eukarya_test.fa"
 
 bin/runPiReT -d tests/test_euk -e test_experimental_design.txt \
 -ge tests/data/eukarya_test.gff3 \
--i tests/test_euk/euk_index -k eukarya -m both \
+-i tests/test_euk/euk_index -k eukarya -m all \
 -fe tests/data/eukarya_test.fa
 
 printf "${blue}fininshed testing pipeline for eukarya\n${normal}"
@@ -50,12 +50,12 @@ printf "${blue}testing pipeline with prok and euk now \n${normal}"
 
 printf "bin/runPiReT -d tests/test_both -e test_experimental_design.txt \
 -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
--i tests/test_both/prok_euk_index -k both -m both \
+-i tests/test_both/prok_euk_index -k both -m all \
 -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa\n"
 
 bin/runPiReT -d tests/test_both -e test_experimental_design.txt \
 -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
--i tests/test_both/prok_euk_index -k both -m both \
+-i tests/test_both/prok_euk_index -k both -m all \
 -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa
 
 printf "${blue}fininshed testing pipeline for prok and euk\n${normal}"
