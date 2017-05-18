@@ -336,14 +336,13 @@ def main():
                                           workers=no_of_jobs)
 
                     luigi.interface.build([
-                        # Summ.FeatureCounts(fastq_dic=samp_dic,
-                        #                    numCPUs=args.CPU,
-                        #                    euk_gff=args.GFF_EUK,
-                        #                    prok_gff=args.GFF_PROK,
-                        #                    indexfile=args.INDEX_HISAT,
-                        #                    kingdom=args.'prokarya',
-                        #                    workdir=workdir,
-                        #                    bindir=bindir),
+                        Summ.FeatureCounts(fastq_dic=samp_dic,
+                                           numCPUs=args.CPU,
+                                           euk_gff=args.GFF_EUK,
+                                           indexfile=args.INDEX_HISAT,
+                                           kingdom=args.TEST_KINGDOM,
+                                           workdir=workdir,
+                                           bindir=bindir),
                         Summ.MergeStringTies(fastq_dic=samp_dic,
                                              numCPUs=args.CPU,
                                              indexfile=args.INDEX_HISAT,
