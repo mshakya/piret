@@ -29,7 +29,6 @@ else
 export PERL5LIB="$ROOTDIR/ext/lib/perl5:$ROOTDIR/lib/perl5/darwin-thread-multi-2level/:$PERL5LIB"
 }
 fi
-printenv
 
 # Add pythonpath
 # export PYTHONPATH="$ROOTDIR/thirdParty/miniconda/lib/python2.7/site-packages/:$PYTHONPATH"
