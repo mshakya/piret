@@ -42,7 +42,7 @@ class CheckDesign():
             if header == "ID\tFiles\tGroup":
                 return True
             else:
-                sys.exit('The header must be ID\tFiles\tGroup\t!')
+                sys.exit('The header of experimental design file must be ID\tFiles\tGroup\n')
 
     def sample_name(self):
         """Check if sample names are unique."""
@@ -84,7 +84,6 @@ class CheckDesign():
     def fastq_exists(self):
         """Check if specified fastq files are present."""
         fastq_files = self.extract_sample_fastqs()
-        print(fastq_files)
         for samp, fastqs in fastq_files.iteritems():
             if isinstance(fastqs, str):
                 files = fastqs.split(":")
