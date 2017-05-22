@@ -141,6 +141,9 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
         -k both -m <EdgeR/Deseq2> -fe <FASTA> -fp <FASTA>
 ```
 
+## Experimental design files
+  We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem.
+
 ## Whats in the working directory (-d)?
 
 Here are the list of directories that will be in `working directory`.
