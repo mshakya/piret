@@ -9,6 +9,7 @@ from luigi.contrib.external_program import ExternalProgramTask
 from luigi import LocalTarget
 from luigi.util import inherits
 from pypiret import Map
+import pandas as pd
 
 
 class RefFile(luigi.ExternalTask):
@@ -39,20 +40,28 @@ class FeatureCounts(ExternalProgramTask):
         if self.kingdom == 'prokarya':
             bam_filelist = [self.workdir + "/" + samp + "/" +
                             "mapping_results" + "/" +
-                            "prokarya.bam" for samp in samp_list]
+                            samp + ".bam" for samp in samp_list]
             return[RefFile(bam) for bam in bam_filelist]
         elif self.kingdom == 'eukarya':
             bam_filelist = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" +
-                            "eukarya.bam" for samp in samp_list]
+                            "mapping_results" + "/" + samp +
+                            ".bam" for samp in samp_list]
             return[RefFile(bam) for bam in bam_filelist]
 
     def output(self):
         """Index output."""
         if self.kingdom == 'prokarya':
-            return LocalTarget(self.workdir + "/prok.count")
+            prok_gtf = self.workdir + "/" + \
+                self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = [pd.read_csv(prok_gtf, sep="\t")[2].tolist()]
+            for feat in features:
+                return LocalTarget(self.workdir + "/prok_" + feat + ".count")
         elif self.kingdom == 'eukarya':
-            return LocalTarget(self.workdir + "/euk.count")
+            euk_gtf = self.workdir + "/" + \
+                self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = [pd.read_csv(euk_gtf, sep="\t")[2].tolist()]
+            for feat in features:
+                return LocalTarget(self.workdir + "/euk_" + feat + ".count")
 
     def program_args(self):
         """Run featureCounts."""
@@ -60,30 +69,36 @@ class FeatureCounts(ExternalProgramTask):
         if self.kingdom == 'prokarya':
             prok_gtf = self.workdir + "/" + \
                 self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = [pd.read_csv(prok_gtf, sep="\t")[2].tolist()]
             bam_filelist = [self.workdir + "/" + samp + "/" +
                             "mapping_results" + "/" +
-                            "prokarya.bam" for samp in samp_list]
-            return ["featureCounts",
-                    "-a", prok_gtf,
-                    "-s", 1,
-                    "-B",
-                    "-p", "-P", "-C",
-                    "-g", "transcript_id",
-                    "-t", "CDS",
-                    "-T", self.numCPUs,
-                    "-o", self.workdir + "/prok.count"] + bam_filelist
+                            samp + ".bam" for samp in samp_list]
+            for feat in features:
+                return ["featureCounts",
+                        "-a", prok_gtf,
+                        "-s", 1,
+                        "-B",
+                        "-p", "-P", "-C",
+                        "-g", "transcript_id",
+                        "-t", feat,
+                        "-T", self.numCPUs,
+                        "-o", self.workdir + "/prok_" + feat + ".count"] + bam_filelist
         elif self.kingdom == 'eukarya':
             euk_gtf = self.workdir + "/" + \
                 self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = [pd.read_csv(euk_gtf, sep="\t")[2].tolist()]
             bam_filelist = [self.workdir + "/" + samp + "/" +
                             "mapping_results" + "/" +
-                            "eukarya.bam" for samp in samp_list]
-            return ["featureCounts",
-                    "-a", euk_gtf,
-                    "-s", 1,
-                    "-p", "-P", "-B", "-C",
-                    "-g", "transcript_id",
-                    "-o", self.workdir + "/euk.count"] + bam_filelist
+                            samp + ".bam" for samp in samp_list]
+            for feat in features:
+                return ["featureCounts",
+                        "-a", euk_gtf,
+                        "-s", 1,
+                        "-p", "-P", "-B", "-C",
+                        "-g", "transcript_id",
+                        "-t", feat,
+                        "-T", self.numCPUs,
+                        "-o", self.workdir + "/euk_" + feat + ".count"] + bam_filelist
 
     def program_environment(self):
         """Environmental variables for this program."""
