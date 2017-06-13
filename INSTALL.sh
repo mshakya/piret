@@ -505,7 +505,7 @@ fi
 if ( checkSystemInstallation python )
 then
   python_installed_VER=`python -V 2>&1 | perl -nle 'print $& if m{Python \d+\.\d+\.\d+}'`;
-  if ( echo $python_installed_VER $python_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+  if ( echo $python_installed_VER $python2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
   then 
     echo " - found python $python_installed_VER"
   else
