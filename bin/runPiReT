@@ -13,7 +13,7 @@ import os
 # import logging
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
-conda_path = os.path.abspath(lib_path, 'thirdParty/miniconda/lib/python2.7/site-packages/')
+conda_path = os.path.abspath(os.path.join('..', 'thirdParty/miniconda/lib/python2.7/site-packages/'))
 bin_path = os.path.abspath(lib_path, 'bin')
 sys.path.append(lib_path)
 sys.path.append(conda_path)
