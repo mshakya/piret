@@ -623,13 +623,13 @@ fi
 
 ################################################################################
 #TODO: add a way to check version here as well
-if [ -x $ROOTDIR/bin/JBrowse/bin/prepare-refseqs.pl ]
-then
-  echo "JBrowse is found"
-else
-  echo "JBrowse is not found"
-  install_jbrowse
-fi
+# if [ -x $ROOTDIR/bin/JBrowse/bin/prepare-refseqs.pl ]
+# then
+#   echo "JBrowse is found"
+# else
+#   echo "JBrowse is not found"
+#   install_jbrowse
+# fi
 
 ################################################################################
 if ( checkSystemInstallation cpanm )
