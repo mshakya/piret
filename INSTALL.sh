@@ -59,6 +59,12 @@ perl_Parllel_ForkManager_VER=1.17
 R_edgeR_VER=3.14.0
 R_DESeq2_VER=1.12.4
 
+#minimum required version of python modules
+python_pandas_VER=0.19.2
+python_Bio_VER=1.68
+python_luigi_VER=2.6.1
+python_plumbum_VER=1.6.3
+
 ################################################################################
 #                           Installation recipes
 ################################################################################
@@ -78,6 +84,64 @@ echo "
 ------------------------------------------------------------------------------
 "
 }
+
+install_python_pandas()
+{
+echo "--------------------------------------------------------------------------
+                installing Python module pandas $python_pandas_VER
+--------------------------------------------------------------------------------
+"
+conda install --yes -c anaconda pandas=$python_pandas_VER
+echo "
+--------------------------------------------------------------------------------
+                           pandas installed
+--------------------------------------------------------------------------------
+"
+}
+
+install_python_Bio()
+{
+echo "--------------------------------------------------------------------------
+                installing Python module Bio $python_Bio_VER
+--------------------------------------------------------------------------------
+"
+conda install --yes -c anaconda biopython=$python_Bio_VER
+echo "
+--------------------------------------------------------------------------------
+                           Biopython installed
+--------------------------------------------------------------------------------
+"
+}
+
+install_python_luigi()
+{
+echo "--------------------------------------------------------------------------
+                installing Python module luigi
+--------------------------------------------------------------------------------
+"
+conda install --yes -c anaconda luigi=2.3.0
+echo "
+--------------------------------------------------------------------------------
+                           luigi installed
+--------------------------------------------------------------------------------
+"
+}
+
+
+install_python_plumbum()
+{
+echo "--------------------------------------------------------------------------
+                installing Python module plumbum
+--------------------------------------------------------------------------------
+"
+conda install --yes -c thebamf plumbum=1.4.2
+echo "
+--------------------------------------------------------------------------------
+                           plumbum installed
+--------------------------------------------------------------------------------
+"
+}
+
 
 
 install_hisat2()
@@ -690,6 +754,58 @@ then
 else
   echo "Perl String::Approx was not found"
   install_perl_string_approx
+fi
+
+################################################################################
+#                        Python Modules
+################################################################################
+if ( checkPythonModule pandas)
+  then
+  python_pandas_installed_VER=`python -c "import pandas; print pandas.__version__" | perl -nle 'print $& if m{\d+\.\d+\.\d+}'`
+  if (echo $python_pandas_installed_VER $python_pandas_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
+  then
+    echo " - found Python module pandas $python_pandas_installed_VER"
+  else
+    echo "Required version of pandas $python_pandas_VER was not found" 
+    install_python_pandas
+  fi
+else
+    echo "pandas was not found"
+    install_python_pandas
+fi
+
+################################################################################
+if ( checkPythonModule luigi)
+  then
+    echo " - found Python module luigi"
+  else
+    install_python_luigi
+fi
+
+################################################################################
+
+if ( checkPythonModule plumbum)
+  then
+    echo " - found Python module plumbum"
+else
+    echo "plumbum was not found"
+    install_python_plumbum
+fi
+
+################################################################################
+if ( checkPythonModule Bio)
+  then
+  python_Bio_installed_VER=`python -c "import Bio; print Bio.__version__" | perl -nle 'print $& if m{\d\.\d+}'`
+  if (echo $python_Bio_installed_VER $python_Bio_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
+  then
+    echo " - found Python module Bio $python_Bio_installed_VER"
+  else
+    echo "Required version of Bio $python_Bio_VER was not found" 
+    install_python_Bio
+  fi
+else
+    echo "Bio was not found"
+    install_python_Bio
 fi
 
 echo "
