@@ -127,21 +127,6 @@ echo "
 "
 }
 
-install_htseq()
-{
-echo "------------------------------------------------------------------------------
-                           downloading htseq v $htseq_VER
-------------------------------------------------------------------------------
-"
-conda install --yes -c bioconda htseq=$htseq_VER -p $ROOTDIR/thirdParty/miniconda
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/htseq-count $ROOTDIR/bin/htseq-count
-echo "
-------------------------------------------------------------------------------
-                           htseq v $htseq_VER installed
-------------------------------------------------------------------------------
-"
-}
-
 install_samtools()
 {
 echo "--------------------------------------------------------------------------
@@ -589,21 +574,7 @@ else
   echo "hisat2 was not found"
   install_hisat2
 fi
-################################################################################
-if ( checkSystemInstallation htseq-count )
-then
-  htseq_installed_VER=`htseq-count -h | grep 'version'| perl -nle 'print $& if m{version \d+\.\d+\.\d+}'`
-  if ( echo $htseq_installed_VER $htseq_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-  then
-    echo " - found htseq $htseq_installed_VER"
-  else
-    echo "Required version of htseq was not found"
-    install_htseq
-  fi
-else
-  echo "htseq was not found"
-  install_htseq
-fi
+
 ################################################################################
 if ( checkSystemInstallation jellyfish )
 then
@@ -618,20 +589,7 @@ else
   echo "jellyfish was not found"
   install_jellyfish
 fi
-################################################################################
-if ( checkSystemInstallation bwa )
-then
-bwa_installed_VER=`bwa 2>&1| grep 'Version'  | perl -nle 'print $& if m{Version: \d+\.\d+\.\d+}'`;
-  if  ( echo $bwa_installed_VER $bwa_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-  then
-    echo " - found BWA $bwa_installed_VER"
-  else
-    install_bwa
-  fi
-else
-  echo "bwa is not found"
-  install_bwa
-fi
+
 ################################################################################
 if ( checkSystemInstallation samtools )
 then
