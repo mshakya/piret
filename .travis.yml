@@ -13,7 +13,6 @@ cache:
 
 install:
   - pip install luigi
-  - pip install pandas
   - pip install plumbum
   - pip install codecov  
   - pip install pytest-cov
