@@ -12,11 +12,22 @@ cache:
     - $HOME/.cache/pip
 
 install:
-  - pip install luigi
-  - pip install plumbum
-  - pip install codecov  
-  - pip install pytest-cov
-  - pip install pandas
+  - sudo apt-get update
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-4.3.21-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-4.3.21-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - mv miniconda.sh $HOME/build/mshakya/PyPiReT/thirdParty/
+  - bash $HOME/build/mshakya/PyPiReT/thirdParty/miniconda.sh -b -p $HOME/build/mshakya/PyPiReT/thirdParty
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  - conda create -q -n piret-environment python=$TRAVIS_PYTHON_VERSION luigi plumbum pandas codecov pytest-cov
+  - source activate piret-environment
   - ./INSTALL.sh
 
 script:   
