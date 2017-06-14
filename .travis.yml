@@ -11,12 +11,9 @@ cache:
     - $HOME/.cache/pip
 
 install:
-  # - pip install -r requirements.txt
   # - pip install codecov  
   # - pip install pytest-cov
-  - pwd
   - ./INSTALL.sh
-  - which bamtools
 
 script:   
   - sh tests/test_pipeline_linux.sh
