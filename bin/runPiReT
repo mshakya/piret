@@ -18,11 +18,11 @@ sys.path.append(lib_path)
 sys.path.append(conda_path)
 os.environ["PATH"] += os.pathsep + bin_path
 # import logging
-import luigi
 from pypiret import CheckDesign
 from pypiret import FastQC
 from pypiret import Map
 from pypiret import Summ
+import luigi
 # from pypiret import logger
 
 
@@ -227,13 +227,13 @@ def main():
 
                     luigi.interface.build([
                         Summ.FeatureCountsW(fastq_dic=samp_dic,
-                                           numCPUs=args.CPU,
-                                           euk_gff=args.GFF_EUK,
-                                           prok_gff=args.GFF_PROK,
-                                           indexfile=args.INDEX_HISAT,
-                                           kingdom=args.TEST_KINGDOM,
-                                           workdir=workdir,
-                                           bindir=bindir),
+                                            numCPUs=args.CPU,
+                                            euk_gff=args.GFF_EUK,
+                                            prok_gff=args.GFF_PROK,
+                                            indexfile=args.INDEX_HISAT,
+                                            kingdom=args.TEST_KINGDOM,
+                                            workdir=workdir,
+                                            bindir=bindir),
                         Summ.MergeStringTies(fastq_dic=samp_dic,
                                              numCPUs=args.CPU,
                                              indexfile=args.INDEX_HISAT,
