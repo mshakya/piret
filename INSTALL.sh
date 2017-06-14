@@ -46,6 +46,7 @@ R_VER=3.3.1
 hisat2_VER=2.0.5
 htseq_VER=0.6.1
 jbrowse_VER=1.12.1
+stringtie_VER=1.3.3
 
 # minimum required version of Scripting languages
 perl5_VER=5.8.0
@@ -158,6 +159,22 @@ echo "
 ------------------------------------------------------------------------------
 "
 }
+
+install_stringtie()
+{
+echo "--------------------------------------------------------------------------
+                           installing stringtie v$stringtie_VER
+--------------------------------------------------------------------------------
+"
+conda install --yes -c bioconda stringtie=$stringtie_VER -p $ROOTDIR/thirdParty/miniconda
+ln -sf $ROOTDIR/thirdParty/miniconda/bin/stringtie $ROOTDIR/bin/stringtie
+echo "
+------------------------------------------------------------------------------
+                           stringtie v$stringtie_VER installed
+------------------------------------------------------------------------------
+"
+}
+
 
 install_jellyfish()
 {
@@ -391,6 +408,8 @@ echo "
 
 
 
+
+
 checkSystemInstallation()
 {
     IFS=:
@@ -581,7 +600,37 @@ if ( checkSystemInstallation R )
       install_R
 fi
 
+################################################################################
+if ( checkSystemInstallation hisat2 )
+then
+  hisat2_installed_VER=`hisat2 --version 2>&1 | grep 'hisat2-align-s version' | perl -nle 'print $& if m{version \d+\.\d+\.\d+}'`;
+  if ( echo $hisat2_installed_VER $hisat2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+  then 
+    echo " - found hisat2 $hisat2_installed_VER"
+  else
+    echo "Required version of hisat2 was not found"
+    install_hisat2
+  fi
+else
+  echo "hisat2 was not found"
+  install_hisat2
+fi
 
+################################################################################
+if ( checkSystemInstallation stringtie )
+then
+  stringtie_installed_VER=`stringtie --version 2>&1 | perl -nle 'print $& if m{\d\.\d\.\d}'`;
+  if ( echo $stringtie_installed_VER $stringtie_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+  then 
+    echo " - found stringtie $stringtie_installed_VER"
+  else
+    echo "Required version of stringtie was not found"
+    install_stringtie
+  fi
+else
+  echo "stringtie was not found"
+  install_stringtie
+fi
 ################################################################################
 # check if required bioconductor R packages are installed
 ################################################################################
@@ -622,21 +671,7 @@ fi
 
 
 
-################################################################################
-if ( checkSystemInstallation hisat2 )
-then
-  hisat2_installed_VER=`hisat2 --version 2>&1 | grep 'hisat2-align-s version' | perl -nle 'print $& if m{version \d+\.\d+\.\d+}'`;
-  if ( echo $hisat2_installed_VER $hisat2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-  then 
-    echo " - found hisat2 $hisat2_installed_VER"
-  else
-    echo "Required version of hisat2 was not found"
-    install_hisat2
-  fi
-else
-  echo "hisat2 was not found"
-  install_hisat2
-fi
+
 
 ################################################################################
 if ( checkSystemInstallation jellyfish )
