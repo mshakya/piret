@@ -773,8 +773,9 @@ fi
 
 if ( checkPerlModule String::Approx )
 then
-  perl_String_Approx_installed_VER=`cpan -D String::Approx 2>&1 | grep 'Installed' | perl -nle 'print $& if m{Installed: \d+\.\d+}'`
-  if ( echo $perl_String_Approx_installed_VER $perl_String_Approx_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+  
+  perl_String_Approx_installed_VER=`perl -MString::Approx -e 'print $String::Approx::VERSION ."\n";'`
+  if ( echo $perl_String_Approx_installed_VER $perl_String_Approx_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
   then
     echo " - found Perl module String::Approx $perl_String_Approx_installed_VER"
   else
