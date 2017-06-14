@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+
+TESTDIR=$( cd $(dirname $0) ; pwd -P ) # path to main PiReT directory
+
+export "PATH=$TESTDIR/../bin/:$PATH"
+
 blue=$(tput setaf 4)
 normal=$(tput sgr0)
 # create a test experimental design file

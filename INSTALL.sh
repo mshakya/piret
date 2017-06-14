@@ -18,7 +18,7 @@ cd thirdParty
 # create a directory to add short cuts to dependencies
 mkdir -p $ROOTDIR/bin
 # export "PATH=$PATH:$ROOTDIR/bin/"
-export "PATH=$ROOTDIR/thirdParty/miniconda/bin/:$ROOTDIR/bin/$PATH:"
+export "PATH=$ROOTDIR/thirdParty/miniconda/bin/:$ROOTDIR/bin/:$PATH"
 if [[ "$OSTYPE" == "darwin"* ]]
 then
 {
