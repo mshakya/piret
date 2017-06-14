@@ -19,9 +19,8 @@ install:
     fi
   - mv miniconda.sh $HOME/build/mshakya/PyPiReT/thirdParty/
   - bash $HOME/build/mshakya/PyPiReT/thirdParty/miniconda.sh -b -p $HOME/build/mshakya/PyPiReT/thirdParty/miniconda -f
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"
   - hash -r
-  - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
