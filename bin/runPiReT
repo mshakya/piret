@@ -5,12 +5,10 @@ RNA seq pipeline.
 wrapper for running RNASeq pipeline
 
 """
+
 from __future__ import print_function
-import argparse
-import luigi
-import sys
 import os
-# import logging
+import sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 conda_path = os.path.abspath(os.path.join('..', 'thirdParty/miniconda/lib/python2.7/site-packages'))
@@ -18,6 +16,9 @@ bin_path = os.path.abspath(lib_path, 'bin')
 sys.path.append(lib_path)
 sys.path.append(conda_path)
 os.environ["PATH"] += os.pathsep + bin_path
+import argparse
+# import logging
+import luigi
 from pypiret import CheckDesign
 from pypiret import FastQC
 from pypiret import Map
