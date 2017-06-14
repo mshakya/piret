@@ -18,7 +18,7 @@ install:
       wget https://repo.continuum.io/miniconda/Miniconda3-4.3.21-Linux-x86_64.sh -O miniconda.sh;
     fi
   - mv miniconda.sh $HOME/build/mshakya/PyPiReT/thirdParty/
-  - bash $HOME/build/mshakya/PyPiReT/thirdParty/miniconda.sh -b -p $HOME/build/mshakya/PyPiReT/thirdParty
+  - bash $HOME/build/mshakya/PyPiReT/thirdParty/miniconda.sh -b -p $HOME/build/mshakya/PyPiReT/thirdParty/miniconda -f
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
