@@ -9,6 +9,7 @@ wrapper for running RNASeq pipeline
 from __future__ import print_function
 import os
 import sys
+import argparse
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 conda_path = os.path.abspath(os.path.join('..', 'thirdParty/miniconda/lib/python2.7/site-packages'))
@@ -16,7 +17,6 @@ bin_path = os.path.abspath(lib_path, 'bin')
 sys.path.append(lib_path)
 sys.path.append(conda_path)
 os.environ["PATH"] += os.pathsep + bin_path
-import argparse
 # import logging
 import luigi
 from pypiret import CheckDesign
@@ -40,7 +40,8 @@ def cmdline_parser():
 
     parser = argparse.ArgumentParser(formatter_class=CustomFormatter,
                                      prog='runPiReT',
-                                     description="""Luigi based workflow for running RNASeq pipeline""",
+                                     description="""Luigi based workflow for running
+                                     RNASeq pipeline""",
                                      epilog="""
 when selecting both kingodm runs, options that are required for both eukaryotes
 and prokaryotes run are required.
@@ -61,7 +62,7 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     parser.add_argument("-c", dest="CPU", help="""number of CPUs/threads to run per
         task. Here, task refers to a processing step. For example, number of CPUs
         specified here will be used for QC, HISAT index and mapping steps. Since QC
-        and mapping steps are run for every sample, be aware that the total 
+        and mapping steps are run for every sample, be aware that the total
         number of CPUs needed are your number of samples times CPU specified here.""",
                         required=False, default=1)
 
