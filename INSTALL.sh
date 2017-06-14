@@ -24,9 +24,8 @@ then
 export PERL5LIB="$ROOTDIR/ext/lib/perl5:$ROOTDIR/ext/lib/perl5/darwin-thread-multi-2level:$PERL5LIB"
 }
 else
-#TODO: update this specific to unix
 {  
-export PERL5LIB="$ROOTDIR/ext/lib/perl5:$ROOTDIR/lib/perl5/darwin-thread-multi-2level/:$PERL5LIB"
+export PERL5LIB="$ROOTDIR/ext/lib/perl5:$ROOTDIR/lib/perl5/auto/:$PERL5LIB"
 }
 fi
 
@@ -312,9 +311,6 @@ echo "--------------------------------------------------------------------------
                  Installing Perl Module String-Approx-3.27
 ------------------------------------------------------------------------------
 "
-#TODO: Figure out how to download this using curl
-# curl -k -l http://search.cpan.org/CPAN/authors/id/J/JH/JHI/String-Approx-3.27.tar.gz -o String-Approx-3.27.tar.gz
-
 cd $ROOTDIR/thirdParty
 tar xvzf String-Approx-3.27.tar.gz
 cd String-Approx-3.27
