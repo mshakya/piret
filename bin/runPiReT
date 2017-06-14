@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!thirdParty/miniconda/bin python
+
+# !/usr/bin/env python
 """
 RNA seq pipeline.
 
