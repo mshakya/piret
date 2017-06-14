@@ -25,6 +25,7 @@ from pypiret import FastQC
 from pypiret import Map
 from pypiret import Summ
 import luigi
+import pandas as pd
 # from pypiret import logger
 
 
