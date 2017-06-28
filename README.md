@@ -163,17 +163,19 @@ All the outputs will be within the `working directory`.
 
   - `mapping_results`
     This folder contains reads mapped using *HISAT2* in following formats. If `splice_sites_gff.txt` is present, **HISAT2** aligns based on known splice sites.
-      - `*.sam`: outputs of *HISAT2* (`forward`, `backward`, `paired`, `Notproperpaired`) and sorted `.sam` files
-      - `*.bam`: generated from `.sam` with `samtools view -bt index_file .sam < .bam`
-<!--         - `.bedgraph`: bedgraph summaries of feature coverage produced using`genomeCoverageBed -split -bg -ibam` -->
-        - [mapping.log](https://github.com/mshakya/PyPiReT/blob/master/examples/mapping.log): Alignment summary file from `HISAT2`.
-      - 
+    - `*.sam`: outputs of *HISAT2* (`forward`, `backward`, `paired`, `Notproperpaired`) and sorted `.sam` files
+    - `*.bam`: generated from `.sam` with `samtools view -bt index_file .sam < .bam`
+    - [mapping.log](https://github.com/mshakya/PyPiReT/blob/master/examples/mapping.log): Alignment summary file from `HISAT2`.
+    - [*sTie.tab](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
+    - [*sTie.gtf](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
 
   - `trimming_results`
   This folder contains results of quality trimming and filtering using FaQC.
-    - [samp3_qc_report.pdf](https://github.com/mshakya/PyPiReT/blob/master/examples/samp3_qc_report.pdf): A QC report file with figures.
-    - [*sTie.tab](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
-    - [*sTie.gtf](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
+    - [*_qc_report.pdf](https://github.com/mshakya/PyPiReT/blob/master/examples/samp3_qc_report.pdf): A QC report file with figures.
+    - [fastqCount.txt](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/fastqCount.txt): A text file with summary of read counts.
+    - *trimmed.fastq: Pair of trimmed fastq files.
+    - *unpaired.trimmed.fastq: fastq that did not have pairs after QC.
+    - [*.stats.txt](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3.stats.txt): Summary file with numbers of reads before and after QC.
 
 - `ballgown`
   `ballgown` folder. The folder is read by `R` package `ballgown` for finding significantly expressed genes.
