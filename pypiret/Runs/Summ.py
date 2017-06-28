@@ -38,15 +38,16 @@ class FeatureCounts(luigi.Task):
 
     def output(self):
         """Expected output of featureCounts."""
+        counts_dir = self.workdir + "/featureCounts"
         if self.kingdom == 'prokarya':
             prok_gtf = self.workdir + "/" + self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
             features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
-            loc_target = [LocalTarget(self.workdir + feat + ".count") for feat in features]
+            loc_target = [LocalTarget(counts_dir + feat + ".count") for feat in features]
             return loc_target
         elif self.kingdom == 'eukarya':
             euk_gtf = self.workdir + "/" + self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
             features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
-            loc_target = [LocalTarget(self.workdir + feat + ".count") for feat in features]
+            loc_target = [LocalTarget(counts_dir + feat + ".count") for feat in features]
             return loc_target
 
     def run(self):
@@ -55,6 +56,9 @@ class FeatureCounts(luigi.Task):
         in_srtbam_list = [self.workdir + "/" + samp + "/" +
                           "mapping_results" + "/" + samp + "_srt.bam"
                           for samp in samp_list]
+        counts_dir = self.workdir + "/featureCounts"
+        if not os.path.exists(counts_dir):
+            os.makedirs(counts_dir)
         if self.kingdom == 'prokarya':
             prok_gtf = self.workdir + "/" + self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
             features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
@@ -66,7 +70,7 @@ class FeatureCounts(luigi.Task):
                                   "-g", "transcript_id",
                                   "-t", feat,
                                   "-T", self.numCPUs,
-                                  "-o", self.workdir + "/" + feat + ".count"] + in_srtbam_list
+                                  "-o", counts_dir + "/" + feat + ".count"] + in_srtbam_list
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
         if self.kingdom == 'eukarya':
@@ -80,7 +84,7 @@ class FeatureCounts(luigi.Task):
                                   "-g", "transcript_id",
                                   "-t", feat,
                                   "-T", self.numCPUs,
-                                  "-o", self.workdir + "/" + feat + ".count"] + in_srtbam_list
+                                  "-o", counts_dir + "/" + feat + ".count"] + in_srtbam_list
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
 
@@ -105,23 +109,27 @@ class FeatureCountsBoth(luigi.Task):
 
     def output(self):
         """Index output."""
+        counts_dir = self.workdir + "/featureCounts"
         prok_gtf = self.workdir + "/" + \
             self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
         prok_features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
-        prok_target = [LocalTarget(self.workdir + "/prok_" + feat + ".count") for feat in prok_features]
+        prok_target = [LocalTarget(counts_dir + "/prok_" + feat + ".count") for feat in prok_features]
         euk_gtf = self.workdir + "/" + \
             self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
         euk_features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
-        euk_target = [LocalTarget(self.workdir + "/euk_" + feat + ".count") for feat in euk_features]
+        euk_target = [LocalTarget(counts_dir + "/euk_" + feat + ".count") for feat in euk_features]
         loc_target = prok_target + euk_target
         return loc_target
 
     def run(self):
         """Running featureCounts on all."""
+        counts_dir = self.workdir + "/featureCounts"
         samp_list = list(self.fastq_dic.keys())
         in_srtbam_list = [self.workdir + "/" + samp + "/" +
                           "mapping_results" + "/" + samp + "_srt.bam"
                           for samp in samp_list]
+        if not os.path.exists(self.workdir + "/featureCounts"):
+            os.makedirs(self.workdir + "/featureCounts")
         prok_gtf = self.workdir + "/" + \
             self.prok_gff.split(";")[0].split(
                 "/")[-1].split(".gff")[0] + ".gtf"
@@ -138,7 +146,7 @@ class FeatureCountsBoth(luigi.Task):
                                   "-g", "transcript_id",
                                   "-t", feat,
                                   "-T", self.numCPUs,
-                                  "-o", self.workdir + "/euk_" + feat + ".count"] + in_srtbam_list
+                                  "-o", counts_dir + "/euk_" + feat + ".count"] + in_srtbam_list
             fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
             fcount_euk_cmd()
         for feat in prok_features:
@@ -149,7 +157,7 @@ class FeatureCountsBoth(luigi.Task):
                                    "-g", "transcript_id",
                                    "-t", feat,
                                    "-T", self.numCPUs,
-                                   "-o", self.workdir + "/prok_" + feat + ".count"] + in_srtbam_list
+                                   "-o", counts_dir + "/prok_" + feat + ".count"] + in_srtbam_list
             fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
             fcount_prok_cmd()
 
