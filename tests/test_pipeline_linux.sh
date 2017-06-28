@@ -13,6 +13,7 @@ rm test_id.txt testR1.txt testR2.txt test_gr.txt
 sed -i 's/:\t/:/g' test_ed.txt
 echo -e "ID\tFiles\tGroup" | cat - test_ed.txt > test_experimental_design.txt
 rm test_ed.txt
+less test_experimental_design.txt
 
 
 
