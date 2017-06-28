@@ -155,27 +155,29 @@ An experimental design file consist of sample name (ID), full path to fastq file
   A sample of experimental design file can be found [here](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/experimental_design.txt). 
 
 
-## 3.0 What is in the working directory (-d)?
+## 3.0 OUTPUT
 
-Here are the list of directories that will be in `working directory`.
+All the outputs will be within the `working directory`.
 
-```
-`samp2`: The name of this directory corresponds to sample name. Within this folder there are two sub-folders:
+- `samp2`: The name of this directory corresponds to sample name. Within this folder there are two sub-folders:
 
-- `mapping_results`
-    This folder contains reads mapped using *HISAT2* in following formats. If `splice_sites_gff.txt` is present, **HISAT2** aligns based on known splice sites (`splice_sites_gff.txt`).
-        - `.sam`: outputs of *HISAT2* (`forward`, `backward`, `paired`, `Notproperpaired`) and sorted `.sam` files
-        - `.bam`: generated from `.sam` with `samtools view -bt index_file .sam < .bam`
-        - `.bedgraph`: bedgraph summaries of feature coverage produced using`genomeCoverageBed -split -bg -ibam`
-        - `.mapping.log`: Alignment summary file from `HISAT2`
+  - `mapping_results`
+    This folder contains reads mapped using *HISAT2* in following formats. If `splice_sites_gff.txt` is present, **HISAT2** aligns based on known splice sites.
+      - `*.sam`: outputs of *HISAT2* (`forward`, `backward`, `paired`, `Notproperpaired`) and sorted `.sam` files
+      - `*.bam`: generated from `.sam` with `samtools view -bt index_file .sam < .bam`
+<!--         - `.bedgraph`: bedgraph summaries of feature coverage produced using`genomeCoverageBed -split -bg -ibam` -->
+        - [mapping.log](https://github.com/mshakya/PyPiReT/blob/master/examples/mapping.log): Alignment summary file from `HISAT2`.
+      - 
 
-- `trimming_results`
-            This folder contains results of quality trimming or filtering. This folder was generated using the same script that filteres reads in [EDGE](https://bioedge.lanl.gov/edge_ui/) pipeline.
+  - `trimming_results`
+  This folder contains results of quality trimming and filtering using FaQC.
+    - [samp3_qc_report.pdf](https://github.com/mshakya/PyPiReT/blob/master/examples/samp3_qc_report.pdf): A QC report file with figures.
+    - [*sTie.tab](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
+    - [*sTie.gtf](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
 
 - `ballgown`
   `ballgown` folder. The folder is read by `R` package `ballgown` for finding significantly expressed genes.
 
-```
 ## 4.0 Removing PiReT
 
 For removal, since all dependencies that are not in your system are installed in `PiReT`, delete (`rm -rf`) `PiReT` folder is sufficient to uninstall the package. **Before removing check if your project files are within `PiReT` directory**.
