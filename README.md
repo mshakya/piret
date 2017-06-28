@@ -144,26 +144,16 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
 ```
 
 ### 2.1 Experimental design file
-  We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem. If possible, please avoid any special characters from sample names and group names.
+An experimental design file consist of sample name (ID), full path to fastq files (Files), and different groups of your samples (Group). We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem. If possible, please avoid any special characters in sample names and group names.
+  
   For example:
   ```
   samp1, samp_1 : good name
   samp 1, samp.1: not a good name
 
   ```
-  A sample of experimental design file:
+  A sample of experimental design file can be found [here](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/experimental_design.txt). 
 
-  ```
-ID Files Group
-samp1 tests/data/fastqs/BTT_test15_R1.fastq:tests/data/fastqs/BTT_test15_R2.fastq spleen
-samp2 tests/data/fastqs/BTT_test25_R1.fastq:tests/data/fastqs/BTT_test25_R2.fastq;tests/data/fastqs/BTT_test15_R1.fastq:tests/data/fastqs/BTT_test15_R2.fastq spleen
-samp3 tests/data/fastqs/BTT_test26-079_R1.fastq:tests/data/fastqs/BTT_test26-079_R2.fastq liver
-samp4 tests/data/fastqs/BTT_test26-090_R1.fastq:tests/data/fastqs/BTT_test26-090_R2.fastq liver
-samp5 tests/data/fastqs/BTT_test26_R1.fastq:tests/data/fastqs/BTT_test26_R2.fastq liver
-samp6 tests/data/fastqs/BTT_test27_R1.fastq:tests/data/fastqs/BTT_test27_R2.fastq spleen
-
-
-  ```
 
 ## 3.0 What is in the working directory (-d)?
 
