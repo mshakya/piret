@@ -7,7 +7,7 @@
 
 Pipeline for Reference based Transcriptomics.
 
-## 0.1 Installing PiReT
+## 0.0 Installing PiReT
 
 Please download PiReT from the [github](https://github.com/mshakya/PyPiReT).
 
@@ -24,7 +24,46 @@ cd PyPiReT
 
 PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`
 
-## Test
+### 0.1 Dependencies
+PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
+
+#### 0.1.0 Programming/Scripting languages
+- [Python >=v2.7.12](https://www.python.org/downloads/release/python-2712/)
+    - The pipeline is not compatible with Python v3.0 or higher.
+- [Perl >=v5.16.3](https://www.perl.org/get.html)
+    - The pipeline has only been tested in v5.16.3 and v5.22.0
+- [R >=v3.3.1](https://www.r-project.org)
+
+#### 0.1.1 Installing dependencies
+- [conda v4.2.13](http://conda.pydata.org/docs/index.html)
+    If conda is not installed, `INSTALL.sh` will download and install [miniconda](http://conda.pydata.org/miniconda.html), a "mini" version of `conda` that only installs handful of packages compared to [anaconda](https://docs.continuum.io/anaconda/pkg-docs)
+- [cpanm v1.7039](http://search.cpan.org/~miyagawa/Menlo-1.9005/script/cpanm-menlo), for installing perl packages.
+
+
+#### 0.1.2 Third party softwares/packages
+- [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
+- [samtools (v1.3.1)](http://www.htslib.org)
+- [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
+- [gffread (v0.9.6)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
+- [featurecount (v1.5.2)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
+- [stringTie (v1.3.3b)](https://ccb.jhu.edu/software/stringtie/)
+
+#### 0.1.3 R packages
+- [edgeR (v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
+- [DEseq2 (v1.12.4)](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+- [ballgown (v2.8.0)](https://bioconductor.org/packages/release/bioc/html/ballgown.html)
+
+#### 0.1.4 Python packages
+- [luigi (v2.6.1)](https://github.com/spotify/luigi)
+- [pandas (v0.19.2)](http://pandas.pydata.org/)
+- [plumbum (v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
+- [Biopython (v1.68)](https://github.com/biopython/biopython.github.io/)
+
+#### 0.1.5 Perl modules
+- [Parallel::ForkManager (v1.17)](http://search.cpan.org/~yanick/Parallel-ForkManager-1.19/lib/Parallel/ForkManager.pm)
+- [String::Approx (v3.27)](http://search.cpan.org/dist/String-Approx/Approx.pm)
+
+## 1.0 Test
 We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `PyPiReT` directory:
 
 ```
@@ -35,46 +74,7 @@ sh ./test_pipeline_linux.sh
 These shell script automatically creates `test_experimental_design.txt` and runs the pipeline.
 
 
-## Dependencies
-PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
-
-### Programming/Scripting languages
-- [Python >=v2.7.12](https://www.python.org/downloads/release/python-2712/)
-    - The pipeline is not compatible with Python v3.0 or higher.
-- [Perl >=v5.16.3](https://www.perl.org/get.html)
-    - The pipeline has only been tested in v5.16.3 and v5.22.0
-- [R >=v3.3.1](https://www.r-project.org)
-
-### Installing dependencies
-- [conda v4.2.13](http://conda.pydata.org/docs/index.html)
-    If conda is not installed, `INSTALL.sh` will download and install [miniconda](http://conda.pydata.org/miniconda.html), a "mini" version of `conda` that only installs handful of packages compared to [anaconda](https://docs.continuum.io/anaconda/pkg-docs)
-- [cpanm v1.7039](http://search.cpan.org/~miyagawa/Menlo-1.9005/script/cpanm-menlo), for installing perl packages.
-
-
-### Third party softwares/packages
-- [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
-- [samtools (v1.3.1)](http://www.htslib.org)
-- [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
-- [gffread (v0.9.6)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
-- [featurecount (v1.5.2)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
-- [stringTie (v1.3.3b)](https://ccb.jhu.edu/software/stringtie/)
-
-### R packages
-- [edgeR (v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
-- [DEseq2 (v1.12.4)](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
-- [ballgown (v2.8.0)](https://bioconductor.org/packages/release/bioc/html/ballgown.html)
-
-### Python packages
-- [luigi (v2.6.1)](https://github.com/spotify/luigi)
-- [pandas (v0.19.2)](http://pandas.pydata.org/)
-- [plumbum (v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
-- [Biopython (v1.68)](https://github.com/biopython/biopython.github.io/)
-
-### Perl modules
-- [Parallel::ForkManager (v1.17)](http://search.cpan.org/~yanick/Parallel-ForkManager-1.19/lib/Parallel/ForkManager.pm)
-- [String::Approx (v3.27)](http://search.cpan.org/dist/String-Approx/Approx.pm)
-
-## Running PiReT
+## 2.0 Running PiReT
 ```
 usage: runPiReT [-h] [-c CPU] -d WORKDIR -i INDEX_HISAT -e EXPDSN
                 [-fp FASTA_PROK] [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK]
@@ -143,7 +143,7 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
         -k both -m <EdgeR/Deseq2> -fe <FASTA> -fp <FASTA>
 ```
 
-## Experimental design file
+### 2.1 Experimental design file
   We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem. If possible, please avoid any special characters from sample names and group names.
   For example:
   ```
@@ -165,7 +165,7 @@ samp6 tests/data/fastqs/BTT_test27_R1.fastq:tests/data/fastqs/BTT_test27_R2.fast
 
   ```
 
-## What is in the working directory (-d)?
+## 3.0 What is in the working directory (-d)?
 
 Here are the list of directories that will be in `working directory`.
 
@@ -186,16 +186,16 @@ Here are the list of directories that will be in `working directory`.
   `ballgown` folder. The folder is read by `R` package `ballgown` for finding significantly expressed genes.
 
 ```
-## Removing PiReT
+## 4.0 Removing PiReT
 
 For removal, since all dependencies that are not in your system are installed in `PiReT`, delete (`rm -rf`) `PiReT` folder is sufficient to uninstall the package. **Before removing check if your project files are within `PiReT` directory**.
 
 
-## Contributions
+## 5.0 Contributions
 - Migun Shakya
 - Shihai Feng
 
-## Citations:
+## 6.0 Citations:
 If you use PiReT please cite following papers:
 
 - **samtools**: Li H., Handsaker B., Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943]
