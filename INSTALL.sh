@@ -49,7 +49,7 @@ jbrowse_VER=1.12.1
 stringtie_VER=1.3.3
 
 # minimum required version of Scripting languages
-perl5_VER=5.8.0
+perl5_VER=5.16.3
 python2_VER=2.7.12
 
 #minimum required version of Perl modules

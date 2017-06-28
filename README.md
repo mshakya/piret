@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/mshakya/PyPiReT.svg?branch=master)](https://travis-ci.org/mshakya/PyPiReT)
 [![codecov](https://codecov.io/gh/mshakya/PyPiReT/branch/master/graph/badge.svg)](https://codecov.io/gh/mshakya/PyPiReT)
 
-#PiReT
+# PiReT
 
 Pipeline for Reference based Transcriptomics.
 
@@ -24,7 +24,7 @@ cd PyPiReT
 
 PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`
 
-##Test
+## Test
 We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `PyPiReT` directory:
 
 ```
@@ -35,11 +35,11 @@ sh ./test_pipeline_linux.sh
 These shell script automatically creates `test_experimental_design.txt` and runs the pipeline.
 
 
-##Dependencies
+## Dependencies
 PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
 
 ### Programming/Scripting languages
-- [Python >=v2.7](https://www.python.org/downloads/release/python-2712/)
+- [Python >=v2.7.12](https://www.python.org/downloads/release/python-2712/)
     - The pipeline is not compatible with Python v3.0 or higher.
 - [Perl >=v5.16.3](https://www.perl.org/get.html)
     - The pipeline has only been tested in v5.16.3 and v5.22.0
@@ -48,12 +48,13 @@ PiReT requires following dependencies, all of which should be installed and in t
 ### Installing dependencies
 - [conda v4.2.13](http://conda.pydata.org/docs/index.html)
     If conda is not installed, `INSTALL.sh` will download and install [miniconda](http://conda.pydata.org/miniconda.html), a "mini" version of `conda` that only installs handful of packages compared to [anaconda](https://docs.continuum.io/anaconda/pkg-docs)
+- [cpanm v1.7039](http://search.cpan.org/~miyagawa/Menlo-1.9005/script/cpanm-menlo), for installing perl packages.
+
 
 ### Third party softwares/packages
 - [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
 - [samtools (v1.3.1)](http://www.htslib.org)
 - [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
-- [bedtools (v2.26.0)](http://bedtools.readthedocs.io/en/latest/index.html)
 - [gffread (v0.9.6)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
 - [featurecount (v1.5.2)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
 - [stringTie (v1.3.3b)](https://ccb.jhu.edu/software/stringtie/)
@@ -64,9 +65,10 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [ballgown (v2.8.0)](https://bioconductor.org/packages/release/bioc/html/ballgown.html)
 
 ### Python packages
-- [luigi](https://github.com/spotify/luigi)
-- [numpy (v1.1.12)](http://www.numpy.org)
-- [matplotlib (v1.5.3)](http://matplotlib.org)
+- [luigi (v2.6.1)](https://github.com/spotify/luigi)
+- [pandas (v0.19.2)](http://pandas.pydata.org/)
+- [plumbum (v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
+- [Biopython (v1.68)](https://github.com/biopython/biopython.github.io/)
 
 ### Perl modules
 - [Parallel::ForkManager (v1.17)](http://search.cpan.org/~yanick/Parallel-ForkManager-1.19/lib/Parallel/ForkManager.pm)
@@ -141,7 +143,7 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
         -k both -m <EdgeR/Deseq2> -fe <FASTA> -fp <FASTA>
 ```
 
-## Experimental design files
+## Experimental design file
   We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem. If possible, please avoid any special characters from sample names and group names.
   For example:
   ```
@@ -189,7 +191,7 @@ Here are the list of directories that will be in `working directory`.
 For removal, since all dependencies that are not in your system are installed in `PiReT`, delete (`rm -rf`) `PiReT` folder is sufficient to uninstall the package. **Before removing check if your project files are within `PiReT` directory**.
 
 
-##Contributions
+## Contributions
 - Migun Shakya
 - Shihai Feng
 
