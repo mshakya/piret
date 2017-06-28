@@ -163,8 +163,8 @@ All the outputs will be within the `working directory`.
 
   - `mapping_results`
     This folder contains reads mapped using *HISAT2* in following formats. If `splice_sites_gff.txt` is present, **HISAT2** aligns based on known splice sites.
-    - `*.sam`: outputs of *HISAT2* (`forward`, `backward`, `paired`, `Notproperpaired`) and sorted `.sam` files
-    - `*.bam`: generated from `.sam` with `samtools view -bt index_file .sam < .bam`
+    - `*.sam`: outputs of *HISAT2*
+    - `*.bam`: generated from `.sam`
     - [mapping.log](https://github.com/mshakya/PyPiReT/blob/master/examples/mapping.log): Alignment summary file from `HISAT2`.
     - [*sTie.tab](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
     - [*sTie.gtf](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
