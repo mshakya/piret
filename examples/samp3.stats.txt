@@ -1,0 +1,24 @@
+Before Trimming
+Reads #: 432520
+Total bases: 43684520
+Reads Length: 101.00
+
+After Trimming
+Reads #: 372971 (86.23 %)
+Total bases: 36912363 (84.50 %)
+Mean Reads Length: 98.97
+  Paired Reads #: 344388 (92.34 %)
+  Paired total bases: 34190884 (92.63 %)
+  Unpaired Reads #: 28583 (7.66 %)
+  Unpaired total bases: 2721479 (7.37 %)
+
+Discarded reads #: 59549 (13.77 %)
+Trimmed bases: 6772157 (15.50 %)
+  Reads Filtered by length cutoff (60 bp): 22794 (5.27 %)
+  Bases Filtered by length cutoff: 838831 (1.92 %)
+  Reads Filtered by continuous base "N" (5): 35052 (8.10 %)
+  Bases Filtered by continuous base "N": 3488759 (7.99 %)
+  Reads Filtered by low complexity ratio (0.7): 1703 (0.39 %)
+  Bases Filtered by low complexity ratio: 156376 (0.36 %)
+  Reads Trimmed by quality (15.0): 94205 (21.78 %)
+  Bases Trimmed by quality: 2288191 (5.24 %)

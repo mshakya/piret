@@ -1,0 +1,14 @@
+NT_173606_1	Gnomon	transcript	7	1921	.	+	.	ID=gene3;geneID=gene3;gene_name=LOC101787090
+NT_173606_1	Gnomon	exon	7	1921	.	+	.	Parent=gene3
+NT_175309_1	Gnomon	transcript	3020	4630	.	+	.	ID=rna60;geneID=gene79;gene_name=LOC101789168
+NT_175309_1	Gnomon	exon	3020	3077	.	+	.	Parent=rna60
+NT_175309_1	Gnomon	exon	3819	4630	.	+	.	Parent=rna60
+NT_175766_1	BestRefSeq	mRNA	74592	75844	.	+	.	ID=rna155;CDS=74619-75844;geneID=gene196;gene_name=C3
+NT_175766_1	BestRefSeq	exon	74592	74692	.	+	.	Parent=rna155
+NT_175766_1	BestRefSeq	exon	75652	75844	.	+	.	Parent=rna155
+NT_175825_1	Gnomon	mRNA	80226	81003	.	+	.	ID=rna164;CDS=80292-80867;geneID=gene209;gene_name=LOC100716854
+NT_175825_1	Gnomon	exon	80226	81003	.	+	.	Parent=rna164
+NT_175961_1	Gnomon	transcript	139656	140949	.	-	.	ID=gene307;geneID=gene307;gene_name=LOC100724132
+NT_175961_1	Gnomon	exon	139656	140949	.	-	.	Parent=gene307
+NT_175991_1	Gnomon	transcript	127109	128429	.	-	.	ID=gene320;geneID=gene320;gene_name=LOC100727992
+NT_175991_1	Gnomon	exon	127109	128429	.	-	.	Parent=gene320
