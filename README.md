@@ -7,7 +7,7 @@
 
 Pipeline for Reference based Transcriptomics.
 
-## Installing PiReT
+## 0.1 Installing PiReT
 
 Please download PiReT from the [github](https://github.com/mshakya/PyPiReT).
 
