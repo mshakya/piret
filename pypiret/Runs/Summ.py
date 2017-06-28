@@ -4,12 +4,12 @@
 from __future__ import print_function
 import os
 import luigi
-from plumbum.cmd import stringtie
+from plumbum.cmd import stringtie, featureCounts
 from luigi.contrib.external_program import ExternalProgramTask
 from luigi import LocalTarget
-from luigi.util import inherits
 from pypiret import Map
 import pandas as pd
+from luigi.util import inherits, requires
 
 
 class RefFile(luigi.ExternalTask):
@@ -22,83 +22,136 @@ class RefFile(luigi.ExternalTask):
         return LocalTarget(os.path.abspath(self.path))
 
 
-class FeatureCounts(ExternalProgramTask):
+@requires(Map.SortBAMfileW)
+class FeatureCounts(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
     kingdom = luigi.Parameter()
-    numCPUs = luigi.IntParameter()
-    prok_gff = luigi.Parameter()
     euk_gff = luigi.Parameter()
-    fastq_dic = luigi.DictParameter()
+    prok_gff = luigi.Parameter()
     workdir = luigi.Parameter()
-    bindir = luigi.Parameter()
     indexfile = luigi.Parameter()
+    bindir = luigi.Parameter()
+    numCPUs = luigi.Parameter()
+    scriptdir = luigi.Parameter()
+    ref_file = luigi.Parameter()
 
-    def requires(self):
-        """Require reference fasta format file."""
-        samp_list = list(self.fastq_dic.keys())
+    def output(self):
+        """Expected output of featureCounts."""
         if self.kingdom == 'prokarya':
-            bam_filelist = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" +
-                            samp + ".bam" for samp in samp_list]
-            return[RefFile(bam) for bam in bam_filelist]
+            prok_gtf = self.workdir + "/" + self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
+            loc_target = [LocalTarget(self.workdir + feat + ".count") for feat in features]
+            return loc_target
         elif self.kingdom == 'eukarya':
-            bam_filelist = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" + samp +
-                            ".bam" for samp in samp_list]
-            return[RefFile(bam) for bam in bam_filelist]
+            euk_gtf = self.workdir + "/" + self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
+            loc_target = [LocalTarget(self.workdir + feat + ".count") for feat in features]
+            return loc_target
+
+    def run(self):
+        """Running featureCounts on all."""
+        samp_list = list(self.fastq_dic.keys())
+        in_srtbam_list = [self.workdir + "/" + samp + "/" +
+                          "mapping_results" + "/" + samp + "_srt.bam"
+                          for samp in samp_list]
+        if self.kingdom == 'prokarya':
+            prok_gtf = self.workdir + "/" + self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
+            for feat in features:
+                fcount_cmd_opt = ["-a", prok_gtf,
+                                  "-s", 1,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", "transcript_id",
+                                  "-t", feat,
+                                  "-T", self.numCPUs,
+                                  "-o", self.workdir + "/" + feat + ".count"] + in_srtbam_list
+                fcount_cmd = featureCounts[fcount_cmd_opt]
+                fcount_cmd()
+        if self.kingdom == 'eukarya':
+            euk_gtf = self.workdir + "/" + self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
+            for feat in features:
+                fcount_cmd_opt = ["-a", euk_gtf,
+                                  "-s", 1,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", "transcript_id",
+                                  "-t", feat,
+                                  "-T", self.numCPUs,
+                                  "-o", self.workdir + "/" + feat + ".count"] + in_srtbam_list
+                fcount_cmd = featureCounts[fcount_cmd_opt]
+                fcount_cmd()
+
+    def program_environment(self):
+        """Environmental variables for this program."""
+        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
+
+
+@requires(Map.SortBAMfileW)
+class FeatureCountsBoth(luigi.Task):
+    """Summarize mapped reads classificaion using FeatureCount."""
+
+    kingdom = luigi.Parameter()
+    euk_gff = luigi.Parameter()
+    prok_gff = luigi.Parameter()
+    workdir = luigi.Parameter()
+    indexfile = luigi.Parameter()
+    bindir = luigi.Parameter()
+    numCPUs = luigi.Parameter()
+    scriptdir = luigi.Parameter()
+    ref_file = luigi.Parameter()
 
     def output(self):
         """Index output."""
-        if self.kingdom == 'prokarya':
-            prok_gtf = self.workdir + "/" + \
-                self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = [pd.read_csv(prok_gtf, sep="\t")[2].tolist()]
-            for feat in features:
-                return LocalTarget(self.workdir + "/prok_" + feat + ".count")
-        elif self.kingdom == 'eukarya':
-            euk_gtf = self.workdir + "/" + \
-                self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = [pd.read_csv(euk_gtf, sep="\t")[2].tolist()]
-            for feat in features:
-                return LocalTarget(self.workdir + "/euk_" + feat + ".count")
+        prok_gtf = self.workdir + "/" + \
+            self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+        prok_features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
+        prok_target = [LocalTarget(self.workdir + "/prok_" + feat + ".count") for feat in prok_features]
+        euk_gtf = self.workdir + "/" + \
+            self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
+        euk_features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
+        euk_target = [LocalTarget(self.workdir + "/euk_" + feat + ".count") for feat in euk_features]
+        loc_target = prok_target + euk_target
+        return loc_target
 
-    def program_args(self):
-        """Run featureCounts."""
+    def run(self):
+        """Running featureCounts on all."""
         samp_list = list(self.fastq_dic.keys())
-        if self.kingdom == 'prokarya':
-            prok_gtf = self.workdir + "/" + \
-                self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = [pd.read_csv(prok_gtf, sep="\t")[2].tolist()]
-            bam_filelist = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" +
-                            samp + ".bam" for samp in samp_list]
-            for feat in features:
-                return ["featureCounts",
-                        "-a", prok_gtf,
-                        "-s", 1,
-                        "-B",
-                        "-p", "-P", "-C",
-                        "-g", "transcript_id",
-                        "-t", feat,
-                        "-T", self.numCPUs,
-                        "-o", self.workdir + "/prok_" + feat + ".count"] + bam_filelist
-        elif self.kingdom == 'eukarya':
-            euk_gtf = self.workdir + "/" + \
-                self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = [pd.read_csv(euk_gtf, sep="\t")[2].tolist()]
-            bam_filelist = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" +
-                            samp + ".bam" for samp in samp_list]
-            for feat in features:
-                return ["featureCounts",
-                        "-a", euk_gtf,
-                        "-s", 1,
-                        "-p", "-P", "-B", "-C",
-                        "-g", "transcript_id",
-                        "-t", feat,
-                        "-T", self.numCPUs,
-                        "-o", self.workdir + "/euk_" + feat + ".count"] + bam_filelist
+        in_srtbam_list = [self.workdir + "/" + samp + "/" +
+                          "mapping_results" + "/" + samp + "_srt.bam"
+                          for samp in samp_list]
+        prok_gtf = self.workdir + "/" + \
+            self.prok_gff.split(";")[0].split(
+                "/")[-1].split(".gff")[0] + ".gtf"
+        prok_features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
+        euk_gtf = self.workdir + "/" + \
+            self.euk_gff.split(";")[0].split(
+                "/")[-1].split(".gff")[0] + ".gtf"
+        euk_features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
+        for feat in euk_features:
+            fcount_euk_cmd_opt = ["-a", euk_gtf,
+                                  "-s", 1,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", "transcript_id",
+                                  "-t", feat,
+                                  "-T", self.numCPUs,
+                                  "-o", self.workdir + "/euk_" + feat + ".count"] + in_srtbam_list
+            fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
+            fcount_euk_cmd()
+        for feat in prok_features:
+            fcount_prok_cmd_opt = ["-a", prok_gtf,
+                                   "-s", 1,
+                                   "-B",
+                                   "-p", "-P", "-C",
+                                   "-g", "transcript_id",
+                                   "-t", feat,
+                                   "-T", self.numCPUs,
+                                   "-o", self.workdir + "/prok_" + feat + ".count"] + in_srtbam_list
+            fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
+            fcount_prok_cmd()
 
     def program_environment(self):
         """Environmental variables for this program."""

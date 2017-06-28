@@ -180,6 +180,8 @@ All the outputs will be within the `working directory`.
 - `ballgown`
   `ballgown` folder. The folder is read by `R` package `ballgown` for finding significantly expressed genes.
 
+- `*merged_transcript.gtf`: Non-redundant list of transcripts in GTF format merged from all samples.
+
 ## 4.0 Removing PiReT
 
 For removal, since all dependencies that are not in your system are installed in `PiReT`, delete (`rm -rf`) `PiReT` folder is sufficient to uninstall the package. **Before removing check if your project files are within `PiReT` directory**.
