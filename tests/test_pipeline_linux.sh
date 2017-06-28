@@ -11,11 +11,9 @@ printf "liver\nspleen\nspleen\nliver\nliver\nspleen\n" > test_gr.txt
 paste test_id.txt testR1.txt testR2.txt test_gr.txt > test_ed.txt
 rm test_id.txt testR1.txt testR2.txt test_gr.txt
 sed -i 's/:\t/:/g' test_ed.txt
-echo -e "ID\tFiles\tGroup" | cat - test_ed.txt > test_experimental_design.txt
+echo "ID\tFiles\tGroup" | cat - test_ed.txt > test_experimental_design.txt
 rm test_ed.txt
-less test_experimental_design.txt
-
-
+less  test_experimental_design.txt
 
 #==============================================================================#
 printf "${blue}testing pipeline with prokarya only\n${normal}"
