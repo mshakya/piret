@@ -36,6 +36,20 @@ printf "bin/runPiReT -d tests/test_euk -e test_experimental_design.txt \
 -i tests/test_euk/euk_index -k eukarya -m all \
 -fe tests/data/eukarya_test.fa"
 
+mkdir -p tests/test_euk/samp1/trimming_results 
+mkdir -p tests/test_euk/samp2/trimming_results 
+mkdir -p tests/test_euk/samp3/trimming_results 
+mkdir -p tests/test_euk/samp4/trimming_results 
+mkdir -p tests/test_euk/samp5/trimming_results 
+mkdir -p tests/test_euk/samp6/trimming_results 
+
+cp tests/test_prok/samp1/trimming_results/*.* tests/test_euk/samp1/trimming_results/
+cp tests/test_prok/samp2/trimming_results/*.* tests/test_euk/samp2/trimming_results/ 
+cp tests/test_prok/samp3/trimming_results/*.* tests/test_euk/samp3/trimming_results/ 
+cp tests/test_prok/samp4/trimming_results/*.* tests/test_euk/samp4/trimming_results/ 
+cp tests/test_prok/samp5/trimming_results/*.* tests/test_euk/samp5/trimming_results/ 
+cp tests/test_prok/samp6/trimming_results/*.* tests/test_euk/samp6/trimming_results/ 
+
 bin/runPiReT -d tests/test_euk -e test_experimental_design.txt \
 -ge tests/data/eukarya_test.gff3 \
 -i tests/test_euk/euk_index -k eukarya -m all \
@@ -50,6 +64,20 @@ printf "bin/runPiReT -d tests/test_both -e test_experimental_design.txt \
 -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
 -i tests/test_both/prok_euk_index -k both -m all \
 -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa\n"
+
+mkdir -p tests/test_both/samp1/trimming_results 
+mkdir -p tests/test_both/samp2/trimming_results 
+mkdir -p tests/test_both/samp3/trimming_results 
+mkdir -p tests/test_both/samp4/trimming_results 
+mkdir -p tests/test_both/samp5/trimming_results 
+mkdir -p tests/test_both/samp6/trimming_results 
+
+cp tests/test_both/samp1/trimming_results/*.* tests/test_euk/samp1/trimming_results/
+cp tests/test_both/samp2/trimming_results/*.* tests/test_euk/samp2/trimming_results/ 
+cp tests/test_both/samp3/trimming_results/*.* tests/test_euk/samp3/trimming_results/ 
+cp tests/test_both/samp4/trimming_results/*.* tests/test_euk/samp4/trimming_results/ 
+cp tests/test_both/samp5/trimming_results/*.* tests/test_euk/samp5/trimming_results/ 
+cp tests/test_both/samp6/trimming_results/*.* tests/test_euk/samp6/trimming_results/ 
 
 bin/runPiReT -d tests/test_both -e test_experimental_design.txt \
 -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
