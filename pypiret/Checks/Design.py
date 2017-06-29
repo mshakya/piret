@@ -89,7 +89,6 @@ class CheckDesign():
                 files = fastqs.split(":")
                 for f in files:
                     if os.path.exists(f):
-                        print(f)
                         pass
                     else:
                         err_message = "%s does not exist"
