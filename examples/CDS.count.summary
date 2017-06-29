@@ -1,0 +1,12 @@
+Status	/panfs/biopan01/scratch-311300/PyPiReT/tests/test_euk/samp1/mapping_results/samp1_srt.bam	/panfs/biopan01/scratch-311300/PyPiReT/tests/test_euk/samp2/mapping_results/samp2_srt.bam	/panfs/biopan01/scratch-311300/PyPiReT/tests/test_euk/samp3/mapping_results/samp3_srt.bam	/panfs/biopan01/scratch-311300/PyPiReT/tests/test_euk/samp4/mapping_results/samp4_srt.bam	/panfs/biopan01/scratch-311300/PyPiReT/tests/test_euk/samp5/mapping_results/samp5_srt.bam	/panfs/biopan01/scratch-311300/PyPiReT/tests/test_euk/samp6/mapping_results/samp6_srt.bam
+Assigned	92	86	81	64	68	67
+Unassigned_Ambiguity	9	5	3	0	2	4
+Unassigned_MultiMapping	1079	822	6042	5882	5884	976
+Unassigned_NoFeatures	2452	1438	2467	2567	2204	1827
+Unassigned_Unmapped	548	387	479	537	538	392
+Unassigned_MappingQuality	0	0	0	0	0	0
+Unassigned_FragmentLength	185	120	474	401	449	135
+Unassigned_Chimera	234	176	399	292	319	206
+Unassigned_Secondary	0	0	0	0	0	0
+Unassigned_Nonjunction	0	0	0	0	0	0
+Unassigned_Duplicate	0	0	0	0	0	0
