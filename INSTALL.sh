@@ -847,7 +847,6 @@ runPiReT
 for usage.
 Read the README for more information!
 To run a test data set
-cd tests
-sh test_pipeline_linux.sh
+sh tests/test_pipeline_linux.sh
 Thanks!
 	"
