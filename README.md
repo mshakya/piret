@@ -165,7 +165,7 @@ All the outputs will be within the `working directory`.
     This folder contains reads mapped using *HISAT2* in following formats. If `splice_sites_gff.txt` is present, **HISAT2** aligns based on known splice sites.
     - `*.sam`: outputs of *HISAT2*
     - `*.bam`: generated from `.sam`
-    - [mapping.log](https://github.com/mshakya/PyPiReT/blob/master/examples/mapping.log): Alignment summary file from `HISAT2`.
+    - [mapping.log](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/mapping.log): Alignment summary file from `HISAT2`.
     - [*sTie.tab](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
     - [*sTie.gtf](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
 
@@ -178,9 +178,18 @@ All the outputs will be within the `working directory`.
     - [*.stats.txt](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3.stats.txt): Summary file with numbers of reads before and after QC.
 
 - `ballgown`
-  `ballgown` folder. The folder is read by `R` package `ballgown` for finding significantly expressed genes.
+  `ballgown` folder. The folder is to be read by `R` package `ballgown` for finding significantly expressed genes.
 
 - `*merged_transcript.gtf`: Non-redundant list of transcripts in GTF format merged from all samples.
+
+- `featureCounts`: A folder containing tables of counts from `featureCounts`.
+  - [CDS.count](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/CDS.count):Reads mapped to regions annotated as CDS.
+  - [CDS.count.summary](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/CDS.count.summary): Summary of reads mapped and unmapped to CDS.
+  - [exon.count](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/exon.count)
+  - [exon.count.summary](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/exon.count.summary)
+  - [prok_CDS.count](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/prok_CDS.count) : When used `both` option, prokaryote counts are in this file. Eukaryotes are found in file named `euk_CDS.count`
+  - [prok_CDS.count.summary](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/prok_CDS.count.summary): Corresponding summary file.
+
 
 ## 4.0 Removing PiReT
 
