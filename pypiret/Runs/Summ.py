@@ -67,7 +67,7 @@ class FeatureCounts(luigi.Task):
                                   "-s", 1,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", "transcript_id",
+                                  "-g", "gene_name",
                                   "-t", feat,
                                   "-T", self.numCPUs,
                                   "-o", counts_dir + "/" + feat + ".count"] + in_srtbam_list
@@ -81,7 +81,7 @@ class FeatureCounts(luigi.Task):
                                   "-s", 1,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", "transcript_id",
+                                  "-g", "gene_name",
                                   "-t", feat,
                                   "-T", self.numCPUs,
                                   "-o", counts_dir + "/" + feat + ".count"] + in_srtbam_list
@@ -143,7 +143,7 @@ class FeatureCountsBoth(luigi.Task):
                                   "-s", 1,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", "transcript_id",
+                                  "-g", "gene_name",
                                   "-t", feat,
                                   "-T", self.numCPUs,
                                   "-o", counts_dir + "/euk_" + feat + ".count"] + in_srtbam_list
@@ -154,7 +154,7 @@ class FeatureCountsBoth(luigi.Task):
                                    "-s", 1,
                                    "-B",
                                    "-p", "-P", "-C",
-                                   "-g", "transcript_id",
+                                   "-g", "gene_name",
                                    "-t", feat,
                                    "-T", self.numCPUs,
                                    "-o", counts_dir + "/prok_" + feat + ".count"] + in_srtbam_list
