@@ -35,11 +35,9 @@ names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
 names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
 
 row.names(read.counts) <- read.counts[, 1]
-print(head(read.counts))
 
 # gene information
 gene.info <- read.counts[, c(1:6)]
-print(head(gene.info))
 
 # remove first six columns that have metadata
 read.counts <- read.counts[, -c(1:6)]
