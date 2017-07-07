@@ -54,6 +54,7 @@ pdf(file.path(out_dir, "count_heatmap.pdf"))
 heatmap(as.matrix(read.counts))
 dev.off()
 
+
 # convert to a DGElist, remove rows where there are no reads mapped
 edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
                             remove.zeros = TRUE, genes = gene.info)
@@ -75,6 +76,13 @@ edger_dge <- edgeR::calcNormFactors(edger_dge, method = "TMM")
 
 # estimate the dispersion for all read counts across all samples
 edger_dge <- edgeR::estimateDisp(edger_dge, design.robust = TRUE)
+
+# plot MDS
+pdf(file.path(out_dir, "MDS.pdf"))
+limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
+               main = "edgeR MDS Plot")
+dev.off()
+
 
 # calculate RPKM and CPM
 rpkm_results <- edgeR::rpkm(edger_dge)
