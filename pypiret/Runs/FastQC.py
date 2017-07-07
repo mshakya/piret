@@ -59,41 +59,6 @@ class PairedRunQC(luigi.Task):
         """Environmental variables for this program."""
         return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
-# class PairedRunQC(ExternalProgramTask):
-#     """Running the perl script for QC."""
-
-#     fastqs = ListParameter()
-#     sample = Parameter()
-#     numCPUs = IntParameter()
-#     outdir = Parameter()
-#     bindir = Parameter()
-
-#     def requires(self):
-#         """Require pair of fastq."""
-#         return RefFile(self.fastqs[0])
-
-#     def output(self):
-#         """QC output."""
-#         out_file = self.outdir + "/" + self.sample + ".stats.txt"
-#         return LocalTarget(out_file)
-
-#     def program_args(self):
-#         """Run the perl script."""
-#         return ["FaQCs",
-#                 "-min_L", "60",
-#                 "-n", "5",
-#                 "-q", "15",
-#                 "-lc", "0.7",
-#                 "-t", self.numCPUs,
-#                 "-prefix", self.sample,
-#                 "-d", os.path.abspath(self.outdir),
-#                 "-1", self.fastqs[0],
-#                 "-2", self.fastqs[1]]
-
-#     def program_environment(self):
-#         """Environmental variables for this program."""
-#         return {'PATH': os.environ["PATH"] + ":" + self.bindir}
-
 # class SGEPairedRunQC(SGEJobTask):
 #     """Running the perl script for QC."""
 #     # TODO: Waiting on a response from luigi group

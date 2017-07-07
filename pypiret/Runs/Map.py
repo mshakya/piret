@@ -141,8 +141,6 @@ class GFF2GTF(ExternalProgramTask):
 class CreateSplice(ExternalProgramTask):
     """Find splice sites off gtf file."""
 
-    scriptdir = Parameter()
-
     def requires(self):
         """Require GTF file."""
         if ',' in self.gff_file:
@@ -203,7 +201,6 @@ class Hisat(ExternalProgramTask):
     mappingLogFile = Parameter()
     outsam = Parameter()
     unalned = Parameter()
-    scriptdir = Parameter()
     ref_file = Parameter()
     bindir = Parameter()
 
@@ -215,7 +212,7 @@ class Hisat(ExternalProgramTask):
                                   numCPUs=self.numCPUs,
                                   outdir=self.mappingLogFile.split("mapping_results")[0] +
                                   "trimming_results",
-                                  scriptdir=self.scriptdir),
+                                  bindir=self.bindir),
                HisatIndex(fasta=self.ref_file,
                           hi_index=self.indexfile,
                           bindir=self.bindir,
@@ -279,7 +276,6 @@ class HisatMapW(luigi.WrapperTask):
                         mappingLogFile=map_dir + "/mapping.log",
                         unalned=map_dir + "/unligned.fastq",
                         outsam=map_dir + "/" + samp + ".sam",
-                        scriptdir=self.scriptdir,
                         ref_file=self.ref_file,
                         bindir=self.bindir)
 
@@ -313,7 +309,6 @@ class HiSatBoth(luigi.WrapperTask):
                         mappingLogFile=map_dir + "/mapping.log",
                         unalned=map_dir + "/unligned.fastq",
                         outsam=map_dir + "/" + samp + ".sam",
-                        scriptdir=self.scriptdir,
                         ref_file=self.ref_file,
                         bindir=self.bindir)
 
@@ -362,7 +357,6 @@ class SAM2BAMfileW(luigi.WrapperTask):
                               unalned=map_dir + "/unligned.fastq",
                               outsam=map_dir + "/" + samp + ".sam",
                               bam_file=map_dir + "/" + samp + ".bam",
-                              scriptdir=self.scriptdir,
                               ref_file=self.ref_file,
                               bindir=self.bindir)
 
@@ -413,7 +407,6 @@ class SortBAMfileW(luigi.WrapperTask):
                               outsam=map_dir + "/" + samp + ".sam",
                               bam_file=map_dir + "/" + samp + ".bam",
                               sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                              scriptdir=self.scriptdir,
                               ref_file=self.ref_file,
                               bindir=self.bindir)
 
@@ -466,7 +459,6 @@ class GetRefNames(luigi.WrapperTask):
                            bam_file=map_dir + "/" + samp + ".bam",
                            sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                            map_ref=map_dir + "/" + samp + ".reflist",
-                           scriptdir=self.scriptdir,
                            ref_file=self.ref_file,
                            bindir=self.bindir)
 
@@ -559,7 +551,6 @@ class StringTieScoresW(luigi.WrapperTask):
                                       outsam=map_dir + "/" + samp + ".sam",
                                       bam_file=map_dir + "/" + samp + ".bam",
                                       sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      scriptdir=self.scriptdir,
                                       ref_file=self.ref_file,
                                       gtf=gtf,
                                       gff_file=self.gff_file,
@@ -584,7 +575,6 @@ class StringTieScoresW(luigi.WrapperTask):
                                       outsam=map_dir + "/" + samp + ".sam",
                                       bam_file=map_dir + "/" + samp + ".bam",
                                       sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      scriptdir=self.scriptdir,
                                       ref_file=self.ref_file,
                                       gtf=prok_gtf,
                                       out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
@@ -604,7 +594,6 @@ class StringTieScoresW(luigi.WrapperTask):
                                       outsam=map_dir + "/" + samp + ".sam",
                                       bam_file=map_dir + "/" + samp + ".bam",
                                       sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      scriptdir=self.scriptdir,
                                       ref_file=self.ref_file,
                                       gtf=euk_gtf,
                                       out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
@@ -667,7 +656,6 @@ class SplitBAMBoth(luigi.WrapperTask):
                                outsam=map_dir + "/" + samp + ".sam",
                                bam_file=map_dir + "/" + samp + ".bam",
                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                               scriptdir=self.scriptdir,
                                map_ref=map_dir + "/" + samp + ".reflist",
                                ref_file=self.ref_file,
                                bindir=self.bindir,
@@ -740,7 +728,6 @@ class SplitProkEukBoth(luigi.WrapperTask):
                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                   map_ref=map_dir + "/" + samp + ".reflist",
                                   map_dir=map_dir,
-                                  scriptdir=self.scriptdir,
                                   ref_file=self.ref_file,
                                   bindir=self.bindir,
                                   workdir=self.workdir)
@@ -802,7 +789,6 @@ class MergeBAMfileBoth(luigi.WrapperTask):
                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                map_ref=map_dir + "/" + samp + ".reflist",
                                map_dir=map_dir,
-                               scriptdir=self.scriptdir,
                                ref_file=self.ref_file,
                                bindir=self.bindir,
                                workdir=self.workdir,
@@ -819,7 +805,6 @@ class MergeBAMfileBoth(luigi.WrapperTask):
                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                map_ref=map_dir + "/" + samp + ".reflist",
                                map_dir=map_dir,
-                               scriptdir=self.scriptdir,
                                ref_file=self.ref_file,
                                bindir=self.bindir,
                                workdir=self.workdir,
@@ -860,7 +845,6 @@ class StringTieScoresBoth(luigi.WrapperTask):
                                   outsam=map_dir + "/" + samp + ".sam",
                                   bam_file=map_dir + "/" + samp + ".bam",
                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                  scriptdir=self.scriptdir,
                                   ref_file=self.ref_file,
                                   gtf=euk_gtf,
                                   out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
@@ -878,7 +862,6 @@ class StringTieScoresBoth(luigi.WrapperTask):
                                   outsam=map_dir + "/" + samp + ".sam",
                                   bam_file=map_dir + "/" + samp + ".bam",
                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                  scriptdir=self.scriptdir,
                                   ref_file=self.ref_file,
                                   gtf=prok_gtf,
                                   out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
