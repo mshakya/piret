@@ -10,6 +10,11 @@ cache:
     - $HOME/build/mshakya/PyPiReT/ext
     - $HOME/.cache/pip
 
+before_install:
+  - apt-get update
+  - apt-get install -y zlib
+
+
 install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-4.3.21-Linux-x86_64.sh -O miniconda.sh;
