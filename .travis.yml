@@ -10,8 +10,6 @@ cache:
     - $HOME/build/mshakya/PyPiReT/ext
     - $HOME/.cache/pip
 
-before_install:
-  - sudo apt-get install -y zlib1g-dev
 
 install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -29,6 +27,7 @@ install:
   - conda info -a
   - conda create -q -n piret-environment python=$TRAVIS_PYTHON_VERSION luigi pandas biopython
   - conda install --yes -c conda-forge plumbum=1.6.3
+  - conda install --yes -c anaconda zlib=1.2.8
   - pip install codecov
   - pip install plumbum
   - pip install pytest-cov
