@@ -149,7 +149,7 @@ An experimental design file consist of sample name (ID), full path to fastq file
   For example:
   ```
   samp1, samp_1 : good name
-  samp 1, samp.1: not a good name
+  samp 1, samp.1: not a good name and will likely cause errors.
 
   ```
   A sample of experimental design file can be found [here](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/experimental_design.txt). 
