@@ -307,7 +307,6 @@ def main():
                                       indexfile=args.INDEX_HISAT,
                                       bindir=bindir,
                                       workdir=args.WORKDIR,
-                                      scriptdir=scriptdir,
                                       ref_file=args.FASTA_EUK)],
                         local_scheduler=args.scheduler,
                         workers=no_of_jobs)
@@ -318,7 +317,6 @@ def main():
                                           indexfile=args.INDEX_HISAT,
                                           bindir=bindir,
                                           workdir=args.WORKDIR,
-                                          scriptdir=scriptdir,
                                           ref_file=args.FASTA_EUK)],
                                           local_scheduler=args.scheduler,
                                           workers=no_of_jobs)
@@ -329,7 +327,6 @@ def main():
                                          indexfile=args.INDEX_HISAT,
                                          bindir=bindir,
                                          workdir=args.WORKDIR,
-                                         scriptdir=scriptdir,
                                          ref_file=args.FASTA_EUK)],
                         local_scheduler=args.scheduler,
                         workers=no_of_jobs)
@@ -340,7 +337,6 @@ def main():
                                              indexfile=args.INDEX_HISAT,
                                              bindir=bindir,
                                              workdir=args.WORKDIR,
-                                             scriptdir=scriptdir,
                                              ref_file=args.FASTA_EUK,
                                              gff_file=args.GFF_EUK,
                                              kingdom=args.TEST_KINGDOM)],
@@ -409,7 +405,7 @@ def main():
                         FastQC.RunAllQC(fastq_dic=samp_dic,
                                         numCPUs=args.CPU,
                                         workdir=workdir,
-                                        bindir=scriptdir),
+                                        bindir=bindir),
                         Map.HisatIndex(fasta=",".join([args.FASTA_PROK, args.FASTA_EUK]),
                                        hi_index=args.INDEX_HISAT,
                                        bindir=bindir,
@@ -422,8 +418,7 @@ def main():
                                     workdir=workdir),
                         Map.CreateSplice(gff_file=args.GFF_EUK,
                                          bindir=bindir,
-                                         workdir=workdir,
-                                         scriptdir=scriptdir),
+                                         workdir=workdir),
                         Map.GetChromName(prok_ref=args.FASTA_PROK,
                                          euk_ref=args.FASTA_EUK,
                                          workdir=workdir)],
@@ -436,7 +431,6 @@ def main():
                                       indexfile=args.INDEX_HISAT,
                                       workdir=workdir,
                                       bindir=bindir,
-                                      scriptdir=scriptdir,
                                       ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))],
                         local_scheduler=args.scheduler, workers=no_of_jobs)
 
