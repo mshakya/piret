@@ -311,13 +311,14 @@ echo "--------------------------------------------------------------------------
                       Installing FaQC
 ------------------------------------------------------------------------------
 "
-export C_PLUS_INCLUDE_PATH=$ROOTDIR/thirdParty/miniconda/include:$C_PLUS_INCLUDE_PATH
+conda install --yes -c anaconda zlib=1.2.8
+export CPLUS_INCLUDE_PATH=$ROOTDIR/thirdParty/miniconda/include/:$CPLUS_INCLUDE_PATH
 cd $ROOTDIR/thirdParty
 tar xvzf FaQCs-2.01.tar.gz
 cd FaQCs
 make
 ln -sf $ROOTDIR/thirdParty/FaQCs $ROOTDIR/bin/FaQCs
-cd $ROOTDIR/thirdParty
+cd $ROOTDIR
 echo "
 ------------------------------------------------------------------------------
                         FaQC-2.01 Installed
