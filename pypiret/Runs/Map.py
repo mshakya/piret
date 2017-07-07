@@ -174,13 +174,13 @@ class CreateSplice(ExternalProgramTask):
                     gff.split("/")[-1].split(".")[0] + ".gtf"
                 out_file = self.workdir + "/" +\
                     gff.split("/")[-1].split(".")[0] + ".splice"
-            return [self.scriptdir + "/hisat2_extract_splice_sites.py",
+            return ["hisat2_extract_splice_sites.py",
                     "-i", gtf_file, "-o", out_file]
         else:
             gtf_file = self.workdir + "/" +\
                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
 
-            return [self.scriptdir + "/hisat2_extract_splice_sites.py",
+            return ["hisat2_extract_splice_sites.py",
                     "-i", gtf_file, "-o", self.workdir + "/" +
                     self.gff_file.split("/")[-1].split(".")[0] + ".splice"]
 
@@ -497,7 +497,6 @@ class StringTieScores(ExternalProgramTask):
                         outsam=self.outsam,
                         bam_file=self.bam_file,
                         sorted_bam_file=self.sorted_bam_file,
-                        scriptdir=self.scriptdir,
                         ref_file=self.ref_file,
                         bindir=self.bindir)] + gff_depen
 
