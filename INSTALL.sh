@@ -333,7 +333,7 @@ cd $ROOTDIR/thirdParty
 tar xvzf FaQCs-2.01.tar.gz
 cd FaQCs
 make
-ln -sf $ROOTDIR/thirdParty/FaQCs $ROOTDIR/bin/FaQCs
+ln -sf $ROOTDIR/thirdParty/FaQCs/FaQCs $ROOTDIR/bin/FaQCs
 cd $ROOTDIR
 echo "
 ------------------------------------------------------------------------------
