@@ -10,7 +10,6 @@ from luigi import Parameter, DictParameter, ListParameter, IntParameter
 from luigi.contrib.sge import SGEJobTask
 from luigi import WrapperTask
 from itertools import chain
-import subprocess
 
 
 class RefFile(ExternalTask):
@@ -43,8 +42,7 @@ class PairedRunQC(ExternalProgramTask):
 
     def program_args(self):
         """Run the perl script."""
-        return ["perl",
-                self.scriptdir + "/illumina_fastq_QC.pl",
+        return ["FaQCs",
                 "-min_L", "60",
                 "-n", "5",
                 "-q", "15",
@@ -52,8 +50,8 @@ class PairedRunQC(ExternalProgramTask):
                 "-t", self.numCPUs,
                 "-prefix", self.sample,
                 "-d", os.path.abspath(self.outdir),
-                "-p"
-                ] + list(self.fastqs)
+                "-1", self.fastqs[0],
+                "-2", self.fastqs[1]]
 
     def program_environment(self):
         """Environmental variables for this program."""
