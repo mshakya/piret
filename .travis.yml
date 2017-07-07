@@ -1,5 +1,5 @@
 language: python
-sudo: false
+sudo: true
 
 python:
   - "2.7"
@@ -11,8 +11,7 @@ cache:
     - $HOME/.cache/pip
 
 before_install:
-  - apt-get update
-  - apt-get install -y zlib
+  - sudo apt-get install -y zlib
 
 
 install:
