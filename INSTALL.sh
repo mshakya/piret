@@ -47,6 +47,7 @@ hisat2_VER=2.0.5
 htseq_VER=0.6.1
 jbrowse_VER=1.12.1
 stringtie_VER=1.3.3
+subread_VER=1.5.0
 
 # minimum required version of Scripting languages
 perl5_VER=5.16.3
@@ -187,6 +188,21 @@ ln -sf $ROOTDIR/thirdParty/miniconda/bin/jellyfish $ROOTDIR/bin/jellyfish
 echo "
 ------------------------------------------------------------------------------
                            jellyfish v$jellyfish_VER installed
+------------------------------------------------------------------------------
+"
+}
+
+install_featureCounts()
+{
+echo "--------------------------------------------------------------------------
+                           installing subread v$subread_VER
+--------------------------------------------------------------------------------
+"
+conda install --yes -c bioconda subread=$subread_VER
+ln -sf $ROOTDIR/thirdParty/miniconda/bin/featureCounts $ROOTDIR/bin/featureCounts
+echo "
+------------------------------------------------------------------------------
+                           featureCounts v$subread_VER installed
 ------------------------------------------------------------------------------
 "
 }
@@ -691,6 +707,14 @@ fi
 
 
 
+################################################################################
+if ( checkSystemInstallation featureCounts )
+then
+  echo " - found featureCounts"
+else
+  echo "featureCounts was not found"
+  install_featureCounts
+fi
 ################################################################################
 if ( checkSystemInstallation jellyfish )
 then
