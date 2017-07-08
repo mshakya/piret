@@ -33,7 +33,6 @@ class FeatureCounts(luigi.Task):
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
     numCPUs = luigi.Parameter()
-    scriptdir = luigi.Parameter()
     ref_file = luigi.Parameter()
 
     def output(self):
@@ -104,7 +103,6 @@ class FeatureCountsBoth(luigi.Task):
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
     numCPUs = luigi.Parameter()
-    scriptdir = luigi.Parameter()
     ref_file = luigi.Parameter()
 
     def output(self):
@@ -306,7 +304,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         outsam=map_dir + "/" + samp + ".sam",
                                         bam_file=map_dir + "/" + samp + ".bam",
                                         sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                        scriptdir=self.scriptdir,
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
                                         gtf=gtf,
@@ -340,7 +337,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         outsam=map_dir + "/" + samp + ".sam",
                                         bam_file=map_dir + "/" + samp + ".bam",
                                         sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                        scriptdir=self.scriptdir,
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
                                         gtf=prok_gtf,
@@ -360,7 +356,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         outsam=map_dir + "/" + samp + ".sam",
                                         bam_file=map_dir + "/" + samp + ".bam",
                                         sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                        scriptdir=self.scriptdir,
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
                                         gtf=euk_gtf,
