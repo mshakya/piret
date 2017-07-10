@@ -37,7 +37,7 @@ fi
 export R_LIBS="$ROOTDIR/ext/lib/R:$R_LIBS:$R_LIBS_USER"
 
 # Minimum Required versions of dependencies
-cpanm_VER=1.7039
+# cpanm_VER=1.7039
 miniconda_VER=4.3.21
 samtools_VER=1.3.1
 bamtools_VER=2.4.0
@@ -50,12 +50,12 @@ stringtie_VER=1.3.3
 subread_VER=1.5.0
 
 # minimum required version of Scripting languages
-perl5_VER=5.16.3
+# perl5_VER=5.16.3
 python2_VER=2.7.12
 
 #minimum required version of Perl modules
-perl_String_Approx_VER=3.27
-perl_Parllel_ForkManager_VER=1.17
+# perl_String_Approx_VER=3.27
+# perl_Parllel_ForkManager_VER=1.17
 
 #minimum required version of R modules
 R_edgeR_VER=3.14.0
@@ -207,21 +207,21 @@ echo "
 "
 }
 
-install_perl_Parallel_ForkManager()
-{
-echo "--------------------------------------------------------------------------
-  Installing Perl Module Parallel-ForkManager v$perl_Parllel_ForkManager_VER
---------------------------------------------------------------------------------
-"
+# install_perl_Parallel_ForkManager()
+# {
+# echo "--------------------------------------------------------------------------
+#   Installing Perl Module Parallel-ForkManager v$perl_Parllel_ForkManager_VER
+# --------------------------------------------------------------------------------
+# "
 
-cpanm Parallel::ForkManager@$perl_Parllel_ForkManager_VER -l $ROOTDIR/ext
-# conda install --yes -c bioconda perl-parallel-forkmanager=$perl_Parllel_ForkManager_VER
-echo "
---------------------------------------------------------------------------------
-      Parallel-ForkManager-$perl_Parllel_ForkManager_VER Installed
---------------------------------------------------------------------------------
-"
-}
+# cpanm Parallel::ForkManager@$perl_Parllel_ForkManager_VER -l $ROOTDIR/ext
+# # conda install --yes -c bioconda perl-parallel-forkmanager=$perl_Parllel_ForkManager_VER
+# echo "
+# --------------------------------------------------------------------------------
+#       Parallel-ForkManager-$perl_Parllel_ForkManager_VER Installed
+# --------------------------------------------------------------------------------
+# "
+# }
 
 install_samtools()
 {
@@ -252,20 +252,20 @@ echo "
 "
 }
 
-install_cpanm()
-{
-echo "--------------------------------------------------------------------------
-                           Installing cpanm
---------------------------------------------------------------------------------
-"
-conda install --yes -c bioconda perl-app-cpanminus=$cpanm_VER -p $ROOTDIR/thirdParty/miniconda
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/cpanm $ROOTDIR/bin/cpanm
-echo "
---------------------------------------------------------------------------------
-                           cpanm installed
---------------------------------------------------------------------------------
-"
-}
+# install_cpanm()
+# {
+# echo "--------------------------------------------------------------------------
+#                            Installing cpanm
+# --------------------------------------------------------------------------------
+# "
+# conda install --yes -c bioconda perl-app-cpanminus=$cpanm_VER -p $ROOTDIR/thirdParty/miniconda
+# ln -sf $ROOTDIR/thirdParty/miniconda/bin/cpanm $ROOTDIR/bin/cpanm
+# echo "
+# --------------------------------------------------------------------------------
+#                            cpanm installed
+# --------------------------------------------------------------------------------
+# "
+# }
 
 install_R()
 {
@@ -343,29 +343,29 @@ echo "
 }
 
 
-install_perl_string_approx()
-{
-echo "------------------------------------------------------------------------------
-                 Installing Perl Module String-Approx-3.27
-------------------------------------------------------------------------------
-"
-cd $ROOTDIR/thirdParty
-tar xvzf String-Approx-3.27.tar.gz
-cd String-Approx-3.27
-perl Makefile.PL 
-make
-mkdir -p $ROOTDIR/ext/lib/perl5/auto
-mkdir -p $ROOTDIR/ext/lib/perl5/auto/String
-mkdir -p $ROOTDIR/ext/lib/perl5/auto/String/Approx
-cp -fR blib/lib/* $ROOTDIR/ext/lib/perl5
-cp -fR blib/arch/auto/String/Approx/Approx.* $ROOTDIR/ext/lib/perl5/auto/String/Approx/
-cd $ROOTDIR/thirdParty
-echo "
-------------------------------------------------------------------------------
-                        String-Approx-3.27 Installed
-------------------------------------------------------------------------------
-"
-}
+# install_perl_string_approx()
+# {
+# echo "------------------------------------------------------------------------------
+#                  Installing Perl Module String-Approx-3.27
+# ------------------------------------------------------------------------------
+# "
+# cd $ROOTDIR/thirdParty
+# tar xvzf String-Approx-3.27.tar.gz
+# cd String-Approx-3.27
+# perl Makefile.PL 
+# make
+# mkdir -p $ROOTDIR/ext/lib/perl5/auto
+# mkdir -p $ROOTDIR/ext/lib/perl5/auto/String
+# mkdir -p $ROOTDIR/ext/lib/perl5/auto/String/Approx
+# cp -fR blib/lib/* $ROOTDIR/ext/lib/perl5
+# cp -fR blib/arch/auto/String/Approx/Approx.* $ROOTDIR/ext/lib/perl5/auto/String/Approx/
+# cd $ROOTDIR/thirdParty
+# echo "
+# ------------------------------------------------------------------------------
+#                         String-Approx-3.27 Installed
+# ------------------------------------------------------------------------------
+# "
+# }
 
 install_gffread()
 {
@@ -462,12 +462,12 @@ checkLocalInstallation()
     return 1
 }
 
-checkPerlModule()
-{
-   # perl -e "use lib \"$ROOTDIR/lib/lib/perl5\"; use $1;"
-   perl -e "use $1";
-   return $?
-}
+# checkPerlModule()
+# {
+#    # perl -e "use lib \"$ROOTDIR/lib/lib/perl5\"; use $1;"
+#    perl -e "use $1";
+#    return $?
+# }
 
 
 checkRpackages()
@@ -772,20 +772,20 @@ fi
 # fi
 
 ################################################################################
-if ( checkSystemInstallation cpanm )
-then
-  cpanm_installed_VER=`cpanm -V 2>&1| head -n 1 | grep 'version' | perl -nle 'print $& if m{version \d+\.\d+}'`;
-  if  ( echo $cpanm_installed_VER $cpanm_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-  then 
-    echo " - found cpanm $cpanm_installed_VER"
-  else
-  echo "Required version of cpanm was not found"
-  install_cpanm
-  fi
-else 
-  echo "cpanm was not found"
-  install_cpanm
-fi
+# if ( checkSystemInstallation cpanm )
+# then
+#   cpanm_installed_VER=`cpanm -V 2>&1| head -n 1 | grep 'version' | perl -nle 'print $& if m{version \d+\.\d+}'`;
+#   if  ( echo $cpanm_installed_VER $cpanm_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+#   then 
+#     echo " - found cpanm $cpanm_installed_VER"
+#   else
+#   echo "Required version of cpanm was not found"
+#   install_cpanm
+#   fi
+# else 
+#   echo "cpanm was not found"
+#   install_cpanm
+# fi
 
 ################################################################################
 if ( checkSystemInstallation gffread )
@@ -808,38 +808,38 @@ fi
 #                        Perl Modules
 ################################################################################
 
-if ( checkPerlModule Parallel::ForkManager )
-then
-  perl_Parallel_ForkManager_installed_VER=`perl -MParallel::ForkManager -e 'print $Parallel::ForkManager::VERSION ."\n";'`
-  if ( echo $perl_Parallel_ForkManager_installed_VER $perl_Parallel_ForkManager_VER | awk '{if($1>=$2) exit 0; else exit 1}')
-  then
-    echo " - found Perl module Parallel::ForkManager $perl_Parallel_ForkManager_installed_VER"
-  else
-    echo "Required version of Parallel::ForkManager $perl_Parallel_ForkManager_VER was not found"
-    install_perl_Parallel_ForkManager
-  fi
-else
-  echo "Perl Parallel::ForkManager is not found"
-  install_perl_Parallel_ForkManager
-fi
+# if ( checkPerlModule Parallel::ForkManager )
+# then
+#   perl_Parallel_ForkManager_installed_VER=`perl -MParallel::ForkManager -e 'print $Parallel::ForkManager::VERSION ."\n";'`
+#   if ( echo $perl_Parallel_ForkManager_installed_VER $perl_Parallel_ForkManager_VER | awk '{if($1>=$2) exit 0; else exit 1}')
+#   then
+#     echo " - found Perl module Parallel::ForkManager $perl_Parallel_ForkManager_installed_VER"
+#   else
+#     echo "Required version of Parallel::ForkManager $perl_Parallel_ForkManager_VER was not found"
+#     install_perl_Parallel_ForkManager
+#   fi
+# else
+#   echo "Perl Parallel::ForkManager is not found"
+#   install_perl_Parallel_ForkManager
+# fi
 
 ################################################################################
 
-if ( checkPerlModule String::Approx )
-then
+# if ( checkPerlModule String::Approx )
+# then
   
-  perl_String_Approx_installed_VER=`perl -MString::Approx -e 'print $String::Approx::VERSION ."\n";'`
-  if ( echo $perl_String_Approx_installed_VER $perl_String_Approx_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
-  then
-    echo " - found Perl module String::Approx $perl_String_Approx_installed_VER"
-  else
-    echo "Required version of String::Approx $perl_String_Approx_VER was not found"
-    install_perl_string_approx
-  fi
-else
-  echo "Perl String::Approx was not found"
-  install_perl_string_approx
-fi
+#   perl_String_Approx_installed_VER=`perl -MString::Approx -e 'print $String::Approx::VERSION ."\n";'`
+#   if ( echo $perl_String_Approx_installed_VER $perl_String_Approx_VER | awk '{if($1>=$2) exit 0; else exit 1}' )
+#   then
+#     echo " - found Perl module String::Approx $perl_String_Approx_installed_VER"
+#   else
+#     echo "Required version of String::Approx $perl_String_Approx_VER was not found"
+#     install_perl_string_approx
+#   fi
+# else
+#   echo "Perl String::Approx was not found"
+#   install_perl_string_approx
+# fi
 
 ################################################################################
 #                        Python Modules
