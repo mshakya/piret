@@ -14,7 +14,7 @@ from luigi import Parameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
-from plumbum.cmd import touch, bamtools
+from plumbum.cmd import touch, bamtools, hisat2
 # from Bio import SeqIO
 
 
@@ -186,11 +186,11 @@ class CreateSplice(ExternalProgramTask):
 
     def program_environment(self):
         """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir + "../scripts"}
+        return {'PATH': + self.bindir + "../scripts" + ":" + os.environ["PATH"]}
 
 
 # @inherits(FastQC.PairedRunQC)
-class Hisat(ExternalProgramTask):
+class Hisat(luigi.Task):
     """Mapping the QCed sequences to reference."""
 
     fastq1 = Parameter()
@@ -222,27 +222,29 @@ class Hisat(ExternalProgramTask):
         """SAM file output of the mapping."""
         return LocalTarget(self.outsam)
 
-    def program_args(self):
+    def run(self):
         """Run hisat2."""
         if self.spliceFile is "":
-            return ["hisat2",
-                    "-p", self.numCPUs,
-                    "-x", self.indexfile,
-                    "-1", self.fastq1,
-                    "-2", self.fastq2,
-                    "-S", self.outsam,
-                    "--un-conc", self.unalned,
-                    "2>", self.mappingLogFile]
+            hisat2_nosplice_option = ["-p", self.numCPUs,
+                                      "-x", self.indexfile,
+                                      "-1", self.fastq1,
+                                      "-2", self.fastq2,
+                                      "-S", self.outsam,
+                                      "--un-conc", self.unalned,
+                                      "2>", self.mappingLogFile]
+            hisat2_cmd = hisat2[hisat2_nosplice_option]
+            hisat2_cmd()
         else:
-            return ["hisat2",
-                    "--known-splicesite-infile", self.spliceFile,
-                    "-p", self.numCPUs,
-                    "-x", self.indexfile,
-                    "-1", self.fastq1,
-                    "-2", self.fastq2,
-                    "-S", self.outsam,
-                    "--un-conc", self.unalned,
-                    "2>", self.mappingLogFile]
+            hisat2_splice_option = ["--known-splicesite-infile", self.spliceFile,
+                                    "-p", self.numCPUs,
+                                    "-x", self.indexfile,
+                                    "-1", self.fastq1,
+                                    "-2", self.fastq2,
+                                    "-S", self.outsam,
+                                    "--un-conc", self.unalned,
+                                    "2>", self.mappingLogFile]
+            hisat2_cmd = hisat2[hisat2_splice_option]
+            hisat2_cmd()
 
 
 @inherits(FastQC.RunAllQC)
