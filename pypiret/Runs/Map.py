@@ -174,19 +174,19 @@ class CreateSplice(ExternalProgramTask):
                     gff.split("/")[-1].split(".")[0] + ".gtf"
                 out_file = self.workdir + "/" +\
                     gff.split("/")[-1].split(".")[0] + ".splice"
-            return ["hisat2_extract_splice_sites.py",
+            return [self.bindir + "/../scripts/hisat2_extract_splice_sites.py",
                     "-i", gtf_file, "-o", out_file]
         else:
             gtf_file = self.workdir + "/" +\
                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
 
-            return ["hisat2_extract_splice_sites.py",
+            return [self.bindir + "/../scripts/hisat2_extract_splice_sites.py",
                     "-i", gtf_file, "-o", self.workdir + "/" +
                     self.gff_file.split("/")[-1].split(".")[0] + ".splice"]
 
     def program_environment(self):
         """Environmental variables for this program."""
-        return {'PATH': + self.bindir + "../scripts" + ":" + os.environ["PATH"]}
+        return {'PATH': self.bindir + "/../scripts/" + ":" + os.environ["PATH"]}
 
 
 # @inherits(FastQC.PairedRunQC)
