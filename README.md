@@ -30,8 +30,6 @@ PiReT requires following dependencies, all of which should be installed and in t
 #### 0.1.0 Programming/Scripting languages
 - [Python >=v2.7.12](https://www.python.org/downloads/release/python-2712/)
     - The pipeline is not compatible with Python v3.0 or higher.
-- [Perl >=v5.16.3](https://www.perl.org/get.html)
-    - The pipeline has only been tested in v5.16.3 and v5.22.0
 - [R >=v3.3.1](https://www.r-project.org)
 
 #### 0.1.1 Installing dependencies
@@ -59,9 +57,6 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [plumbum (v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
 - [Biopython (v1.68)](https://github.com/biopython/biopython.github.io/)
 
-#### 0.1.5 Perl modules
-- [Parallel::ForkManager (v1.17)](http://search.cpan.org/~yanick/Parallel-ForkManager-1.19/lib/Parallel/ForkManager.pm)
-- [String::Approx (v3.27)](http://search.cpan.org/dist/String-Approx/Approx.pm)
 
 ## 1.0 Test
 We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `PyPiReT` directory:
