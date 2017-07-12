@@ -147,373 +147,477 @@ def main():
         no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
         samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
         if check_method(args.METHOD, args.EXPDSN) is True:
-
-            # USER STORY 1A (SGE)
-            if args.TEST_KINGDOM == 'prokarya':
-                if all([args.TEST_KINGDOM == 'prokarya',
-                        check_ref(ref_gff=args.GFF_PROK,
-                                  ref_fasta=args.FASTA_PROK),
-                        args.qsub]) is True:
-                    luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-                                                              numCPUs=args.CPU,
-                                                              workdir=args.WORKDIR,
-                                                              shared_tmp_dir=workdir + "/.tmp"),
-                                           Map.HisatIndex(args.FASTA_PROK,
-                                                          args.INDEX_HISAT,
-                                                          numCPUs=args.CPU)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-            # USER STORY 1B
-                elif (all([args.TEST_KINGDOM == 'prokarya',
-                           check_ref(ref_gff=args.GFF_PROK,
-                                     ref_fasta=args.FASTA_PROK)]) is True and
-                        args.qsub is False):
-                    luigi.interface.build([
-                        FastQC.RunAllQC(fastq_dic=samp_dic,
-                                        numCPUs=args.CPU,
-                                        workdir=workdir,
-                                        bindir=bindir),
-                        Map.HisatIndex(fasta=args.FASTA_PROK,
+            # Running FastQC
+            luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
+                                   numCPUs=args.CPU,
+                                   workdir=workdir,
+                                   bindir=bindir)],
+                                  local_scheduler=args.scheduler,
+                                  workers=no_of_jobs,
+                                  )
+            if (all([args.TEST_KINGDOM == 'prokarya',
+                check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)])
+                    is True and args.qsub is False):
+                # Creating hisat2 index
+                luigi.interface.build([Map.HisatIndex(fasta=args.FASTA_PROK,
                                        hi_index=args.INDEX_HISAT,
                                        bindir=bindir,
                                        numCPUs=args.CPU),
-                        Map.GFF2GTF(gff_file=args.GFF_PROK,
-                                    bindir=bindir,
-                                    workdir=workdir)
-                    ], local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.HisatMapW(fastq_dic=samp_dic,
+                                      Map.GFF2GTF(gff_file=args.GFF_PROK,
+                                      bindir=bindir,
+                                      workdir=workdir)],
+                                      local_scheduler=args.scheduler)
+                # Map reads to Hisat index
+                luigi.interface.build([Map.HisatMapW(fastq_dic=samp_dic,
                                       numCPUs=args.CPU,
                                       indexfile=args.INDEX_HISAT,
                                       bindir=bindir,
                                       workdir=args.WORKDIR,
                                       ref_file=args.FASTA_PROK)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
+                                      local_scheduler=args.scheduler,
+                                      workers=no_of_jobs)
 
-                    luigi.interface.build([
-                        Map.SAM2BAMfileW(fastq_dic=samp_dic,
-                                          numCPUs=args.CPU,
-                                          indexfile=args.INDEX_HISAT,
-                                          bindir=bindir,
-                                          workdir=args.WORKDIR,
-                                          ref_file=args.FASTA_PROK)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.SortBAMfileW(fastq_dic=samp_dic,
-                                         numCPUs=args.CPU,
-                                         indexfile=args.INDEX_HISAT,
-                                         bindir=bindir,
-                                         workdir=args.WORKDIR,
-                                         ref_file=args.FASTA_PROK)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.StringTieScoresW(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=args.FASTA_PROK,
-                                             gff_file=args.GFF_PROK,
-                                             kingdom=args.TEST_KINGDOM)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Summ.FeatureCounts(fastq_dic=samp_dic,
-                                           numCPUs=args.CPU,
-                                           euk_gff=args.GFF_EUK,
-                                           prok_gff=args.GFF_PROK,
-                                           indexfile=args.INDEX_HISAT,
-                                           kingdom=args.TEST_KINGDOM,
-                                           workdir=workdir,
-                                           bindir=bindir,
-                                           ref_file=args.FASTA_PROK),
-                        Summ.MergeStringTies(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=args.FASTA_PROK,
-                                             gff_file=args.GFF_PROK,
-                                             kingdom=args.TEST_KINGDOM)
-                    ], local_scheduler=args.scheduler, workers=2)
-
-                    luigi.interface.build([
-                        Summ.ReStringTieScoresW(fastq_dic=samp_dic,
-                                                numCPUs=args.CPU,
-                                                indexfile=args.INDEX_HISAT,
-                                                bindir=bindir,
-                                                workdir=args.WORKDIR,
-                                                ref_file=args.FASTA_PROK,
-                                                gff_file=args.GFF_PROK,
-                                                kingdom=args.TEST_KINGDOM)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-
-            # USER STORY 2A (SGE)
-            elif args.TEST_KINGDOM == 'eukarya':
-                if all([args.TEST_KINGDOM == 'eukarya',
-                        check_ref(ref_gff=args.GFF_EUK,
-                                  ref_fasta=args.FASTA_EUK),
-                        args.qsub]) is True:
-                    luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
-                                                              numCPUs=args.CPU,
-                                                              workdir=workdir,
-                                                              shared_tmp_dir=workdir + "/.tmp"),
-                                           Map.HisatIndex(args.FASTA_EUK, numCPUs=args.CPU)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-            # USER STORY 2B
-                elif (all([args.TEST_KINGDOM == 'eukarya',
-                           check_ref(ref_gff=args.GFF_EUK,
-                                     ref_fasta=args.FASTA_EUK)]) is True and
-                      args.qsub is False):
-                    luigi.interface.build([
-                        FastQC.RunAllQC(fastq_dic=samp_dic,
-                                        numCPUs=args.CPU,
-                                        workdir=workdir,
-                                        bindir=bindir),
-                        Map.HisatIndex(fasta=args.FASTA_EUK,
-                                       hi_index=args.INDEX_HISAT,
+                # Convert SAM to BAM file
+                luigi.interface.build([Map.SAM2BAMfileW(fastq_dic=samp_dic,
+                                       numCPUs=args.CPU,
+                                       indexfile=args.INDEX_HISAT,
                                        bindir=bindir,
-                                       numCPUs=args.CPU),
-                        Map.GFF2GTF(gff_file=args.GFF_EUK,
-                                    bindir=bindir,
-                                    workdir=workdir),
-                        Map.CreateSplice(gff_file=args.GFF_EUK,
-                                         bindir=bindir,
-                                         workdir=workdir)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.HisatMapW(fastq_dic=samp_dic,
-                                      numCPUs=args.CPU,
-                                      indexfile=args.INDEX_HISAT,
-                                      bindir=bindir,
-                                      workdir=args.WORKDIR,
-                                      ref_file=args.FASTA_EUK)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.SAM2BAMfileW(fastq_dic=samp_dic,
-                                          numCPUs=args.CPU,
-                                          indexfile=args.INDEX_HISAT,
-                                          bindir=bindir,
-                                          workdir=args.WORKDIR,
-                                          ref_file=args.FASTA_EUK)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.SortBAMfileW(fastq_dic=samp_dic,
-                                         numCPUs=args.CPU,
-                                         indexfile=args.INDEX_HISAT,
-                                         bindir=bindir,
-                                         workdir=args.WORKDIR,
-                                         ref_file=args.FASTA_EUK)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Map.StringTieScoresW(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=args.FASTA_EUK,
-                                             gff_file=args.GFF_EUK,
-                                             kingdom=args.TEST_KINGDOM)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-
-                    luigi.interface.build([
-                        Summ.FeatureCounts(fastq_dic=samp_dic,
-                                           numCPUs=args.CPU,
-                                           euk_gff=args.GFF_EUK,
-                                           prok_gff=args.GFF_PROK,
-                                           indexfile=args.INDEX_HISAT,
-                                           kingdom=args.TEST_KINGDOM,
-                                           workdir=workdir,
-                                           bindir=bindir,
-                                           ref_file=args.FASTA_EUK),
-                        Summ.MergeStringTies(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=args.FASTA_EUK,
-                                             gff_file=args.GFF_EUK,
-                                             kingdom=args.TEST_KINGDOM)
-                    ], local_scheduler=args.scheduler, workers=2)
-
-                    luigi.interface.build([
-                        Summ.ReStringTieScoresW(fastq_dic=samp_dic,
-                                                numCPUs=args.CPU,
-                                                indexfile=args.INDEX_HISAT,
-                                                bindir=bindir,
-                                                workdir=args.WORKDIR,
-                                                ref_file=args.FASTA_EUK,
-                                                gff_file=args.GFF_EUK,
-                                                kingdom=args.TEST_KINGDOM)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
-
-            # USER STORY 3A (SGE)
-            elif args.TEST_KINGDOM == 'both':
-                if all([args.TEST_KINGDOM == 'both',
-                        check_ref(ref_gff=args.GFF_EUK,
-                                  ref_fasta=args.FASTA_EUK),
-                        check_ref(ref_gff=args.GFF_PROK,
-                                  ref_fasta=args.FASTA_PROK),
-                        args.qsub]) is True:
-                    luigi.interface.build([
-                        FastQC.SGERunAllQC(fastq_dic=samp_dic,
-                                           numCPUs=args.CPU,
-                                           workdir=workdir,
-                                           shared_tmp_dir=workdir + "/.tmp"),
-                        Map.HisatIndex(args.FASTA_PROK, numCPUs=args.CPU)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
-            # USER STORY 3B
-                elif (all([args.TEST_KINGDOM == 'both',
-                           check_ref(ref_gff=args.GFF_EUK,
-                                     ref_fasta=args.FASTA_EUK),
-                           check_ref(ref_gff=args.GFF_PROK,
-                                     ref_fasta=args.FASTA_PROK)]) is True and
-                      args.qsub is False):
-                    luigi.interface.build([
-                        FastQC.RunAllQC(fastq_dic=samp_dic,
-                                        numCPUs=args.CPU,
-                                        workdir=workdir,
-                                        bindir=bindir),
-                        Map.HisatIndex(fasta=",".join([args.FASTA_PROK, args.FASTA_EUK]),
-                                       hi_index=args.INDEX_HISAT,
+                                       workdir=args.WORKDIR,
+                                       ref_file=args.FASTA_PROK)],
+                                      local_scheduler=args.scheduler,
+                                      workers=no_of_jobs)
+                # Sort BAM files
+                luigi.interface.build([Map.SortBAMfileW(fastq_dic=samp_dic,
+                                       numCPUs=args.CPU,
+                                       indexfile=args.INDEX_HISAT,
                                        bindir=bindir,
-                                       numCPUs=args.CPU),
-                        Map.GFF2GTF(gff_file=args.GFF_EUK,
-                                    bindir=bindir,
-                                    workdir=workdir),
-                        Map.GFF2GTF(gff_file=args.GFF_PROK,
-                                    bindir=bindir,
-                                    workdir=workdir),
-                        Map.CreateSplice(gff_file=args.GFF_EUK,
-                                         bindir=bindir,
-                                         workdir=workdir),
-                        Map.GetChromName(prok_ref=args.FASTA_PROK,
-                                         euk_ref=args.FASTA_EUK,
-                                         workdir=workdir)],
-                        local_scheduler=args.scheduler,
-                        workers=no_of_jobs)
+                                       workdir=args.WORKDIR,
+                                       ref_file=args.FASTA_PROK)],
+                                      local_scheduler=args.scheduler,
+                                      workers=no_of_jobs)
 
-                    luigi.interface.build([
-                        Map.HisatMapW(fastq_dic=samp_dic,
-                                      numCPUs=args.CPU,
-                                      indexfile=args.INDEX_HISAT,
-                                      workdir=workdir,
-                                      bindir=bindir,
-                                      ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))],
-                        local_scheduler=args.scheduler, workers=no_of_jobs)
+                # Calculate StringTie Scores
+                luigi.interface.build([Map.StringTieScoresW(fastq_dic=samp_dic,
+                                       numCPUs=args.CPU,
+                                       indexfile=args.INDEX_HISAT,
+                                       bindir=bindir,
+                                       workdir=args.WORKDIR,
+                                       ref_file=args.FASTA_PROK,
+                                       gff_file=args.GFF_PROK,
+                                       kingdom=args.TEST_KINGDOM)],
+                                      local_scheduler=args.scheduler,
+                                      workers=no_of_jobs)
 
-                    luigi.interface.build([
-                        Map.SAM2BAMfileW(fastq_dic=samp_dic,
-                                          numCPUs=args.CPU,
-                                          indexfile=args.INDEX_HISAT,
-                                          bindir=bindir,
-                                          workdir=args.WORKDIR,
-                                          ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Map.SortBAMfileW(fastq_dic=samp_dic,
-                                         numCPUs=args.CPU,
-                                         indexfile=args.INDEX_HISAT,
-                                         bindir=bindir,
-                                         workdir=args.WORKDIR,
-                                         ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Map.GetRefNames(fastq_dic=samp_dic,
-                                        numCPUs=args.CPU,
-                                        indexfile=args.INDEX_HISAT,
-                                        bindir=bindir,
-                                        workdir=args.WORKDIR,
-                                        ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Map.SplitBAMBoth(fastq_dic=samp_dic,
-                                         numCPUs=args.CPU,
-                                         indexfile=args.INDEX_HISAT,
-                                         bindir=bindir,
-                                         workdir=args.WORKDIR,
-                                         ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Map.SplitProkEukBoth(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Map.MergeBAMfileBoth(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Map.StringTieScoresW(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             gff_file=";".join(
-                                                 [args.GFF_PROK, args.GFF_EUK]),
-                                             kingdom=args.TEST_KINGDOM,
-                                             workdir=args.WORKDIR,
-                                             bindir=bindir,
-                                             ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
-                        Summ.FeatureCountsBoth(fastq_dic=samp_dic,
-                                           numCPUs=args.CPU,
-                                           euk_gff=args.GFF_EUK,
-                                           prok_gff=args.GFF_PROK,
-                                           indexfile=args.INDEX_HISAT,
-                                           kingdom='both',
-                                           workdir=workdir,
-                                           bindir=bindir,
-                                           ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))
-                    ], local_scheduler=args.scheduler, workers=no_of_jobs)
+                # Count using FeatureCounts and MergeStringTies
+                luigi.interface.build([Summ.FeatureCounts(fastq_dic=samp_dic,
+                                       numCPUs=args.CPU,
+                                       euk_gff=args.GFF_EUK,
+                                       prok_gff=args.GFF_PROK,
+                                       indexfile=args.INDEX_HISAT,
+                                       kingdom=args.TEST_KINGDOM,
+                                       workdir=workdir,
+                                       bindir=bindir,
+                                       ref_file=args.FASTA_PROK),
+                                       Summ.MergeStringTies(fastq_dic=samp_dic,
+                                       numCPUs=args.CPU,
+                                       indexfile=args.INDEX_HISAT,
+                                       bindir=bindir,
+                                       workdir=args.WORKDIR,
+                                       ref_file=args.FASTA_PROK,
+                                       gff_file=args.GFF_PROK,
+                                       kingdom=args.TEST_KINGDOM)],
+                                      local_scheduler=args.scheduler, workers=2)
+                # Recalculate StringTies
+                luigi.interface.build([Summ.ReStringTieScoresW(fastq_dic=samp_dic,
+                                       numCPUs=args.CPU,
+                                       indexfile=args.INDEX_HISAT,
+                                       bindir=bindir,
+                                       workdir=args.WORKDIR,
+                                       ref_file=args.FASTA_PROK,
+                                       gff_file=args.GFF_PROK,
+                                       kingdom=args.TEST_KINGDOM)],
+                                      local_scheduler=args.scheduler,
+                                      workers=no_of_jobs)
 
-                    luigi.interface.build([
-                        # Summ.FeatureCounts(fastq_dic=samp_dic,
-                        #                    numCPUs=args.CPU,
-                        #                    euk_gff=args.GFF_EUK,
-                        #                    prok_gff=args.GFF_PROK,
-                        #                    indexfile=args.INDEX_HISAT,
-                        #                    kingdom=args.'prokarya',
-                        #                    workdir=workdir,
-                        #                    bindir=bindir),
-                        Summ.MergeStringTies(fastq_dic=samp_dic,
-                                             numCPUs=args.CPU,
-                                             indexfile=args.INDEX_HISAT,
-                                             bindir=bindir,
-                                             workdir=args.WORKDIR,
-                                             ref_file=",".join([args.FASTA_PROK,
-                                                                args.FASTA_EUK]),
-                                             gff_file=";".join(
-                                                 [args.GFF_PROK, args.GFF_EUK]),
-                                             kingdom=args.TEST_KINGDOM)
-                    ], local_scheduler=args.scheduler, workers=2)
+                # which DGE to run
+                if args.METHOD == 'all':
+                    luigi.interface.build()
 
-                    luigi.interface.build([
-                        Summ.ReStringTieScoresW(fastq_dic=samp_dic,
-                                                numCPUs=args.CPU,
-                                                indexfile=args.INDEX_HISAT,
-                                                bindir=bindir,
-                                                workdir=args.WORKDIR,
-                                                ref_file=",".join([args.FASTA_PROK,
-                                                                   args.FASTA_EUK]),
-                                                gff_file=";".join(
-                                                    [args.GFF_PROK, args.GFF_EUK]),
-                                                kingdom=args.TEST_KINGDOM)],
-                                          local_scheduler=args.scheduler,
-                                          workers=no_of_jobs)
+
+
+
+
+
+
+
+            # # USER STORY 1A (SGE)
+            # if args.TEST_KINGDOM == 'prokarya':
+            #     if all([args.TEST_KINGDOM == 'prokarya',
+            #             check_ref(ref_gff=args.GFF_PROK,
+            #                       ref_fasta=args.FASTA_PROK),
+            #             args.qsub]) is True:
+            #         luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
+            #                                                   numCPUs=args.CPU,
+            #                                                   workdir=args.WORKDIR,
+            #                                                   shared_tmp_dir=workdir + "/.tmp"),
+            #                                Map.HisatIndex(args.FASTA_PROK,
+            #                                               args.INDEX_HISAT,
+            #                                               numCPUs=args.CPU)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+            # # USER STORY 1B
+            #     elif (all([args.TEST_KINGDOM == 'prokarya',
+            #                check_ref(ref_gff=args.GFF_PROK,
+            #                          ref_fasta=args.FASTA_PROK)]) is True and
+            #             args.qsub is False):
+            #         luigi.interface.build([
+            #             FastQC.RunAllQC(fastq_dic=samp_dic,
+            #                             numCPUs=args.CPU,
+            #                             workdir=workdir,
+            #                             bindir=bindir),
+            #             Map.HisatIndex(fasta=args.FASTA_PROK,
+            #                            hi_index=args.INDEX_HISAT,
+            #                            bindir=bindir,
+            #                            numCPUs=args.CPU),
+            #             Map.GFF2GTF(gff_file=args.GFF_PROK,
+            #                         bindir=bindir,
+            #                         workdir=workdir)
+            #         ], local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.HisatMapW(fastq_dic=samp_dic,
+            #                           numCPUs=args.CPU,
+            #                           indexfile=args.INDEX_HISAT,
+            #                           bindir=bindir,
+            #                           workdir=args.WORKDIR,
+            #                           ref_file=args.FASTA_PROK)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.SAM2BAMfileW(fastq_dic=samp_dic,
+            #                               numCPUs=args.CPU,
+            #                               indexfile=args.INDEX_HISAT,
+            #                               bindir=bindir,
+            #                               workdir=args.WORKDIR,
+            #                               ref_file=args.FASTA_PROK)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.SortBAMfileW(fastq_dic=samp_dic,
+            #                              numCPUs=args.CPU,
+            #                              indexfile=args.INDEX_HISAT,
+            #                              bindir=bindir,
+            #                              workdir=args.WORKDIR,
+            #                              ref_file=args.FASTA_PROK)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.StringTieScoresW(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=args.FASTA_PROK,
+            #                                  gff_file=args.GFF_PROK,
+            #                                  kingdom=args.TEST_KINGDOM)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Summ.FeatureCounts(fastq_dic=samp_dic,
+            #                                numCPUs=args.CPU,
+            #                                euk_gff=args.GFF_EUK,
+            #                                prok_gff=args.GFF_PROK,
+            #                                indexfile=args.INDEX_HISAT,
+            #                                kingdom=args.TEST_KINGDOM,
+            #                                workdir=workdir,
+            #                                bindir=bindir,
+            #                                ref_file=args.FASTA_PROK),
+            #             Summ.MergeStringTies(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=args.FASTA_PROK,
+            #                                  gff_file=args.GFF_PROK,
+            #                                  kingdom=args.TEST_KINGDOM)
+            #         ], local_scheduler=args.scheduler, workers=2)
+
+            #         luigi.interface.build([
+            #             Summ.ReStringTieScoresW(fastq_dic=samp_dic,
+            #                                     numCPUs=args.CPU,
+            #                                     indexfile=args.INDEX_HISAT,
+            #                                     bindir=bindir,
+            #                                     workdir=args.WORKDIR,
+            #                                     ref_file=args.FASTA_PROK,
+            #                                     gff_file=args.GFF_PROK,
+            #                                     kingdom=args.TEST_KINGDOM)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+            #         if args.METHOD in ['EdgeR', 'DeEdge', 'ballEdge', 'all']:
+            #           luigi.interface.build([])
+
+            # # USER STORY 2A (SGE)
+            # elif args.TEST_KINGDOM == 'eukarya':
+            #     if all([args.TEST_KINGDOM == 'eukarya',
+            #             check_ref(ref_gff=args.GFF_EUK,
+            #                       ref_fasta=args.FASTA_EUK),
+            #             args.qsub]) is True:
+            #         luigi.interface.build([FastQC.SGERunAllQC(fastq_dic=samp_dic,
+            #                                                   numCPUs=args.CPU,
+            #                                                   workdir=workdir,
+            #                                                   shared_tmp_dir=workdir + "/.tmp"),
+            #                                Map.HisatIndex(args.FASTA_EUK, numCPUs=args.CPU)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+            # # USER STORY 2B
+            #     elif (all([args.TEST_KINGDOM == 'eukarya',
+            #                check_ref(ref_gff=args.GFF_EUK,
+            #                          ref_fasta=args.FASTA_EUK)]) is True and
+            #           args.qsub is False):
+            #         luigi.interface.build([
+            #             FastQC.RunAllQC(fastq_dic=samp_dic,
+            #                             numCPUs=args.CPU,
+            #                             workdir=workdir,
+            #                             bindir=bindir),
+            #             Map.HisatIndex(fasta=args.FASTA_EUK,
+            #                            hi_index=args.INDEX_HISAT,
+            #                            bindir=bindir,
+            #                            numCPUs=args.CPU),
+            #             Map.GFF2GTF(gff_file=args.GFF_EUK,
+            #                         bindir=bindir,
+            #                         workdir=workdir),
+            #             Map.CreateSplice(gff_file=args.GFF_EUK,
+            #                              bindir=bindir,
+            #                              workdir=workdir)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.HisatMapW(fastq_dic=samp_dic,
+            #                           numCPUs=args.CPU,
+            #                           indexfile=args.INDEX_HISAT,
+            #                           bindir=bindir,
+            #                           workdir=args.WORKDIR,
+            #                           ref_file=args.FASTA_EUK)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.SAM2BAMfileW(fastq_dic=samp_dic,
+            #                               numCPUs=args.CPU,
+            #                               indexfile=args.INDEX_HISAT,
+            #                               bindir=bindir,
+            #                               workdir=args.WORKDIR,
+            #                               ref_file=args.FASTA_EUK)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.SortBAMfileW(fastq_dic=samp_dic,
+            #                              numCPUs=args.CPU,
+            #                              indexfile=args.INDEX_HISAT,
+            #                              bindir=bindir,
+            #                              workdir=args.WORKDIR,
+            #                              ref_file=args.FASTA_EUK)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.StringTieScoresW(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=args.FASTA_EUK,
+            #                                  gff_file=args.GFF_EUK,
+            #                                  kingdom=args.TEST_KINGDOM)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Summ.FeatureCounts(fastq_dic=samp_dic,
+            #                                numCPUs=args.CPU,
+            #                                euk_gff=args.GFF_EUK,
+            #                                prok_gff=args.GFF_PROK,
+            #                                indexfile=args.INDEX_HISAT,
+            #                                kingdom=args.TEST_KINGDOM,
+            #                                workdir=workdir,
+            #                                bindir=bindir,
+            #                                ref_file=args.FASTA_EUK),
+            #             Summ.MergeStringTies(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=args.FASTA_EUK,
+            #                                  gff_file=args.GFF_EUK,
+            #                                  kingdom=args.TEST_KINGDOM)
+            #         ], local_scheduler=args.scheduler, workers=2)
+
+            #         luigi.interface.build([
+            #             Summ.ReStringTieScoresW(fastq_dic=samp_dic,
+            #                                     numCPUs=args.CPU,
+            #                                     indexfile=args.INDEX_HISAT,
+            #                                     bindir=bindir,
+            #                                     workdir=args.WORKDIR,
+            #                                     ref_file=args.FASTA_EUK,
+            #                                     gff_file=args.GFF_EUK,
+            #                                     kingdom=args.TEST_KINGDOM)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
+
+            # # USER STORY 3A (SGE)
+            # elif args.TEST_KINGDOM == 'both':
+            #     if all([args.TEST_KINGDOM == 'both',
+            #             check_ref(ref_gff=args.GFF_EUK,
+            #                       ref_fasta=args.FASTA_EUK),
+            #             check_ref(ref_gff=args.GFF_PROK,
+            #                       ref_fasta=args.FASTA_PROK),
+            #             args.qsub]) is True:
+            #         luigi.interface.build([
+            #             FastQC.SGERunAllQC(fastq_dic=samp_dic,
+            #                                numCPUs=args.CPU,
+            #                                workdir=workdir,
+            #                                shared_tmp_dir=workdir + "/.tmp"),
+            #             Map.HisatIndex(args.FASTA_PROK, numCPUs=args.CPU)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+            # # USER STORY 3B
+            #     elif (all([args.TEST_KINGDOM == 'both',
+            #                check_ref(ref_gff=args.GFF_EUK,
+            #                          ref_fasta=args.FASTA_EUK),
+            #                check_ref(ref_gff=args.GFF_PROK,
+            #                          ref_fasta=args.FASTA_PROK)]) is True and
+            #           args.qsub is False):
+            #         luigi.interface.build([
+            #             FastQC.RunAllQC(fastq_dic=samp_dic,
+            #                             numCPUs=args.CPU,
+            #                             workdir=workdir,
+            #                             bindir=bindir),
+            #             Map.HisatIndex(fasta=",".join([args.FASTA_PROK, args.FASTA_EUK]),
+            #                            hi_index=args.INDEX_HISAT,
+            #                            bindir=bindir,
+            #                            numCPUs=args.CPU),
+            #             Map.GFF2GTF(gff_file=args.GFF_EUK,
+            #                         bindir=bindir,
+            #                         workdir=workdir),
+            #             Map.GFF2GTF(gff_file=args.GFF_PROK,
+            #                         bindir=bindir,
+            #                         workdir=workdir),
+            #             Map.CreateSplice(gff_file=args.GFF_EUK,
+            #                              bindir=bindir,
+            #                              workdir=workdir),
+            #             Map.GetChromName(prok_ref=args.FASTA_PROK,
+            #                              euk_ref=args.FASTA_EUK,
+            #                              workdir=workdir)],
+            #             local_scheduler=args.scheduler,
+            #             workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.HisatMapW(fastq_dic=samp_dic,
+            #                           numCPUs=args.CPU,
+            #                           indexfile=args.INDEX_HISAT,
+            #                           workdir=workdir,
+            #                           bindir=bindir,
+            #                           ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))],
+            #             local_scheduler=args.scheduler, workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             Map.SAM2BAMfileW(fastq_dic=samp_dic,
+            #                               numCPUs=args.CPU,
+            #                               indexfile=args.INDEX_HISAT,
+            #                               bindir=bindir,
+            #                               workdir=args.WORKDIR,
+            #                               ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Map.SortBAMfileW(fastq_dic=samp_dic,
+            #                              numCPUs=args.CPU,
+            #                              indexfile=args.INDEX_HISAT,
+            #                              bindir=bindir,
+            #                              workdir=args.WORKDIR,
+            #                              ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Map.GetRefNames(fastq_dic=samp_dic,
+            #                             numCPUs=args.CPU,
+            #                             indexfile=args.INDEX_HISAT,
+            #                             bindir=bindir,
+            #                             workdir=args.WORKDIR,
+            #                             ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Map.SplitBAMBoth(fastq_dic=samp_dic,
+            #                              numCPUs=args.CPU,
+            #                              indexfile=args.INDEX_HISAT,
+            #                              bindir=bindir,
+            #                              workdir=args.WORKDIR,
+            #                              ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Map.SplitProkEukBoth(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Map.MergeBAMfileBoth(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Map.StringTieScoresW(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  gff_file=";".join(
+            #                                      [args.GFF_PROK, args.GFF_EUK]),
+            #                                  kingdom=args.TEST_KINGDOM,
+            #                                  workdir=args.WORKDIR,
+            #                                  bindir=bindir,
+            #                                  ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK])),
+            #             Summ.FeatureCountsBoth(fastq_dic=samp_dic,
+            #                                numCPUs=args.CPU,
+            #                                euk_gff=args.GFF_EUK,
+            #                                prok_gff=args.GFF_PROK,
+            #                                indexfile=args.INDEX_HISAT,
+            #                                kingdom='both',
+            #                                workdir=workdir,
+            #                                bindir=bindir,
+            #                                ref_file=",".join([args.FASTA_PROK, args.FASTA_EUK]))
+            #         ], local_scheduler=args.scheduler, workers=no_of_jobs)
+
+            #         luigi.interface.build([
+            #             # Summ.FeatureCounts(fastq_dic=samp_dic,
+            #             #                    numCPUs=args.CPU,
+            #             #                    euk_gff=args.GFF_EUK,
+            #             #                    prok_gff=args.GFF_PROK,
+            #             #                    indexfile=args.INDEX_HISAT,
+            #             #                    kingdom=args.'prokarya',
+            #             #                    workdir=workdir,
+            #             #                    bindir=bindir),
+            #             Summ.MergeStringTies(fastq_dic=samp_dic,
+            #                                  numCPUs=args.CPU,
+            #                                  indexfile=args.INDEX_HISAT,
+            #                                  bindir=bindir,
+            #                                  workdir=args.WORKDIR,
+            #                                  ref_file=",".join([args.FASTA_PROK,
+            #                                                     args.FASTA_EUK]),
+            #                                  gff_file=";".join(
+            #                                      [args.GFF_PROK, args.GFF_EUK]),
+            #                                  kingdom=args.TEST_KINGDOM)
+            #         ], local_scheduler=args.scheduler, workers=2)
+
+            #         luigi.interface.build([
+            #             Summ.ReStringTieScoresW(fastq_dic=samp_dic,
+            #                                     numCPUs=args.CPU,
+            #                                     indexfile=args.INDEX_HISAT,
+            #                                     bindir=bindir,
+            #                                     workdir=args.WORKDIR,
+            #                                     ref_file=",".join([args.FASTA_PROK,
+            #                                                        args.FASTA_EUK]),
+            #                                     gff_file=";".join(
+            #                                         [args.GFF_PROK, args.GFF_EUK]),
+            #                                     kingdom=args.TEST_KINGDOM)],
+            #                               local_scheduler=args.scheduler,
+            #                               workers=no_of_jobs)
 
 
 def check_exp_design(exp_design_file):
