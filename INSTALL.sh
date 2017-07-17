@@ -444,27 +444,27 @@ usage: $0 options
 EOF
 }
 
-print_tools_list()
-{
+# print_tools_list()
+# {
 
 
-   echo "Available tools for updates/re-install"
-   echo -e "\nAlignment"
-   for i in "${alignments_tools[@]}"
-   do
-       echo "* $i"
-   done
-   echo -e "\nUtility"
-   for i in "${utility_tools[@]}"
-   do
-       echo "* $i"
-   done
-   echo -e "\nCount"
-   for i in "${count_tools[@]}"
-   do
-       echo "* $i"
-   done
-}
+#    echo "Available tools for updates/re-install"
+#    echo -e "\nAlignment"
+#    for i in "${alignments_tools[@]}"
+#    do
+#        echo "* $i"
+#    done
+#    echo -e "\nUtility"
+#    for i in "${utility_tools[@]}"
+#    do
+#        echo "* $i"
+#    done
+#    echo -e "\nCount"
+#    for i in "${count_tools[@]}"
+#    do
+#        echo "* $i"
+#    done
+# }
 
 
 ### Main ####
