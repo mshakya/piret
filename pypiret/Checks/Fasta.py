@@ -83,3 +83,14 @@ def match_gff_fasta(fasta_file, gff_file, out_fasta):
             if acc in seq.id:
                 seq.description = acc + " " + seq.description
                 Bio.SeqIO.write(seq, out_fasta, "fasta")
+
+
+#TODO: implement these checks
+def check_quotations(gff_file):
+    """Check if there are quotations in gff file."""
+    with open(gff_file) as g:
+        content = g.readlines()
+        for l in content:
+            if '"' in l:
+                print(l)
+                raise TypeError("There is a quotation in above line, remove them first")
