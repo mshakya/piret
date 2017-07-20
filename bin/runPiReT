@@ -689,22 +689,22 @@ def check_method(method, exp_design_file):
 
 
 def check_ref(ref_fasta=None, ref_gff=None):
-    """Check if refs are present."""
+    """Check if references are present."""
     if ',' in ref_fasta:
         if all([os.path.exists(f) for f in ref_fasta.split(",")]) is True:
             pass
         else:
-            sys.exit("Reference(s) do not exist!")
+            sys.exit("One of the reference fasta do not exist!")
     if ',' in ref_gff:
         if all([os.path.exists(f) for f in ref_gff.split(",")]) is True:
             return True
         else:
-            sys.exit("Reference(s) do not exist!")
+            sys.exit("One of the reference gff do not exist!")
     else:
         if os.path.exists(ref_gff) and os.path.exists(ref_fasta):
             return True
         else:
-            sys.exit("Reference(s) do not exist!")
+            sys.exit("Reference gff do not exist!")
 
 
 if __name__ == '__main__':
