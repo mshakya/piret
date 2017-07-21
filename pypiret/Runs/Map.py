@@ -125,7 +125,7 @@ class GFF2GTF(ExternalProgramTask):
             gffs = self.gff_file.split(",")
             for gff in gffs:
                 out_file = self.workdir + "/" +\
-                    self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
+                    gff.split("/")[-1].split(".")[0] + ".gtf"
                 return ["gffread", gff, "-T", "-o", out_file]
         else:
             out_file = self.workdir + "/" +\
@@ -174,8 +174,8 @@ class CreateSplice(ExternalProgramTask):
                     gff.split("/")[-1].split(".")[0] + ".gtf"
                 out_file = self.workdir + "/" +\
                     gff.split("/")[-1].split(".")[0] + ".splice"
-            return [self.bindir + "/../scripts/hisat2_extract_splice_sites.py",
-                    "-i", gtf_file, "-o", out_file]
+                return [self.bindir + "/../scripts/hisat2_extract_splice_sites.py",
+                        "-i", gtf_file, "-o", out_file]
         else:
             gtf_file = self.workdir + "/" +\
                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
