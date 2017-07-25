@@ -245,7 +245,7 @@ class HisatMapW(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
         else:
@@ -325,7 +325,7 @@ class SAM2BAMfileW(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
         else:
@@ -373,7 +373,7 @@ class SortBAMfileW(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
         else:
@@ -429,7 +429,7 @@ class GetRefNames(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
         for samp, fastq in self.fastq_dic.iteritems():
@@ -514,7 +514,7 @@ class StringTieScoresW(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
         else:
@@ -625,7 +625,7 @@ class SplitBAMBoth(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
         for samp, fastq in self.fastq_dic.iteritems():
@@ -696,7 +696,7 @@ class SplitProkEukBoth(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
         for samp, fastq in self.fastq_dic.iteritems():
@@ -757,7 +757,7 @@ class MergeBAMfileBoth(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
         for samp, fastq in self.fastq_dic.iteritems():
@@ -810,7 +810,7 @@ class StringTieScoresBoth(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
 
