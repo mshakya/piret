@@ -14,7 +14,7 @@ from luigi import Parameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
-from plumbum.cmd import touch, bamtools, hisat2
+from plumbum.cmd import touch, bamtools, hisat2, gffread, python
 # from Bio import SeqIO
 
 
@@ -92,8 +92,8 @@ class HisatIndex(ExternalProgramTask):
         return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
 
-class GFF2GTF(ExternalProgramTask):
-    """Convert GFF to GTF format."""
+class GFF2GTF(luigi.Task):
+    """Converts GFF to GTF format."""
 
     gff_file = Parameter()
     workdir = Parameter()
@@ -119,39 +119,27 @@ class GFF2GTF(ExternalProgramTask):
                                self.gff_file.split("/")[-1].split(".")[0] +
                                ".gtf")
 
-    def program_args(self):
-        """The gffread conversion."""
+    def run(self):
+        """Main."""
         if ',' in self.gff_file:
             gffs = self.gff_file.split(",")
             for gff in gffs:
                 out_file = self.workdir + "/" +\
                     gff.split("/")[-1].split(".")[0] + ".gtf"
-                return ["gffread", gff, "-T", "-o", out_file]
+                gffread_option = [gff, "-T", "-o", out_file]
+                gffread_cmd = gffread[gffread_option]
+                gffread_cmd()
         else:
             out_file = self.workdir + "/" +\
                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
-            return ["gffread", self.gff_file, "-T", "-o", out_file]
-
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
+            gffread_option = [self.gff_file, "-T", "-o", out_file]
+            gffread_cmd = gffread[gffread_option]
+            gffread_cmd()
 
 
-@inherits(GFF2GTF)
+@requires(GFF2GTF)
 class CreateSplice(ExternalProgramTask):
     """Find splice sites off gtf file."""
-
-    def requires(self):
-        """Require GTF file."""
-        if ',' in self.gff_file:
-            gffs = self.gff_file.split(",")
-            return [GFF2GTF(gff_file=gff,
-                            workdir=self.workdir,
-                            bindir=self.bindir) for gff in gffs]
-        else:
-            return [GFF2GTF(gff_file=self.gff_file,
-                            workdir=self.workdir,
-                            bindir=self.bindir)]
 
     def output(self):
         """Splice site output."""
@@ -165,8 +153,8 @@ class CreateSplice(ExternalProgramTask):
                                self.gff_file.split("/")[-1].split(".")[0] +
                                ".splice")
 
-    def program_args(self):
-        """Extracting splice sites."""
+    def run(self):
+        """Main."""
         if ',' in self.gff_file:
             gffs = self.gff_file.split(",")
             for gff in gffs:
@@ -174,19 +162,16 @@ class CreateSplice(ExternalProgramTask):
                     gff.split("/")[-1].split(".")[0] + ".gtf"
                 out_file = self.workdir + "/" +\
                     gff.split("/")[-1].split(".")[0] + ".splice"
-                return [self.bindir + "/../scripts/hisat2_extract_splice_sites.py",
-                        "-i", gtf_file, "-o", out_file]
+                hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
+                hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
+                hess_cmd = python[hess_opt]
+                hess_cmd()
         else:
             gtf_file = self.workdir + "/" +\
                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
-
-            return [self.bindir + "/../scripts/hisat2_extract_splice_sites.py",
-                    "-i", gtf_file, "-o", self.workdir + "/" +
-                    self.gff_file.split("/")[-1].split(".")[0] + ".splice"]
-
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': self.bindir + "/../scripts/" + ":" + os.environ["PATH"]}
+            hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
+            hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
+            hess_cmd = python[hess_opt]
 
 
 # @inherits(FastQC.PairedRunQC)
@@ -384,7 +369,7 @@ class SortBAMfileW(luigi.WrapperTask):
     """Sort all bam files."""
 
     def requires(self):
-        """A wrapper for running the QC."""
+        """A wrapper task for converting sam to bam."""
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
