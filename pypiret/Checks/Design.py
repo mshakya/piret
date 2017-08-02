@@ -95,7 +95,7 @@ class CheckDesign():
                         sys.exit(err_message % f)
             elif isinstance(fastqs, list):
                 for pairs in fastqs:
-                    files = pairs.split(":")
+                    files = pairs.split(";")
                     for f in files:
                         if os.path.exists(f):
                             pass
@@ -113,7 +113,7 @@ class CheckDesign():
             for line in dfile:
                 sample = line.split("\t")[0]
                 if ';' in line.split("\t")[1]:
-                    fastq_pairs = line.split("\t")[1].split(";")
+                    fastq_pairs = line.split("\t")[1].split(":")
                 else:
                     fastq_pairs = line.split("\t")[1]
                 sample_fastqs[sample] = fastq_pairs
