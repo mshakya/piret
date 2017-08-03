@@ -10,7 +10,7 @@ from luigi import Parameter, DictParameter, ListParameter, IntParameter
 # from luigi.contrib.sge import SGEJobTask
 from luigi import WrapperTask
 from itertools import chain
-from plumbum.cmd import FaQCs
+from plumbum.cmd import FaQCs, cat
 
 
 class RefFile(ExternalTask):
@@ -34,7 +34,15 @@ class PairedRunQC(luigi.Task):
 
     def requires(self):
         """Require pair of fastq."""
-        return RefFile(self.fastqs[0])
+        if isinstance(self.fastqs, (list, tuple)):
+            # fastqs = ["x1;x2","y1;y2"]
+            for fqs in self.fastqs:
+                fqs_list = fqs.split(",")
+                # fqs_list = ["x1", "x2"]
+                for fq in fqs_list:
+                    return RefFile(fq)
+        elif isinstance(self.fastqs, str):
+            return RefFile(self.fastqs.split(":")[0])
 
     def output(self):
         """QC output."""
@@ -42,7 +50,7 @@ class PairedRunQC(luigi.Task):
         return LocalTarget(out_file)
 
     def run(self):
-        """Run the perl script."""
+        """Run the FaQC script."""
         faqc_options = ["-min_L", "60",
                         "-n", "5",
                         "-q", "15",
@@ -127,12 +135,22 @@ class RunAllQC(WrapperTask):
         """A wrapper for running the QC."""
         for samp, fastq in self.fastq_dic.iteritems():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
+            if os.path.isdir(trim_dir) is False:
+                os.makedirs(trim_dir)
             if isinstance(fastq, (list, tuple)):
-                fqs = list(chain.from_iterable(
-                    [fq.split(':') for fq in fastq]))
-                if os.path.isdir(trim_dir) is False:
-                    os.makedirs(trim_dir)
-                yield PairedRunQC(fastqs=fqs,
+                fqs = [fq.replace(';', ',') for fq in fastq]
+                i = 1
+                for fq in fqs:
+                    fq_list = fq.split(",")
+                    # fq_list.extend((">", trim_dir + "/" + samp + "_R" + str(i) + ".fastq"))
+                    print(fq_list)
+                    cp_fq = trim_dir + "/" + samp + "_R" + str(i) + ".fastq"
+                    cat_cmd = (cat[fq_list] > cp_fq)
+                    cat_cmd()
+                    i = i + 1
+                yield PairedRunQC(fastqs=[trim_dir + "/" + samp +
+                                          "_R1.fastq", trim_dir + "/" +
+                                          samp + "_R2.fastq"],
                                   sample=samp,
                                   numCPUs=self.numCPUs,
                                   outdir=trim_dir,
