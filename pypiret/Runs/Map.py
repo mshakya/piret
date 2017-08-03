@@ -14,7 +14,7 @@ from luigi import Parameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
-from plumbum.cmd import touch, bamtools, hisat2, gffread, python
+from plumbum.cmd import touch, bamtools, hisat2, gffread, python, cp, rm, cut, samtools, stringtie
 # from Bio import SeqIO
 
 
@@ -172,6 +172,52 @@ class CreateSplice(ExternalProgramTask):
             hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
             hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
             hess_cmd = python[hess_opt]
+
+
+# @requires(GFF2GTF)
+# class GetIntGenRegions(ExternalProgramTask):
+#     """Find splice sites off gtf file."""
+
+#     def output(self):
+#         """Splice site output."""
+#         if ',' in self.gff_file:
+#             gffs = self.gff_file.split(",")
+#             return [LocalTarget(self.workdir + "/" +
+#                                 gff.split("/")[-1].split(".")[0] +
+#                                 ".ints") for gff in gffs]
+#         else:
+#             return LocalTarget(self.workdir + "/" +
+#                                self.gff_file.split("/")[-1].split(".")[0] +
+#                                ".ints")
+
+#     def run(self):
+#         """Main."""
+#         if ',' in self.ref_file:
+#             refs = self.refs.split(",")
+#             for ref in refs:
+#                 target_fa = self.workdir + "/" + ref
+#                 cp_opt = [ref, target_fa]
+#                 cp_cmd = cp[cp_opt]
+#                 cp_cmd()
+#                 sam_opt = ["faidx", target_fa]
+#                 sam_cmd = samtools[sam_opt]
+#                 sam_cmd()
+#                 rm_opt = [target_fa]
+#                 rm_cmd = rm[rm_opt]
+#                 rm_cmd()
+#                 index_file = target_fa + ".fai"
+#                 cut_opt = ["-f1,2", index_file]
+#                 cut_cmd = cut[cut_opt]
+#                 cut_cmd()
+
+
+
+#         else:
+#             gtf_file = self.workdir + "/" +\
+#                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
+#             hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
+#             hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
+#             hess_cmd = python[hess_opt]
 
 
 # @inherits(FastQC.PairedRunQC)
@@ -452,10 +498,10 @@ class GetRefNames(luigi.WrapperTask):
 
 @inherits(GFF2GTF)
 @inherits(SortBAMfile)
-class StringTieScores(ExternalProgramTask):
+class StringTieScores(luigi.Task):
     """Calculate scores using string tie."""
 
-    gtf = luigi.Parameter()
+    in_gtf = luigi.Parameter()
     out_gtf = luigi.Parameter()
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
@@ -473,7 +519,6 @@ class StringTieScores(ExternalProgramTask):
                                  workdir=self.workdir,
                                  bindir=self.bindir)]
         return [
-            # RefFile(self.gtf),
             SortBAMfile(fastq1=self.fastq1,
                         fastq2=self.fastq2,
                         numCPUs=self.numCPUs,
@@ -491,14 +536,15 @@ class StringTieScores(ExternalProgramTask):
         """Index output."""
         return LocalTarget(self.out_gtf)
 
-    def program_args(self):
+    def run(self):
         """Run stringtie."""
-        return ["stringtie",
-                "-o", self.out_gtf,
-                "-G", self.gtf,
-                "-C", self.out_cover,
-                "-A", self.out_abun,
-                self.in_bam_file]
+        stringtie_opt = ["-o", self.out_gtf,
+                         "-G", self.in_gtf,
+                         "-C", self.out_cover,
+                         "-A", self.out_abun,
+                         self.in_bam_file]
+        stringtie_cmd = stringtie[stringtie_opt]
+        stringtie_cmd()
 
 
 @inherits(GFF2GTF)
@@ -510,42 +556,43 @@ class StringTieScoresW(luigi.WrapperTask):
     kingdom = Parameter()
 
     def requires(self):
-        """A wrapper for running the QC."""
+        """A wrapper for running Stringtie scores on all samples."""
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
             splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
-        else:
-            splice_file = ''
         for samp, fastq in self.fastq_dic.iteritems():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
-                gtf = self.workdir + "/" + \
-                    self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
-                yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                      fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-                                      numCPUs=self.numCPUs,
-                                      indexfile=self.indexfile,
-                                      spliceFile=splice_file,
-                                      mappingLogFile=map_dir + "/mapping.log",
-                                      unalned=map_dir + "/unligned.fastq",
-                                      outsam=map_dir + "/" + samp + ".sam",
-                                      bam_file=map_dir + "/" + samp + ".bam",
-                                      sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      ref_file=self.ref_file,
-                                      gtf=gtf,
-                                      gff_file=self.gff_file,
-                                      out_gtf=map_dir + "/" + samp + "_sTie.gtf",
-                                      out_cover=map_dir + "/" + samp + "_covered_sTie.gtf",
-                                      out_abun=map_dir + "/" + samp + "_sTie.tab",
-                                      in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      bindir=self.bindir,
-                                      workdir=self.workdir)
+                if ',' in self.gff_file:
+                    gff_list = [os.path.abspath(gff) for gff in self.gff_file.split(",")]
+                    for gff in gff_list:
+                        gtf = self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf"
+                        gff_name = gtf.split(".gtf")[0].split("/")[-1]
+                        yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                              fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                                              numCPUs=self.numCPUs,
+                                              indexfile=self.indexfile,
+                                              spliceFile=splice_file,
+                                              mappingLogFile=map_dir + "/mapping.log",
+                                              unalned=map_dir + "/unligned.fastq",
+                                              outsam=map_dir + "/" + samp + ".sam",
+                                              bam_file=map_dir + "/" + samp + ".bam",
+                                              sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                              ref_file=self.ref_file,
+                                              in_gtf=gtf,
+                                              gff_file=self.gff_file,
+                                              out_gtf=map_dir + "/" + samp + "_" + gff_name + "_sTie.gtf",
+                                              out_cover=map_dir + "/" + samp + "_" + gff_name + "_covered_sTie.gtf",
+                                              out_abun=map_dir + "/" + samp + "_" + gff_name + "_sTie.tab",
+                                              in_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                              bindir=self.bindir,
+                                              workdir=self.workdir)
             elif self.kingdom == 'both':
                 prok_gtf = self.workdir + "/" + \
                     self.gff_file.split(";")[0].split("/")[-1].split(".gff")[0] + ".gtf"
