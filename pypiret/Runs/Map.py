@@ -115,8 +115,9 @@ class GFF2GTF(luigi.Task):
                                 gff.split("/")[-1].split(".")[0] +
                                 ".gtf") for gff in gffs]
         else:
+            gff = os.path.abspath(self.gff_file)
             return LocalTarget(self.workdir + "/" +
-                               self.gff_file.split("/")[-1].split(".")[0] +
+                               gff.split("/")[-1].rsplit(".", 1)[0] +
                                ".gtf")
 
     def run(self):
@@ -124,14 +125,16 @@ class GFF2GTF(luigi.Task):
         if ',' in self.gff_file:
             gffs = self.gff_file.split(",")
             for gff in gffs:
+                gff_abs = os.path.abspath(gff)
                 out_file = self.workdir + "/" +\
-                    gff.split("/")[-1].split(".")[0] + ".gtf"
-                gffread_option = [gff, "-T", "-o", out_file]
+                    gff_abs.split("/")[-1].split(".")[0] + ".gtf"
+                gffread_option = [gff_abs, "-T", "-o", out_file]
                 gffread_cmd = gffread[gffread_option]
                 gffread_cmd()
         else:
+            gff = os.path.abspath(self.gff_file)
             out_file = self.workdir + "/" +\
-                self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
+                gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
             gffread_option = [self.gff_file, "-T", "-o", out_file]
             gffread_cmd = gffread[gffread_option]
             gffread_cmd()
@@ -146,11 +149,12 @@ class CreateSplice(ExternalProgramTask):
         if ',' in self.gff_file:
             gffs = self.gff_file.split(",")
             return [LocalTarget(self.workdir + "/" +
-                                gff.split("/")[-1].split(".")[0] +
+                                os.path.abspath(gff).split("/")[-1].split(".")[0] +
                                 ".splice") for gff in gffs]
         else:
+            gff = os.path.abspath(self.gff_file)
             return LocalTarget(self.workdir + "/" +
-                               self.gff_file.split("/")[-1].split(".")[0] +
+                               gff.split("/")[-1].split(".")[0] +
                                ".splice")
 
     def run(self):
@@ -167,11 +171,15 @@ class CreateSplice(ExternalProgramTask):
                 hess_cmd = python[hess_opt]
                 hess_cmd()
         else:
+            gff = os.path.abspath(self.gff_file)
             gtf_file = self.workdir + "/" +\
-                self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
+                gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
+            out_file = self.workdir + "/" +\
+                self.gff_file.split("/")[-1].rsplit(".")[0] + ".splice"
             hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
             hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
             hess_cmd = python[hess_opt]
+            hess_cmd()
 
 
 # @requires(GFF2GTF)
