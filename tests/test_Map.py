@@ -70,23 +70,23 @@ class TestCreateSplice(unittest.TestCase):
 
     def test_splices_creation(self):
         """Test if GFF2GTF works for multiple gffs."""
-        luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff,tests/data/eukarya_test.gff3",
+        luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok1.1.gff,tests/data/eukarya_test.gff3",
                                            bindir="bin",
                                            workdir="tests/test_createsplice"),
-                               Map.CreateSplice(gff_file="tests/data/test_prok.gff,tests/data/eukarya_test.gff3",
+                               Map.CreateSplice(gff_file="tests/data/test_prok1.1.gff,tests/data/eukarya_test.gff3",
                                                 bindir="bin",
                                                 workdir="tests/test_createsplice")],
                               local_scheduler=True)
 
-        self.assertTrue(os.path.exists("tests/test_createsplice/test_prok.splice"))
+        self.assertTrue(os.path.exists("tests/test_createsplice/test_prok1.splice"))
         self.assertTrue(os.path.exists("tests/test_createsplice/eukarya_test.splice"))
         with open("tests/test_createsplice/eukarya_test.splice") as pg:
             first_line_second_column = pg.readline().split("\t")[1]
             self.assertEqual(first_line_second_column, "220")
 
-    # def tearDown(self):
-    #     """Remove created files and directories."""
-    #     shutil.rmtree("tests/test_createsplice/")
+    def tearDown(self):
+        """Remove created files and directories."""
+        shutil.rmtree("tests/test_createsplice/")
 
 # class Test
 if __name__ == '__main__':
