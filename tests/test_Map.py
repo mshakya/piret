@@ -2,26 +2,51 @@
 """A suite to test file_exist."""
 import sys
 import os
+import luigi
 import unittest
+import shutil
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
 from pypiret.Runs import Map  # noqa
 
 
-class TestMap(unittest.TestCase):
+class TestGFF2GTF(unittest.TestCase):
     """Unittest testcase."""
 
-    def test_hisat_map(self):
-        """Test if program SystemExit when tab delimited file is not given."""
-        Map.HisatIndex(fasta="tests/data/test_prok.fa",
-                       hi_index="tests/test_index",
-                       bindir="bin",
-                       numCPUs=1)
+    def setUp(self):
+        """Setting tup the directory."""
+        if os.path.exists("tests/test_gff2gtf") is False:
+            os.makedirs("tests/test_gff2gtf")
+
+    def test_gtf_creation(self):
+        """Test if GFF2GTF works."""
+        luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff",
+                                           bindir="bin",
+                                           workdir="tests/test_gff2gtf")],
+                              local_scheduler=True)
+
+        self.assertTrue(os.path.exists("tests/test_gff2gtf/test_prok.gtf"))
+
+    def test_gtfs_creation(self):
+        """Test if GFF2GTF works for multiple gffs."""
+        luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff,tests/data/eukarya_test.gff3",
+                                           bindir="bin",
+                                           workdir="tests/test_gff2gtf")],
+                              local_scheduler=True)
+
+        self.assertTrue(os.path.exists("tests/test_gff2gtf/test_prok.gtf"))
+        self.assertTrue(os.path.exists("tests/test_gff2gtf/eukarya_test.gtf"))
+        with open("tests/test_gff2gtf/test_prok.gtf") as pg:
+            first_line_fourth_column = pg.readline().split("\t")[3]
+            self.assertEqual(first_line_fourth_column, "462")
+        with open("tests/test_gff2gtf/eukarya_test.gtf") as pg:
+            first_line_fifth_column = pg.readline().split("\t")[4]
+            self.assertEqual(first_line_fifth_column, "2754")
 
     def tearDown(self):
-        """Tear down."""
-        self.test_hisat_map()
+        """Remove created files and directories."""
+        shutil.rmtree("tests/test_gff2gtf/")
 
 # class Test
 if __name__ == '__main__':
