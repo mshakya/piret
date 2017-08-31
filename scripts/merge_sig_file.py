@@ -4,6 +4,8 @@
 Script that joins all csv from EdgeR.
 
 It creates one csv file for easier manual analysis.
+
+Example: python ~/Desktop/PyPiReT/scripts/merge_sig_file.py -i .
 """
 
 from __future__ import print_function
