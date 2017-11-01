@@ -2,8 +2,9 @@
 
 library(optparse)
 library(edgeR)
-library(rtracklayer)
+#library(rtracklayer)
 library(dplyr)
+library(pheatmap)
 
 
 option_list <- list(
@@ -51,7 +52,7 @@ ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
 
 # create heatmap of count data.
 pdf(file.path(out_dir, "count_heatmap.pdf"))
-heatmap(as.matrix(read.counts))
+heatmap(as.matrix(read.counts), legend=TRUE)
 dev.off()
 
 

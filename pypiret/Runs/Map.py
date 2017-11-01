@@ -103,16 +103,16 @@ class GFF2GTF(luigi.Task):
         """Require reference gff(s) file."""
         if ',' in self.gff_file:
             gffs = self.gff_file.split(",")
-            return [RefFile(gff) for gff in gffs]
+            return [RefFile(os.path.abspath(gff)) for gff in gffs]
         else:
-            return [RefFile(self.gff_file)]
+            return [RefFile(os.path.abspath(self.gff_file))]
 
     def output(self):
         """Output converted gtf file."""
         if ',' in self.gff_file:
             gffs = self.gff_file.split(",")
             return [LocalTarget(self.workdir + "/" +
-                                gff.split("/")[-1].split(".")[0] +
+                                os.path.abspath(gff).split("/")[-1].rsplit(".", 1)[0] +
                                 ".gtf") for gff in gffs]
         else:
             gff = os.path.abspath(self.gff_file)
@@ -127,7 +127,7 @@ class GFF2GTF(luigi.Task):
             for gff in gffs:
                 gff_abs = os.path.abspath(gff)
                 out_file = self.workdir + "/" +\
-                    gff_abs.split("/")[-1].split(".")[0] + ".gtf"
+                    gff_abs.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
                 gffread_option = [gff_abs, "-T", "-o", out_file]
                 gffread_cmd = gffread[gffread_option]
                 gffread_cmd()
@@ -163,9 +163,9 @@ class CreateSplice(ExternalProgramTask):
             gffs = self.gff_file.split(",")
             for gff in gffs:
                 gtf_file = self.workdir + "/" +\
-                    gff.split("/")[-1].split(".")[0] + ".gtf"
+                    gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
                 out_file = self.workdir + "/" +\
-                    gff.split("/")[-1].split(".")[0] + ".splice"
+                    gff.split("/")[-1].rsplit(".", 1)[0] + ".splice"
                 hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
                 hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
                 hess_cmd = python[hess_opt]
@@ -175,7 +175,7 @@ class CreateSplice(ExternalProgramTask):
             gtf_file = self.workdir + "/" +\
                 gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
             out_file = self.workdir + "/" +\
-                self.gff_file.split("/")[-1].rsplit(".")[0] + ".splice"
+                self.gff_file.split("/")[-1].rsplit(".", 1)[0] + ".splice"
             hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
             hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
             hess_cmd = python[hess_opt]

@@ -27,8 +27,7 @@ class FeatureCounts(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
     kingdom = luigi.Parameter()
-    euk_gff = luigi.Parameter()
-    prok_gff = luigi.Parameter()
+    gff = luigi.Parameter()
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
@@ -38,14 +37,20 @@ class FeatureCounts(luigi.Task):
     def output(self):
         """Expected output of featureCounts."""
         counts_dir = self.workdir + "/featureCounts"
-        if self.kingdom == 'prokarya':
-            prok_gtf = self.workdir + "/" + self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
-            loc_target = [LocalTarget(counts_dir + feat + ".count") for feat in features]
-            return loc_target
-        elif self.kingdom == 'eukarya':
-            euk_gtf = self.workdir + "/" + self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
+        if ',' in self.gff:
+            gff_list = self.gff.split(",")
+            gff_full_path = [os.path.abspath(gff) for gff in gff_list]
+            gtfs = [self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf" for gff in gff_full_path]
+            all_target = []
+            for gtf in gtfs:
+                feature = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
+                loc_target = [LocalTarget(counts_dir + gtf + feat + ".count") for feat in feature]
+                all_target = loc_target + all_target
+                return all_target
+        else:
+            gff_fp = os.path.abspath(self.gff)
+            gtf = self.workdir + "/" + gff_fp.split("/")[-1].split(".gff")[0] + ".gtf"
+            features = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
             loc_target = [LocalTarget(counts_dir + feat + ".count") for feat in features]
             return loc_target
 
@@ -58,38 +63,37 @@ class FeatureCounts(luigi.Task):
         counts_dir = self.workdir + "/featureCounts"
         if not os.path.exists(counts_dir):
             os.makedirs(counts_dir)
-        if self.kingdom == 'prokarya':
-            prok_gtf = self.workdir + "/" + self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
-            for feat in features:
-                fcount_cmd_opt = ["-a", prok_gtf,
+        if ',' in self.gff:
+            gff_list = self.gff.split(",")
+            gff_full_path = [os.path.abspath(gff) for gff in gff_list]
+            gtfs = [self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf" for gff in gff_full_path]
+            for gtf in gtfs:
+                feature = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
+                for feat in feature:
+                    fcount_cmd_opt = ["-a", gtf,
+                                      "-s", 1,
+                                      "-B",
+                                      "-p", "-P", "-C",
+                                      "-g", "gene_name",
+                                      "-t", feat,
+                                      "-T", self.numCPUs,
+                                      "-o", counts_dir + "/" + gtf.split("/")[-1].split("gtf")[0] + feat + ".count"] + in_srtbam_list
+                    fcount_cmd = featureCounts[fcount_cmd_opt]
+                    fcount_cmd()
+        else:
+            gtf = self.workdir + "/" + self.gff.split("/")[-1].split(".gff")[0] + ".gtf"
+            feature = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
+            for feat in feature:
+                fcount_cmd_opt = ["-a", gtf,
                                   "-s", 1,
                                   "-B",
                                   "-p", "-P", "-C",
                                   "-g", "gene_name",
                                   "-t", feat,
                                   "-T", self.numCPUs,
-                                  "-o", counts_dir + "/" + feat + ".count"] + in_srtbam_list
+                                  "-o", counts_dir + "/" + gtf.split("/")[-1].split("gtf")[0] + feat + ".count"] + in_srtbam_list
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
-        if self.kingdom == 'eukarya':
-            euk_gtf = self.workdir + "/" + self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
-            for feat in features:
-                fcount_cmd_opt = ["-a", euk_gtf,
-                                  "-s", 1,
-                                  "-B",
-                                  "-p", "-P", "-C",
-                                  "-g", "gene_name",
-                                  "-t", feat,
-                                  "-T", self.numCPUs,
-                                  "-o", counts_dir + "/" + feat + ".count"] + in_srtbam_list
-                fcount_cmd = featureCounts[fcount_cmd_opt]
-                fcount_cmd()
-
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
 
 @requires(Map.SortBAMfileW)
@@ -164,27 +168,9 @@ class FeatureCountsBoth(luigi.Task):
         return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
 
-@inherits(Map.StringTieScoresW)
+@requires(Map.StringTieScoresW)
 class MergeStringTies(luigi.Task):
     """Summarize mapped reads classification using StringTie."""
-
-    def requires(self):
-        """Required."""
-        samp_list = list(self.fastq_dic.keys())
-        if self.kingdom in ['prokarya', 'eukarya']:
-            out_gtf_list = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" + samp + "_sTie.gtf"
-                            for samp in samp_list]
-            return[RefFile(out_gtf_file) for out_gtf_file in out_gtf_list]
-        elif self.kingdom == 'both':
-            prokout_gtf_list = [self.workdir + "/" + samp + "/" +
-                                "mapping_results" + "/" + samp + "_prok_sTie.gtf"
-                                for samp in samp_list]
-            eukout_gtf_list = [self.workdir + "/" + samp + "/" +
-                               "mapping_results" + "/" + samp + "_euk_sTie.gtf"
-                               for samp in samp_list]
-            out_gtf_list = prokout_gtf_list + eukout_gtf_list
-            return[Map.RefFile(out_gtf) for out_gtf in out_gtf_list]
 
     def ouput(self):
         """Ouptut of string tie merge."""
@@ -198,6 +184,8 @@ class MergeStringTies(luigi.Task):
         """Running stringtie merge."""
         samp_list = list(self.fastq_dic.keys())
         if self.kingdom in ['prokarya', 'eukarya']:
+            if ',' in self.gff_file:
+                
             gtf = self.workdir + "/" + \
                 self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
             out_gtf_list = [self.workdir + "/" + samp + "/" +
@@ -279,7 +267,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
         splice_list = [self.workdir + "/" +
                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
         if len(splice_list) > 1:
-            splice_file = ','.join([splice_list])
+            splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
         else:
@@ -365,3 +353,11 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         in_bam_file=map_dir + "/eukarya.bam",
                                         bindir=self.bindir,
                                         workdir=self.workdir)
+
+# class SampleInfo(luigi.task):
+#     luigi.Parameter() = workdir
+
+#     def run(self):
+#         for root, dirs, files in os.walk(workdir):
+
+            # if file.endswith
