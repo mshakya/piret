@@ -700,7 +700,7 @@ def check_ref(ref_fasta=None, ref_gff=None):
         if os.path.exists(ref_gff) and os.path.exists(ref_fasta):
             return True
         else:
-            exit_message = ' '.join(("Reference GFF", ref_gff, "do not exist!"))
+            exit_message = ' '.join(("Reference GFF", ref_gff, "does not exist!"))
             sys.exit(exit_message)
 
 
