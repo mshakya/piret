@@ -678,7 +678,7 @@ def check_method(method, exp_design_file):
     exp_desn = CheckDesign(exp_design_file)
     if method in ('Deseq2', 'all', 'Degown', 'DeEdge') and exp_desn.sample_suff(method='Deseq'):
         return True
-    elif method in ('EdgeR', 'ballgown'):
+    elif method in ('EdgeR', 'ballgown', 'ballEdge'):
         return True
     else:
         sys.exit("Deseq2 requires at least three replicates within a group!")
