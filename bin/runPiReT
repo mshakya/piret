@@ -13,12 +13,9 @@ import sys
 import argparse
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
-# conda_path = os.path.abspath(os.path.join(lib_path, 'thirdParty/miniconda/lib/python2.7/site-packages'))
-# conda_path2 = os.path.abspath(os.path.join(lib_path, 'thirdParty/miniconda/lib/python2.7'))
+print(lib_path)
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
-# sys.path.append(conda_path)
-# sys.path.append(conda_path2)
 os.environ["PATH"] += os.pathsep + bin_path
 # import logging
 from pypiret import CheckDesign, FastQC, Map, Summ, DGE
