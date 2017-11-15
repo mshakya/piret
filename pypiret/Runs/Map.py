@@ -577,6 +577,10 @@ class StringTieScoresW(luigi.WrapperTask):
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
+                if self.kingdom == 'prokarya':
+                    append_name = '_prok'
+                elif self.kingdom == 'eukarya':
+                    append_name = '_euk'
                 if ',' in self.gff_file:
                     gff_list = [os.path.abspath(gff) for gff in self.gff_file.split(",")]
                     for gff in gff_list:
@@ -595,9 +599,9 @@ class StringTieScoresW(luigi.WrapperTask):
                                           ref_file=self.ref_file,
                                           in_gtf=gtf,
                                           gff_file=self.gff_file,
-                                          out_gtf=map_dir + "/" + samp + "_" + gff_name + "_sTie.gtf",
-                                          out_cover=map_dir + "/" + samp + "_" + gff_name + "_covered_sTie.gtf",
-                                          out_abun=map_dir + "/" + samp + "_" + gff_name + "_sTie.tab",
+                                          out_gtf=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf",
+                                          out_cover=map_dir + "/" + samp + "_" + gff_name + append_name + "_covered_sTie.gtf",
+                                          out_abun=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.tab",
                                           in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                           bindir=self.bindir,
                                           workdir=self.workdir)
@@ -618,9 +622,9 @@ class StringTieScoresW(luigi.WrapperTask):
                                           ref_file=self.ref_file,
                                           in_gtf=gtf,
                                           gff_file=self.gff_file,
-                                          out_gtf=map_dir + "/" + samp + "_" + gff_name + "_sTie.gtf",
-                                          out_cover=map_dir + "/" + samp + "_" + gff_name + "_covered_sTie.gtf",
-                                          out_abun=map_dir + "/" + samp + "_" + gff_name + "_sTie.tab",
+                                          out_gtf=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf",
+                                          out_cover=map_dir + "/" + samp + "_" + gff_name + append_name + "_covered_sTie.gtf",
+                                          out_abun=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.tab",
                                           in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                           bindir=self.bindir,
                                           workdir=self.workdir)
