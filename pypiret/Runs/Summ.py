@@ -308,7 +308,8 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         out_abun=bg_dir + "/" + samp + "_sTie.tab",
                                         in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                         bindir=self.bindir,
-                                        workdir=self.workdir)
+                                        workdir=self.workdir,
+                                        in_gtf=gtf)
             elif self.kingdom == 'both':
                 bg_dir_prok = self.workdir + "/ballgown/prok/" + samp
                 if os.path.isdir(bg_dir_prok) is False:
