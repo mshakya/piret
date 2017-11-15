@@ -188,14 +188,16 @@ class MergeStringTies(luigi.Task):
                 append_name = '_prok'
             elif self.kingdom == 'eukarya':
                 append_name = '_euk'
-            gtf = self.workdir + "/" + \
-                self.gff_file.split(";")[0].split(
-                    "/")[-1].split(".gff")[0] + ".gtf"
-            # if ',' in self.gff_file: 
+            # gtf = self.workdir + "/" + \
+            #     self.gff_file.split(";")[0].split(
+            #         "/")[-1].split(".gff")[0] + ".gtf"
+
+            # if ',' in self.gff_file:
             gtf = self.workdir + "/" + \
                     self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
+            gff_name = gtf.split(".gtf")[0].split("/")[-1]
             out_gtf_list = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" + samp + append_name + "_sTie.gtf"
+                            "mapping_results" + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf"
                             for samp in samp_list]
 
             stie_cmd_opt = ["--merge", "-G", gtf,
