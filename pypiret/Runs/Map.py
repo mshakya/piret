@@ -603,7 +603,7 @@ class StringTieScoresW(luigi.WrapperTask):
                                           workdir=self.workdir)
 
                 else:
-                    gtf = self.workdir + "/" + gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
+                    gtf = self.workdir + "/" + self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
                     gff_name = gtf.split(".gtf")[0].split("/")[-1]
                     yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                           fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
