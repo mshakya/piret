@@ -184,6 +184,10 @@ class MergeStringTies(luigi.Task):
         """Running stringtie merge."""
         samp_list = list(self.fastq_dic.keys())
         if self.kingdom in ['prokarya', 'eukarya']:
+            if self.kingdom == 'prokarya':
+                append_name = '_prok'
+            elif self.kingdom == 'eukarya':
+                append_name = '_euk'
             gtf = self.workdir + "/" + \
                 self.gff_file.split(";")[0].split(
                     "/")[-1].split(".gff")[0] + ".gtf"
@@ -191,7 +195,7 @@ class MergeStringTies(luigi.Task):
             gtf = self.workdir + "/" + \
                     self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
             out_gtf_list = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" + samp + "_sTie.gtf"
+                            "mapping_results" + "/" + samp + append_name + "_sTie.gtf"
                             for samp in samp_list]
 
             stie_cmd_opt = ["--merge", "-G", gtf,
