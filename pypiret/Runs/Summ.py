@@ -290,6 +290,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
                     os.makedirs(bg_dir)
                 gtf = self.workdir + "/" + \
                     self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
+
                 yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                         fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                                         numCPUs=self.numCPUs,
@@ -302,10 +303,10 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
-                                        gtf=gtf,
-                                        out_gtf=bg_dir + "/" + samp + "_sTie.gtf",
-                                        out_cover=bg_dir + "/" + samp + "_covered_sTie.gtf",
-                                        out_abun=bg_dir + "/" + samp + "_sTie.tab",
+                                        gtf=self.workdir + "/" + "merged_transcript.gtf",
+                                        out_gtf=bg_dir + "/" + samp + "merged_sTie.gtf",
+                                        out_cover=bg_dir + "/" + samp + "merged_covered_sTie.gtf",
+                                        out_abun=bg_dir + "/" + samp + "merged_sTie.tab",
                                         in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                         bindir=self.bindir,
                                         workdir=self.workdir,
