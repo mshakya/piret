@@ -65,7 +65,7 @@ pdf(file.path(out_dir, "cpm_histograpm.pdf"))
 hist(log2(rowSums(cpm(edger_dge))))
 dev.off()
 
-# only keep genes/features that have total cpm in at least all samples
+# only keep genes/features that have an average of 1 CPM
 keep <- rowSums(cpm(edger_dge) > 1) >= nrow(group_table)
 edger_dge <- edger_dge[keep, ]
 
