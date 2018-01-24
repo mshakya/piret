@@ -66,7 +66,8 @@ hist(log2(rowSums(cpm(edger_dge))))
 dev.off()
 
 # only keep genes/features that have an average of 1 CPM
-keep <- rowSums(cpm(edger_dge) > 1) >= nrow(group_table)
+#keep <- rowSums(cpm(edger_dge) > 1) >= nrow(group_table)
+keep <- rowSums(cpm(edger_dge) > 1)
 edger_dge <- edger_dge[keep, ]
 
 # recompute library size after filtering
