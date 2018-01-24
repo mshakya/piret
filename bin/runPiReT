@@ -160,7 +160,7 @@ def main():
                          fastq_dic=samp_dic,
                          workdir=workdir,
                          kingdom=args.TEST_KINGDOM,
-                         exp_desn=args.EXPDSN,
+                         exp_desn_file=args.EXPDSN,
                          p_value=args.P_VALUE)
             elif args.TEST_KINGDOM == 'eukarya' and args.qsub is False:
                 check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
@@ -173,7 +173,7 @@ def main():
                          fastq_dic=samp_dic,
                          workdir=workdir,
                          kingdom=args.TEST_KINGDOM,
-                         exp_desn=args.EXPDSN,
+                         exp_desn_file=args.EXPDSN,
                          p_value=args.P_VALUE)
             elif args.TEST_KINGDOM == 'both' and args.qsub is False:
                 check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
@@ -192,7 +192,7 @@ def main():
 
 def euk_prok(ref_fasta, hisat_index, bindir, num_cpus,
              local_scheduler, fastq_dic, workdir, ref_gff,
-             kingdom, exp_desn, p_value):
+             kingdom, exp_desn_file, p_value):
     """All pipelines."""
     # Creating hisat2 index
     no_of_jobs = len(fastq_dic)
@@ -285,7 +285,7 @@ def euk_prok(ref_fasta, hisat_index, bindir, num_cpus,
                                                    ref_file=ref_fasta,
                                                    gff_file=ref_gff,
                                                    kingdom=kingdom,
-                                                   exp_desn=exp_desn,
+                                                   exp_desn_file=exp_desn,
                                                    p_value=p_value)],
                           local_scheduler=local_scheduler,
                           workers=no_of_jobs)
