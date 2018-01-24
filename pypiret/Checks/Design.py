@@ -32,7 +32,8 @@ class CheckDesign():
                     sys.exit('Experimental design file not correctly \
                               formatted!')
             else:
-                sys.exit('Experimental design file is not correctly formatted!'
+                sys.exit('Experimental design file is not correctly formatted!\n \
+                    There is only one or no column!'
                          )
 
     def header(self):
