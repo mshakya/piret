@@ -35,6 +35,7 @@ names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
                            perl = TRUE)
 names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
 
+print(read.counts)
 row.names(read.counts) <- read.counts[, 1]
 
 # gene information
