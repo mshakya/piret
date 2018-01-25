@@ -29,7 +29,8 @@ class EdgeR(ExternalProgramTask):
 
     def requires(self):
         """Require count file to be present."""
-        return RefFile(os.path.join(self.workdir, "featureCounts", "CDS.count"))
+        return RefFile(os.path.join(self.workdir, "featureCounts", os.path.splitext(os.path.basename(self.gff))[0] + ".CDS.count"))
+
 
     def output(self):
         """Expected output of DGE using EdgeR."""
