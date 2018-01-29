@@ -112,12 +112,11 @@ required arguments:
 
 required arguments (for prokaryotes):
   -fp FASTA_PROK        fasta for Prokaryotic Reference (default: None)
-  -gp GFF_PROK          path to gff files for prokaryotic organism (default:
-                        )
+  -gp GFF_PROK          path to gff files for prokaryotic organism, must have .gff extension
 
 required arguments (for eukaryotes):
   -fe FASTA_EUK         fasta for Eukaryotic Reference (default: None)
-  -ge GFF_EUK           path to gff files for eukaryotic organism (default: )
+  -ge GFF_EUK           path to gff files for eukaryotic organism, must have .gff extension
 
 when selecting both kingodm runs, options that are required for both eukaryotes
 and prokaryotes run are required.

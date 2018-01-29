@@ -42,16 +42,16 @@ class FeatureCounts(luigi.Task):
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
             gtfs = [self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf" for gff in gff_full_path]
             all_target = []
-            for gtf in gtfs:
-                feature = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
-                loc_target = [LocalTarget(counts_dir + gtf + feat + ".count") for feat in feature]
+            for gffs in gff_full_path:
+                feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
+                loc_target = [LocalTarget(counts_dir +  os.path.basename(gffs) + "_" + feat + "_count.csv") for feat in feature]
                 all_target = loc_target + all_target
                 return all_target
         else:
             gff_fp = os.path.abspath(self.gff)
-            gtf = self.workdir + "/" + gff_fp.split("/")[-1].split(".gff")[0] + ".gtf"
-            features = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
-            loc_target = [LocalTarget(counts_dir + feat + ".count") for feat in features]
+            features = list(set(pd.read_csv(gff_fp, sep="\t", header=None, comment='#')[2].tolist()))
+            features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene']]
+            loc_target = LocalTarget(counts_dir + "/" + os.path.basename(self.gff).split(".gff")[0] + "_" + features[-1] + "_count.csv")
             return loc_target
 
     def run(self):
@@ -67,33 +67,38 @@ class FeatureCounts(luigi.Task):
             gff_list = self.gff.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
             gtfs = [self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf" for gff in gff_full_path]
-            for gtf in gtfs:
-                feature = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
+            for gffs in gff_full_path:
+                feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
                 for feat in feature:
-                    fcount_cmd_opt = ["-a", gtf,
+                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene']:
+                        fcount_cmd_opt = ["-a", gtf,
                                       "-s", 1,
                                       "-B",
                                       "-p", "-P", "-C",
-                                      "-g", "gene_name",
+                                      "-g", "ID",
                                       "-t", feat,
                                       "-T", self.numCPUs,
-                                      "-o", counts_dir + "/" + gtf.split("/")[-1].split("gtf")[0] + feat + ".count"] + in_srtbam_list
+                                      "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
         else:
             gtf = self.workdir + "/" + self.gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            feature = list(set(pd.read_csv(gtf, sep="\t", header=None)[2].tolist()))
+            print("migun")
+            print(self.gff)
+
+            feature = list(set(pd.read_csv(self.gff, sep="\t", header=None, comment='#')[2].tolist()))
             for feat in feature:
-                fcount_cmd_opt = ["-a", gtf,
+                if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene']:
+                    fcount_cmd_opt = ["-a", self.gff,
                                   "-s", 1,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", "gene_name",
+                                  "-g", "ID",
                                   "-t", feat,
                                   "-T", self.numCPUs,
-                                  "-o", counts_dir + "/" + gtf.split("/")[-1].split("gtf")[0] + feat + ".count"] + in_srtbam_list
-                fcount_cmd = featureCounts[fcount_cmd_opt]
-                fcount_cmd()
+                                  "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
+                    fcount_cmd = featureCounts[fcount_cmd_opt]
+                    fcount_cmd()
 
 
 @requires(Map.SortBAMfileW)

@@ -82,14 +82,14 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         erence""", required=False, default=None)
 
     required_prok_args.add_argument("-gp", dest="GFF_PROK", help="""path to gff files for prokar
-        yotic organism""", required=False, default="")
+        yotic organism, must be a .gff file""", required=False, default="")
 
     required_euk_args = parser.add_argument_group('required arguments (for eukaryotes)')
 
     required_euk_args.add_argument("-fe", dest="FASTA_EUK", help="""fasta for Eukaryotic Refe
         rence""", required=False, default=None)
     required_euk_args.add_argument("-ge", dest="GFF_EUK", help="""path to gff files for eukar
-        yotic organism""", required=False, default="")
+        yotic organism, must be a .gff file""", required=False, default="")
 
     parser.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
         when eukarya or both is chosen, it expects alternative splicing
