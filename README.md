@@ -63,7 +63,7 @@ We have provided test data set to check if the installation was successful or no
 
 ```
 # if you are in a LINUX system:
-sh ./test_pipeline_linux.sh
+sh ./tests/test_pipeline_linux.sh
 
 ```
 These shell script automatically creates `test_experimental_design.txt` and runs the pipeline.
