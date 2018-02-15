@@ -128,14 +128,14 @@ class GFF2GTF(luigi.Task):
                 gff_abs = os.path.abspath(gff)
                 out_file = self.workdir + "/" +\
                     gff_abs.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
-                gffread_option = [gff_abs, "-T", "-o", out_file]
+                gffread_option = [gff_abs, "-O", "-o", out_file]
                 gffread_cmd = gffread[gffread_option]
                 gffread_cmd()
         else:
             gff = os.path.abspath(self.gff_file)
             out_file = self.workdir + "/" +\
                 gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
-            gffread_option = [self.gff_file, "-T", "-o", out_file]
+            gffread_option = [self.gff_file, "-O","-o", out_file]
             gffread_cmd = gffread[gffread_option]
             gffread_cmd()
 
