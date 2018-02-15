@@ -42,6 +42,7 @@ samtools_VER=1.3.1
 bamtools_VER=2.4.0
 jellyfish_VER=2.2.6
 R_VER=3.4.2
+
 hisat2_VER=2.0.5
 htseq_VER=0.6.1
 jbrowse_VER=1.12.1
