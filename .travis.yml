@@ -2,7 +2,7 @@ language: python
 sudo: false
 
 python:
-  - "2.7"
+  - "3.5.4"
 
 cache:
   directories:
@@ -37,7 +37,7 @@ install:
 script:
   - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"   
   - sh tests/test_pipeline_linux.sh
-  # - py.test --cov=./
+  - py.test --cov=./
 
 after_success:
   - codecov
