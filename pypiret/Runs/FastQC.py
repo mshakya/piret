@@ -133,7 +133,7 @@ class RunAllQC(WrapperTask):
 
     def requires(self):
         """A wrapper for running the QC."""
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             if os.path.isdir(trim_dir) is False:
                 os.makedirs(trim_dir)

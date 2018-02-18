@@ -286,7 +286,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
         else:
             splice_file = ''
 
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             if self.kingdom in ['prokarya', 'eukarya']:

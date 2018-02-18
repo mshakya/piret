@@ -304,7 +304,7 @@ class HisatMapW(luigi.WrapperTask):
             splice_file = splice_list[0]
         else:
             splice_file = ''
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             if os.path.isdir(map_dir) is False:
@@ -337,7 +337,7 @@ class HiSatBoth(luigi.WrapperTask):
         else:
             splice_file = ''
 
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             if os.path.isdir(map_dir) is False:
@@ -384,7 +384,7 @@ class SAM2BAMfileW(luigi.WrapperTask):
             splice_file = splice_list[0]
         else:
             splice_file = ''
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             if os.path.isdir(map_dir) is False:
@@ -432,7 +432,7 @@ class SortBAMfileW(luigi.WrapperTask):
             splice_file = splice_list[0]
         else:
             splice_file = ''
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             if os.path.isdir(map_dir) is False:
@@ -486,7 +486,7 @@ class GetRefNames(luigi.WrapperTask):
             splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             yield RefNames(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
@@ -571,7 +571,7 @@ class StringTieScoresW(luigi.WrapperTask):
             splice_file = ','.join(splice_list)
         elif len(splice_list) == 1:
             splice_file = splice_list[0]
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             if os.path.isdir(map_dir) is False:
@@ -710,7 +710,7 @@ class SplitBAMBoth(luigi.WrapperTask):
             splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
 
@@ -781,7 +781,7 @@ class SplitProkEukBoth(luigi.WrapperTask):
             splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             yield SplitRefProkEuk(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
@@ -842,7 +842,7 @@ class MergeBAMfileBoth(luigi.WrapperTask):
             splice_file = ','.join(splice_list)
         else:
             splice_file = splice_list[0]
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             yield MergeBAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
@@ -900,7 +900,7 @@ class StringTieScoresBoth(luigi.WrapperTask):
             self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
         prok_gtf = self.workdir + "/" + \
             self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-        for samp, fastq in self.fastq_dic.iteritems():
+        for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
