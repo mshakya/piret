@@ -160,19 +160,17 @@ All the outputs will be within the `working directory`.
     - `*.sam`: outputs of *HISAT2*
     - `*.bam`: generated from `.sam`
     - [mapping.log](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/mapping.log): Alignment summary file from `HISAT2`.
-    - [*sTie.tab](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
-    - [*sTie.gtf](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
-
+    - [`*sTie.tab`](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
+    - [`*sTie.gtf`](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
   - `trimming_results`
   This folder contains results of quality trimming and filtering using FaQC.
-    - [*_qc_report.pdf](https://github.com/mshakya/PyPiReT/blob/master/examples/samp3_qc_report.pdf): A QC report file with figures.
+    - [`*_qc_report.pdf`](https://github.com/mshakya/PyPiReT/blob/master/examples/samp3_qc_report.pdf): A QC report file with figures.
     - [fastqCount.txt](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/fastqCount.txt): A text file with summary of read counts.
     - *trimmed.fastq: Pair of trimmed fastq files.
     - *unpaired.trimmed.fastq: fastq that did not have pairs after QC.
-    - [*.stats.txt](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3.stats.txt): Summary file with numbers of reads before and after QC.
-
+    - [`*.stats.txt`](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3.stats.txt): Summary file with numbers of reads before and after QC.
 - `ballgown`
-  `ballgown` folder. The folder is to be read by `R` package `ballgown` for finding significantly expressed genes.
+  `ballgown` folder. The folder is to be read by `R` package `ballgown` for finding significantly expressed genes. There is one folder per sample.
 
 - `*merged_transcript.gtf`: Non-redundant list of transcripts in GTF format merged from all samples.
 
@@ -183,6 +181,14 @@ All the outputs will be within the `working directory`.
   - [exon.count.summary](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/exon.count.summary)
   - [prok_CDS.count](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/prok_CDS.count) : When used `both` option, prokaryote counts are in this file. Eukaryotes are found in file named `euk_CDS.count`
   - [prok_CDS.count.summary](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/prok_CDS.count.summary): Corresponding summary file.
+- `edgeR`: A folder containing tables and figures processed mainly using R package `edgeR` to detect significantly expressed genes. Based on the options picked, the folder will have either one or two folders, `prokarya` and `eukarya`. Withing these folders there are following files and figures.
+  - `*RPKM.csv`: A table with RPKM values for all genes across all samples.
+  - `*CPM.csv`: A table with CPM values for all features across all samples
+  - `*feature_count_heatmap.pdf`: Heatmap based on count data for the features listed in gff files.
+  - `*feature_count_CPM_histogram.pdf`: A histogram of CPMs.
+  - `*MDS.pdf`: A MDS plot based on reads mapped to samples.
+  - `group1__group2__gene__et.csv`: table with gene name, logFC, logCPM, PValue, and FDR comparing group1 vs. group 2. This one contains all genes that have any counts.
+  - `group1__group2__gene__sig.csv`: A subset of `group1__group2__gene__et.csv` with all only genes that are significant based on the specified P-value.
 
 
 ## 4.0 Removing PiReT
