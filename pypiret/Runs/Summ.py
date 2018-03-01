@@ -33,6 +33,7 @@ class FeatureCounts(luigi.Task):
     bindir = luigi.Parameter()
     numCPUs = luigi.Parameter()
     ref_file = luigi.Parameter()
+    ID=luigi.Parameter()
 
     def output(self):
         """Expected output of featureCounts."""
@@ -50,7 +51,7 @@ class FeatureCounts(luigi.Task):
         else:
             gff_fp = os.path.abspath(self.gff)
             features = list(set(pd.read_csv(gff_fp, sep="\t", header=None, comment='#')[2].tolist()))
-            features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene']]
+            features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']]
             loc_target = LocalTarget(counts_dir + "/" + os.path.basename(self.gff).split(".gff")[0] + "_" + features[-1] + "_count.csv")
             return loc_target
 
@@ -70,12 +71,12 @@ class FeatureCounts(luigi.Task):
             for gffs in gff_full_path:
                 feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
                 for feat in feature:
-                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene']:
+                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
                         fcount_cmd_opt = ["-a", gtf,
                                       "-s", 1,
                                       "-B",
                                       "-p", "-P", "-C",
-                                      "-g", "ID",
+                                      "-g", self.ID,
                                       "-t", feat,
                                       "-T", self.numCPUs,
                                       "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
@@ -83,17 +84,14 @@ class FeatureCounts(luigi.Task):
                     fcount_cmd()
         else:
             gtf = self.workdir + "/" + self.gff.split("/")[-1].split(".gff")[0] + ".gtf"
-            print("migun")
-            print(self.gff)
-
             feature = list(set(pd.read_csv(self.gff, sep="\t", header=None, comment='#')[2].tolist()))
             for feat in feature:
-                if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene']:
+                if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
                     fcount_cmd_opt = ["-a", self.gff,
                                   "-s", 1,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", "ID",
+                                  "-g", self.ID,
                                   "-t", feat,
                                   "-T", self.numCPUs,
                                   "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
@@ -205,9 +203,9 @@ class MergeStringTies(luigi.Task):
                             "mapping_results" + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf"
                             for samp in samp_list]
 
-            stie_cmd_opt = ["--merge", "-G", gtf,
+            stie_cmd_opt = ["--merge", "-G", self.gff_file,
                             "-o", self.workdir +
-                            "/" + "/merged_transcript.gtf"] + out_gtf_list
+                            "/" + "merged_transcript.gtf"] + out_gtf_list
             stie_cmd = stringtie[stie_cmd_opt]
             stie_cmd()
         elif self.kingdom == 'both':

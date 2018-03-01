@@ -547,7 +547,7 @@ class StringTieScores(luigi.Task):
     def run(self):
         """Run stringtie."""
         stringtie_opt = ["-o", self.out_gtf,
-                         "-G", self.in_gtf,
+                         "-G", self.gff_file,
                          "-C", self.out_cover,
                          "-A", self.out_abun,
                          self.in_bam_file]
