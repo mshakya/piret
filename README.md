@@ -71,13 +71,14 @@ These shell script automatically creates `test_experimental_design.txt` and runs
 
 ## 2.0 Running PiReT
 ```
-usage: runPiReT [-h] [-c CPU] -d WORKDIR -i INDEX_HISAT -e EXPDSN
-                [-fp FASTA_PROK] [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK]
+usage: runPiReT [-h] [-c CPU] -d WORKDIR -e EXPDSN [-fp FASTA_PROK]
+                [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK] [-i INDEX_HISAT]
                 [-k {prokarya,eukarya,both}]
                 [-m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}]
                 [-p P_VALUE] [--scheduler] [--qsub]
 
-Luigi based workflow for running RNASeq pipeline
+Luigi based workflow for running
+                                     RNASeq pipeline
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -88,14 +89,16 @@ optional arguments:
                         for every sample, be aware that the total number of
                         CPUs needed are your number of samples times CPU
                         specified here. (default: 1)
+  -i INDEX_HISAT        hisat2 index file, it only creates index if it does
+                        not exist (default: None)
   -k {prokarya,eukarya,both}
                         which kingdom to test, when eukarya or both is chosen,
                         it expects alternative splicing (default: prokarya)
   -m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}
                         Method to use for detecting differentially expressed
                         genes, Deseq2 requires 3 biological replicates and
-                        ballgown only works for eukaryotes (default: ballEdge)
-  -p P_VALUE            P-Value to for finding significantly
+                        ballgown only processes eukaryotes (default: ballEdge)
+  -p P_VALUE            P-Value to consider if genes are significantly
                         different, default is 0.001 (default: 0.001)
   --scheduler           when specified, will use luigi scheduler which allows
                         you to keep track of task using an url specified
@@ -106,17 +109,17 @@ optional arguments:
 required arguments:
   -d WORKDIR            working directory where all output files will be
                         processed and written (default: None)
-  -i INDEX_HISAT        hisat2 index file, it only creates index if it does
-                        not exist
   -e EXPDSN             tab delimited experimental design file
 
 required arguments (for prokaryotes):
-  -fp FASTA_PROK        fasta for Prokaryotic Reference (default: None)
-  -gp GFF_PROK          path to gff files for prokaryotic organism, must have .gff extension
+  -fp FASTA_PROK        fasta for Prokaryotic Ref erence (default: None)
+  -gp GFF_PROK          path to gff files for prokar yotic organism, must be a
+                        .gff file (default: )
 
 required arguments (for eukaryotes):
-  -fe FASTA_EUK         fasta for Eukaryotic Reference (default: None)
-  -ge GFF_EUK           path to gff files for eukaryotic organism, must have .gff extension
+  -fe FASTA_EUK         fasta for Eukaryotic Refe rence (default: None)
+  -ge GFF_EUK           path to gff files for eukar yotic organism, must be a
+                        .gff file (default: )
 
 when selecting both kingodm runs, options that are required for both eukaryotes
 and prokaryotes run are required.
