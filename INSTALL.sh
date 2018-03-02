@@ -262,7 +262,7 @@ then
   curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
   chmod +x miniconda.sh
   ./miniconda.sh -b -p $ROOTDIR/thirdParty/miniconda -f
-  conda update -n base conda
+  conda update --yes -n base conda
   # export PATH=$ROOTDIR/thirdParty/miniconda/bin:$PATH
   ln -sf $ROOTDIR/thirdParty/miniconda/bin/conda $ROOTDIR/bin/conda
   ln -sf $ROOTDIR/thirdParty/miniconda/bin/pip $ROOTDIR/bin/pip
@@ -274,7 +274,7 @@ else
   wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   chmod +x miniconda.sh
   ./miniconda.sh -b -p $ROOTDIR/thirdParty/miniconda -f
-  conda update -n base conda
+  conda update --yes -n base conda
   # export PATH=$ROOTDIR/thirdParty/miniconda/bin:$PATH
   ln -sf $ROOTDIR/thirdParty/miniconda/bin/conda $ROOTDIR/bin/conda
   ln -sf $ROOTDIR/thirdParty/miniconda/bin/pip $ROOTDIR/bin/pip
