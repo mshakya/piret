@@ -4,6 +4,8 @@ sudo: false
 # python:
 #   - "3.5.4"
 
+r:
+  - release
 # cache:
 #   directories:
 #     - $HOME/build/mshakya/PyPiReT/thirdParty/miniconda
