@@ -61,10 +61,8 @@ class TestCheckDesign(unittest.TestCase):
         """Test if correctly generated."""
         get_fastqs = CheckDesign(test_exp_file)
         self.assertEqual(get_fastqs.extract_sample_fastqs()['samp2'],
-                         ["tests/data/fastqs/BTT_test25_R1.fastq:"
-                          "tests/data/fastqs/BTT_test25_R2.fastq",
-                          "tests/data/fastqs/BTT_test15_R1.fastq:"
-                          "tests/data/fastqs/BTT_test15_R2.fastq"])
+                         ["tests/data/fastqs/BTT_test25_R1.fastq:tests/data/fastqs/BTT_test25_R2.fastq",
+                          "tests/data/fastqs/BTT_test15_R1.fastq:tests/data/fastqs/BTT_test15_R2.fastq"])
 
     def test_fastq_notexists(self):
         """Test if Fastq files in experimental design are not present."""
