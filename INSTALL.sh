@@ -37,7 +37,7 @@ fi
 export R_LIBS="$ROOTDIR/ext/lib/R:$R_LIBS:$R_LIBS_USER"
 
 # Minimum Required versions of dependencies
-miniconda_VER=4.3.21
+miniconda_VER=4.4.11
 samtools_VER=1.3.1
 bamtools_VER=2.4.0
 jellyfish_VER=2.2.6
