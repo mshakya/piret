@@ -33,9 +33,9 @@ install:
   # - source activate piret-environment
   - ./INSTALL.sh
   - source activate piret
-  - pip install codecov
-  - pip install coverage
-  - pip install pytest-cov
+  - conda install -c conda-forge codecov -n piret
+  - conda install -c conda-forge coverage -n piret
+  - conda install -c conda-forge pytest-cov -n piret
 
 script:
   - source activate piret
