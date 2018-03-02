@@ -95,9 +95,9 @@ class TestHisatMapping(unittest.TestCase):
         if os.path.exists("tests/test_hisatmapping") is False:
             os.makedirs("tests/test_hisatmapping")
 
-    def tearDown(self):
+    # def tearDown(self):
         # """Remove created files and directories."""
-        shutil.rmtree("tests/test_hisatmapping/")
+        # shutil.rmtree("tests/test_hisatmapping/")
 
     def test_hisat(self):
         """Test hisat index creation, FastQC, and mapping."""
@@ -106,19 +106,16 @@ class TestHisatMapping(unittest.TestCase):
         luigi.interface.build([
             Map.HisatIndex(fasta="tests/data/test_prok.fa",
                            hi_index="tests/test_hisatmapping/prok_index",
-                           bindir="bin",
+                           bindir=bindir,
                            numCPUs=1),
-            FastQC.PairedRunQC(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
-                                       "tests/data/BTT_test15_R2.1000.fastq"],
-                               sample="samp1",
-                               numCPUs=1,
-                               outdir="tests/test_hisatmapping/trimming_results",
-                               bindir=bindir,
-                               faqc_min_L=50,
-                               n_cutoff=5),
-            Map.Hisat(fastq1="tests/data/BTT_test15_R1.1000.fastq",
+            Map.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
+                              "tests/data/BTT_test15_R2.1000.fastq"],
+                      fastq1="tests/data/BTT_test15_R1.1000.fastq",
                       fastq2="tests/data/BTT_test15_R2.1000.fastq",
                       numCPUs=1,
+                      sample="samp1",
+                      faqc_min_L=50, n_cutoff=5,
+                      qc_outdir="tests/test_hisatmapping/trimming_results",
                       indexfile="tests/test_hisatmapping/prok_index",
                       spliceFile="",
                       mappingLogFile="tests/test_hisatmapping/mapping.log",

@@ -228,7 +228,7 @@ class CreateSplice(ExternalProgramTask):
 #             hess_cmd = python[hess_opt]
 
 
-# @inherits(FastQC.PairedRunQC)
+@requires(FastQC.PairedRunQC)
 class Hisat(luigi.Task):
     """Mapping the QCed sequences to reference."""
 
@@ -243,19 +243,19 @@ class Hisat(luigi.Task):
     ref_file = Parameter()
     bindir = Parameter()
 
-    def requires(self):
-        """Require pair of fastq and index files."""
-        return[FastQC.PairedRunQC(fastqs=[self.fastq1, self.fastq2],
-                                  sample=self.outsam.split(
-                                      ".sam")[0].split("/")[-1],
-                                  numCPUs=self.numCPUs,
-                                  outdir=self.mappingLogFile.split("mapping_results")[0] +
-                                  "trimming_results",
-                                  bindir=self.bindir),
-               HisatIndex(fasta=self.ref_file,
-                          hi_index=self.indexfile,
-                          bindir=self.bindir,
-                          numCPUs=self.numCPUs)]
+    # def requires(self):
+    #     """Require pair of fastq and index files."""
+    #     return[FastQC.PairedRunQC(fastqs=[self.fastq1, self.fastq2],
+    #                               sample=self.outsam.split(
+    #                                   ".sam")[0].split("/")[-1],
+    #                               numCPUs=self.numCPUs,
+    #                               outdir=self.mappingLogFile.split("mapping_results")[0] +
+    #                               "trimming_results",
+    #                               bindir=self.bindir),
+    #            HisatIndex(fasta=self.ref_file,
+    #                       hi_index=self.indexfile,
+    #                       bindir=self.bindir,
+    #                       numCPUs=self.numCPUs)]
 
     def output(self):
         """SAM file output of the mapping."""

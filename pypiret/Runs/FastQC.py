@@ -29,16 +29,16 @@ class PairedRunQC(luigi.Task):
     fastqs = ListParameter()
     sample = Parameter()
     numCPUs = IntParameter()
-    outdir = Parameter()
+    qc_outdir = Parameter()
     bindir = Parameter()
+    faqc_min_L = IntParameter()
+    n_cutoff = IntParameter()
 
     def requires(self):
         """Require pair of fastq."""
         if isinstance(self.fastqs, (list, tuple)):
-            # fastqs = ["x1;x2","y1;y2"]
             for fqs in self.fastqs:
                 fqs_list = fqs.split(",")
-                # fqs_list = ["x1", "x2"]
                 for fq in fqs_list:
                     return RefFile(fq)
         elif isinstance(self.fastqs, str):
@@ -46,18 +46,18 @@ class PairedRunQC(luigi.Task):
 
     def output(self):
         """QC output."""
-        out_file = self.outdir + "/" + self.sample + ".stats.txt"
+        out_file = self.qc_outdir + "/" + self.sample + ".stats.txt"
         return LocalTarget(out_file)
 
     def run(self):
         """Run the FaQC script."""
-        faqc_options = ["-min_L", "60",
-                        "-n", "5",
+        faqc_options = ["-min_L", self.faqc_min_L,
+                        "-n", self.n_cutoff,
                         "-q", "15",
                         "-lc", "0.7",
                         "-t", self.numCPUs,
                         "-prefix", self.sample,
-                        "-d", os.path.abspath(self.outdir),
+                        "-d", os.path.abspath(self.qc_outdir),
                         "-1", self.fastqs[0],
                         "-2", self.fastqs[1]]
         faqc_cmd = FaQCs[faqc_options]
@@ -73,7 +73,7 @@ class PairedRunQC(luigi.Task):
 
 #     fastqs = ListParameter()
 #     sample = Parameter()
-#     outdir = Parameter()
+#     qc_outdir = Parameter()
 #     parallel_env = "smp"
 #     no_tarball = True
 #     dont_remove_tmp_dir = True
@@ -85,7 +85,7 @@ class PairedRunQC(luigi.Task):
 
 #     def output(self):
 #         """QC output."""
-#         return LocalTarget(self.outdir + "/" + self.sample + ".stats.text")
+#         return LocalTarget(self.qc_outdir + "/" + self.sample + ".stats.text")
 
 #     # def run_program(self):
 #     #     subprocess.call(["perl", "scripts/illumina_fastq_QC.pl",
@@ -95,15 +95,15 @@ class PairedRunQC(luigi.Task):
 #     #                       "-lc", "0.7",
 #     #                       "-t", str(self.n_cpu),
 #     #                       "-prefix", str(self.sample),
-#     #                       "-d", str(os.path.abspath(self.outdir)),
+#     #                       "-d", str(os.path.abspath(self.qc_outdir)),
 #     #                       "-p", str(self.fastqs)], shell=True, stdout=subprocess.PIPE,
 #     #                       stderr=subprocess.PIPE)
 
 #     def work(self):
 #         """Run the perl script."""
 #         # logger.info('Running test job...')
-#         # mig = os.path.abspath(self.outdir)
-#         out_file = self.outdir + "/" + self.sample + ".stats.txt"
+#         # mig = os.path.abspath(self.qc_outdir)
+#         out_file = self.qc_outdir + "/" + self.sample + ".stats.txt"
 #         # out_file_full = mig + "/" + self.sample + ".stats.text"
 #         subprocess.call(["ls", "-lh"])
 #         # with open(out_file, 'w') as f:
@@ -118,7 +118,7 @@ class PairedRunQC(luigi.Task):
 #         #                   "-lc", "0.7",
 #         #                   "-t", str(self.numCPUs),
 #         #                   "-prefix", str(self.sample),
-#         #                   "-d", str(os.path.abspath(self.outdir)),
+#         #                   "-d", str(os.path.abspath(self.qc_outdir)),
 #         #                   "-p", str(self.fastqs)], shell=True, stdout=subprocess.PIPE,
 #         #                   stderr=subprocess.PIPE)
 
@@ -130,6 +130,8 @@ class RunAllQC(WrapperTask):
     workdir = Parameter()
     numCPUs = IntParameter()
     bindir = Parameter()
+    faqc_min_L = IntParameter()
+    n_cutoff = IntParameter()
 
     def requires(self):
         """A wrapper for running the QC."""
@@ -142,8 +144,6 @@ class RunAllQC(WrapperTask):
                 i = 1
                 for fq in fqs:
                     fq_list = fq.split(",")
-                    # fq_list.extend((">", trim_dir + "/" + samp + "_R" + str(i) + ".fastq"))
-                    print(fq_list)
                     cp_fq = trim_dir + "/" + samp + "_R" + str(i) + ".fastq"
                     cat_cmd = (cat[fq_list] > cp_fq)
                     cat_cmd()
@@ -153,8 +153,10 @@ class RunAllQC(WrapperTask):
                                           samp + "_R2.fastq"],
                                   sample=samp,
                                   numCPUs=self.numCPUs,
-                                  outdir=trim_dir,
-                                  bindir=self.bindir)
+                                  qc_outdir=trim_dir,
+                                  bindir=self.bindir,
+                                  faqc_min_L=self.faqc_min_L,
+                                  n_cutoff=self.n_cutoff)
 
             else:
                 if os.path.isdir(trim_dir) is False:
@@ -163,8 +165,10 @@ class RunAllQC(WrapperTask):
                 yield PairedRunQC(fastqs=fqs,
                                   sample=samp,
                                   numCPUs=self.numCPUs,
-                                  outdir=trim_dir,
-                                  bindir=self.bindir)
+                                  qc_outdir=trim_dir,
+                                  bindir=self.bindir,
+                                  faqc_min_L=self.faqc_min_L,
+                                  n_cutoff=self.n_cutoff)
 
 
 # class SGERunAllQC(WrapperTask):
@@ -188,7 +192,7 @@ class RunAllQC(WrapperTask):
 #                 yield SGEPairedRunQC(fastqs=fqs,
 #                                      sample=samp,
 #                                      n_cpu=self.numCPUs,
-#                                      outdir=trim_dir,
+#                                      qc_outdir=trim_dir,
 #                                      shared_tmp_dir=self.shared_tmp_dir)
 
 #             else:
@@ -198,5 +202,5 @@ class RunAllQC(WrapperTask):
 #                 yield SGEPairedRunQC(fastqs=fqs,
 #                                      sample=samp,
 #                                      n_cpu=self.numCPUs,
-#                                      outdir=trim_dir,
+#                                      qc_outdir=trim_dir,
 #                                      shared_tmp_dir=self.shared_tmp_dir)

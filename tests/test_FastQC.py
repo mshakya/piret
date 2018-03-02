@@ -28,7 +28,7 @@ class TestFaQC(unittest.TestCase):
                                                        "tests/data/fastqs/BTT_test15_R1.fastq"],
                                                 sample="samp1",
                                                 numCPUs=1,
-                                                outdir="test_faqc",
+                                                qc_outdir="test_faqc",
                                                 bindir=bindir,
                                                 faqc_min_L=50,
                                                 n_cutoff=5)],
