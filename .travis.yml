@@ -39,6 +39,7 @@ install:
 
 script:
   - source activate piret
+  - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"
   - which python
   # - sh tests/test_pipeline_linux.sh 
   - py.test --cov=codecov
