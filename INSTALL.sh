@@ -259,7 +259,7 @@ if [[ "$OSTYPE" == "darwin"* ]]
 then
 {
 
-  curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-x86_64.sh
+  curl -o miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
   chmod +x miniconda.sh
   ./miniconda.sh -b -p $ROOTDIR/thirdParty/miniconda -f
   # export PATH=$ROOTDIR/thirdParty/miniconda/bin:$PATH
