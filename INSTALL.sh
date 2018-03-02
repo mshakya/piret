@@ -785,6 +785,13 @@ else
     install_python_Bio
 fi
 
+
+#installing some lightweight developer tools
+echo "Installing some developer tools codecov, coverage, pytest-cov"
+conda install -c conda-forge codecov -n piret
+conda install -c conda-forge coverage -n piret
+conda install -c conda-forge pytest-cov -n piret
+
 echo "
 All done! Please Restart the Terminal Session.
 Run

@@ -33,9 +33,10 @@ install:
   # - source activate piret-environment
   - ./INSTALL.sh
   - source activate piret
-  - conda install -c conda-forge codecov -n piret
-  - conda install -c conda-forge coverage -n piret
-  - conda install -c conda-forge pytest-cov -n piret
+  - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"
+  # - conda install -c conda-forge codecov -n piret
+  # - conda install -c conda-forge coverage -n piret
+  # - conda install -c conda-forge pytest-cov -n piret
 
 script:
   - source activate piret
