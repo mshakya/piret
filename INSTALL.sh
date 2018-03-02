@@ -103,7 +103,7 @@ echo "--------------------------------------------------------------------------
                 installing Python module Bio $python_Bio_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c anaconda biopython=$python_Bio_VER
+conda install --yes -n piret -c anaconda biopython=$python_Bio_VER
 echo "
 --------------------------------------------------------------------------------
                            Biopython installed
@@ -117,7 +117,7 @@ echo "--------------------------------------------------------------------------
                 installing Python module luigi
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c anaconda luigi=2.3.0
+conda install --yes -n piret -c anaconda luigi=2.3.0
 echo "
 --------------------------------------------------------------------------------
                            luigi installed
@@ -132,7 +132,7 @@ echo "--------------------------------------------------------------------------
                 installing Python module plumbum
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c conda-forge plumbum=1.6.3
+conda install --yes -n piret -c conda-forge plumbum=1.6.3
 echo "
 --------------------------------------------------------------------------------
                            plumbum installed
@@ -147,7 +147,7 @@ echo "--------------------------------------------------------------------------
                            installing hisat2 v$hisat2_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda hisat2=$hisat2_VER
+conda install --yes -n piret -c bioconda hisat2=$hisat2_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/hisat2 $ROOTDIR/bin/hisat2
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/hisat2-build $ROOTDIR/bin/hisat2-build
 echo "
@@ -163,7 +163,7 @@ echo "--------------------------------------------------------------------------
                            installing stringtie v$stringtie_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda stringtie=$stringtie_VER
+conda install --yes -n piret -c bioconda stringtie=$stringtie_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/stringtie $ROOTDIR/bin/stringtie
 echo "
 ------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ echo "--------------------------------------------------------------------------
                            installing jellyfish v$jellyfish_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda jellyfish=$jellyfish_VER
+conda install --yes -n piret -c bioconda jellyfish=$jellyfish_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/jellyfish $ROOTDIR/bin/jellyfish
 echo "
 ------------------------------------------------------------------------------
@@ -194,7 +194,7 @@ echo "--------------------------------------------------------------------------
                            installing subread v$subread_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda subread=$subread_VER
+conda install --yes -n piret -c bioconda subread=$subread_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/featureCounts $ROOTDIR/bin/featureCounts
 echo "
 ------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ echo "--------------------------------------------------------------------------
                            Downloading samtools v $samtools_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda samtools=$samtools_VER
+conda install --yes -n piret -c bioconda samtools=$samtools_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/samtools $ROOTDIR/bin/samtools
 echo "
 --------------------------------------------------------------------------------
@@ -223,7 +223,7 @@ echo "--------------------------------------------------------------------------
                            Downloading bamtools v $bamtools_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda bamtools=$bamtools_VER
+conda install --yes -n piret -c bioconda bamtools=$bamtools_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/bamtools $ROOTDIR/bin/bamtools
 echo "
 --------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ echo "--------------------------------------------------------------------------
                            Installing R v $R_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c r r-base=$R_VER
+conda install --yes -n piret -c r r-base=$R_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/R $ROOTDIR/bin/R
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/Rscript $ROOTDIR/bin/Rscript
 echo "
@@ -295,7 +295,7 @@ echo "--------------------------------------------------------------------------
                       Installing FaQC
 ------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c anaconda zlib=1.2.11
+conda install --yes -n piret -c anaconda zlib=1.2.11
 export CPLUS_INCLUDE_PATH=$ROOTDIR/thirdParty/miniconda/include/:$CPLUS_INCLUDE_PATH
 cd $ROOTDIR/thirdParty
 tar xvzf FaQCs-2.06.tar.gz
