@@ -1,12 +1,10 @@
 language: python
 sudo: false
 
-# python:
-#   - "3.5.4"
+python:
+  - "3.6.3"
 
-r:
-  - release
-# cache:
+ # cache:
 #   directories:
 #     - $HOME/build/mshakya/PyPiReT/thirdParty/miniconda
 #     - $HOME/build/mshakya/PyPiReT/ext
