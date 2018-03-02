@@ -10,7 +10,7 @@ import luigi
 from luigi.contrib.external_program import ExternalProgramTask
 from luigi import ExternalTask
 from luigi import LocalTarget
-from luigi import Parameter
+from luigi import Parameter, IntParameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
@@ -65,7 +65,7 @@ class HisatIndex(ExternalProgramTask):
     fasta = Parameter()
     hi_index = Parameter()
     bindir = Parameter()
-    numCPUs = Parameter()
+    numCPUs = IntParameter()
 
     def requires(self):
         """Require reference fasta format file."""
@@ -286,7 +286,7 @@ class Hisat(luigi.Task):
             hisat2_cmd()
 
 
-@inherits(FastQC.RunAllQC)
+@requires(FastQC.RunAllQC)
 class HisatMapW(luigi.WrapperTask):
     """A wrapper task for running mapping."""
 
