@@ -51,7 +51,7 @@ subread_VER=1.5.0
 
 # minimum required version of Scripting languages
 # perl5_VER=5.16.3
-python2_VER=2.7.12
+python3_VER=3.6.4
 
 #minimum required version of R modules
 R_edgeR_VER=3.14.0
@@ -70,15 +70,15 @@ python_plumbum_VER=1.6.3
 install_python()
 {
 echo "--------------------------------------------------------------------------
-                           installing python v$python2_VER
+                           installing python v$python3_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret python=$python2_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret python=$python3_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/python $ROOTDIR/bin/python
 
 echo "
 ------------------------------------------------------------------------------
-                           python v$python2_VER installed
+                           python v$python3_VER installed
 ------------------------------------------------------------------------------
 "
 }
@@ -147,7 +147,7 @@ echo "--------------------------------------------------------------------------
                            installing hisat2 v$hisat2_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda hisat2=$hisat2_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret-c bioconda hisat2=$hisat2_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/hisat2 $ROOTDIR/bin/hisat2
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/hisat2-build $ROOTDIR/bin/hisat2-build
 echo "
@@ -163,7 +163,7 @@ echo "--------------------------------------------------------------------------
                            installing stringtie v$stringtie_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda stringtie=$stringtie_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret-c bioconda stringtie=$stringtie_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/stringtie $ROOTDIR/bin/stringtie
 echo "
 ------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ echo "--------------------------------------------------------------------------
                            installing jellyfish v$jellyfish_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda jellyfish=$jellyfish_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret-c bioconda jellyfish=$jellyfish_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/jellyfish $ROOTDIR/bin/jellyfish
 echo "
 ------------------------------------------------------------------------------
@@ -209,7 +209,7 @@ echo "--------------------------------------------------------------------------
                            Downloading samtools v $samtools_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda samtools=$samtools_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret-c bioconda samtools=$samtools_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/samtools $ROOTDIR/bin/samtools
 echo "
 --------------------------------------------------------------------------------
@@ -223,7 +223,7 @@ echo "--------------------------------------------------------------------------
                            Downloading bamtools v $bamtools_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c bioconda bamtools=$bamtools_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret-c bioconda bamtools=$bamtools_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/bamtools $ROOTDIR/bin/bamtools
 echo "
 --------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ echo "--------------------------------------------------------------------------
                            Installing R v $R_VER
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret-c r r-base=$R_VER -p $ROOTDIR/thirdParty/miniconda
+conda install --yes -n piret-c r r-base=$R_VER
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/R $ROOTDIR/bin/R
 ln -sf $ROOTDIR/thirdParty/miniconda/bin/Rscript $ROOTDIR/bin/Rscript
 echo "
@@ -549,11 +549,11 @@ fi
 if ( checkSystemInstallation python )
 then
   python_installed_VER=`python -V 2>&1 | perl -nle 'print $& if m{Python \d+\.\d+\.\d+}'`;
-  if ( echo $python_installed_VER $python2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+  if ( echo $python_installed_VER $python3_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
   then 
     echo " - found python $python_installed_VER"
   else
-    echo "Required version of python ($python2_VER) was not found"
+    echo "Required version of python ($python3_VER) was not found"
     install_python
   fi
 else
