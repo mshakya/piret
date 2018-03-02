@@ -117,7 +117,8 @@ echo "--------------------------------------------------------------------------
                 installing Python module luigi
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret -c anaconda luigi=2.3.0
+# conda install --yes -n piret -c anaconda luigi=2.3.0
+pip install luigi
 echo "
 --------------------------------------------------------------------------------
                            luigi installed
