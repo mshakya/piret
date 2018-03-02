@@ -28,15 +28,16 @@ install:
   # - conda create -q -n piret-environment python=$TRAVIS_PYTHON_VERSION luigi pandas biopython
   # - conda install --yes -c conda-forge plumbum=1.6.3
   # - conda install --yes -c anaconda zlib=1.2.8
-  # - pip install codecov
   # - pip install plumbum
   # - pip install pytest-cov
   # - source activate piret-environment
   - ./INSTALL.sh
+  - pip install codecov
+  - pip install coverage
 
 script:
   - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"   
-  - sh tests/test_pipeline_linux.sh
+  - sh tests/test_pipeline_linux.sh 
   - py.test --cov=./
 
 after_success:
