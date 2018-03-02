@@ -529,20 +529,20 @@ then
     if [ -d "$ROOTDIR/thirdParty/miniconda" ]; then
       echo "conda is pointed to right environment"
       echo "creating piret environment"
-      conda create --name piret 
+      conda create --name piret --yes
     else
       echo "Creating a separate conda enviroment ..."
-      conda create --name piret --yes -p $ROOTDIR/thirdParty/miniconda
+      conda create --name piret --yes
     fi
   else
     echo "Required version of conda ($miniconda_VER) was not found"
     install_miniconda
-    conda create --name piret --yes -p $ROOTDIR/thirdParty/miniconda
+    conda create --name piret --yes
   fi
 else
   echo "conda was not found"
   install_miniconda
-  conda create --name piret --yes -p $ROOTDIR/thirdParty/miniconda
+  conda create --name piret --yes
 fi
 
 ###############################################################################
