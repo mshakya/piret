@@ -32,12 +32,12 @@ install:
   # - pip install pytest-cov
   # - source activate piret-environment
   - ./INSTALL.sh
-  - pip install --user codecov
+  - pip install codecov
   - pip install coverage
 
 script:
   - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"   
-  - sh tests/test_pipeline_linux.sh 
+  # - sh tests/test_pipeline_linux.sh 
   - py.test --cov=codecov
 
 after_success:
