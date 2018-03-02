@@ -530,19 +530,23 @@ then
       echo "conda is pointed to right environment"
       echo "creating piret environment"
       conda create --name piret --yes
+      source activate piret
     else
       echo "Creating a separate conda enviroment ..."
       conda create --name piret --yes
+      source activate piret
     fi
   else
     echo "Required version of conda ($miniconda_VER) was not found"
     install_miniconda
     conda create --name piret --yes
+    source activate piret
   fi
 else
   echo "conda was not found"
   install_miniconda
   conda create --name piret --yes
+  source activate piret
 fi
 
 ###############################################################################
