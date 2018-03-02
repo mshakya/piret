@@ -34,6 +34,7 @@ install:
   - ./INSTALL.sh
   - pip install codecov
   - pip install coverage
+  - pip install pytest-cov
 
 script:
   - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"   
