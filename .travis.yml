@@ -43,7 +43,7 @@ script:
   - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$HOME/build/mshakya/PyPiReT/bin:$PATH"
   - which python
   # - sh tests/test_pipeline_linux.sh 
-  - py.test --cov=codecov
+  - pytest --cov=./
 
 after_success:
   - codecov
