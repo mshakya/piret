@@ -151,6 +151,16 @@ An experimental design file consist of sample name (ID), full path to fastq file
   ```
   A sample of experimental design file can be found [here](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/experimental_design.txt). 
 
+### 2.2 Option details
+`-m` Method to use for detecting differentially expressed genes, all of which are R packages. This option provides users with multiple tools to use which can be spcified using following keywords:
+  - `EdgeR`: Uses EdgeR.
+  - Deseq2: Uses Deseq2
+  - ballgown: Uses ballgown. Appropriate for eukaryotes.
+  - DeEdge: Uses both EdgeR and Deseq2. 
+  - Degown: Uses Deseq2 and ballgown.
+  - ballEdge: Uses ballgown and Deseq2.
+  - all: Uses all of the above methods.
+
 
 ## 3.0 OUTPUT
 
