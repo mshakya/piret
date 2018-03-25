@@ -80,21 +80,21 @@ if (feature_name == "rRNA") {
     out_cpm_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_cpm_histograpm.pdf", sep=""))
     pdf(out_cpm_hist)
     ggplot(data = melt(as.data.frame(cpm_results)), mapping = aes(x = value)) + 
-        geom_histogram(bins = 5) + facet_wrap(~variable)
+        geom_histogram(bins = 10) + facet_wrap(~variable)
     dev.off()
-    ############################################################################
     } else {
-        print(feature_name)
+
     # create heatmap of count data.
     out_heatmap <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_heatmap.pdf", sep=""))
     pdf(out_heatmap)
     heatmap(as.matrix(read.counts), legend=TRUE)
     dev.off()
 
-    # convert to a DGElist, remove rows where there are no reads mapped
+    # convert to a DGElist
     edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
                             remove.zeros = FALSE, genes = gene.info)
-
+    # print(edger_dge$counts)
+    # print(sum(edger_dge$counts[,4]))
     # calculate RPKM and CPM
     rpkm_results <- edgeR::rpkm(edger_dge)
     cpm_results <- edgeR::cpm(edger_dge)
@@ -107,16 +107,24 @@ if (feature_name == "rRNA") {
     out_cpm_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_cpm_histograpm.pdf", sep=""))
     pdf(out_cpm_hist)
     ggplot(data = melt(as.data.frame(cpm_results)), mapping = aes(x = value)) + 
-    geom_histogram(bins = 5) + facet_wrap(~variable)
+    geom_histogram(bins = 10) + facet_wrap(~variable)
     dev.off()
 
     if (0 %in% colSums(edger_dge$counts)) {
         print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
     } else {
         # only keep genes/features that have an average of 1 CPM
-        keep <- rowSums(cpm(edger_dge) > 1) >= nrow(group_table)
+        # keep <- rowSums(edgeR::cpm(edger_dge) > 1) >= nrow(group_table)
+        keep <- rowSums(edgeR::cpm(edger_dge)) >= nrow(group_table)
+
+        print(rowSums(cpm(edger_dge)))
+        print("Rows to keep")
+        print(length(keep))
+        # print(keep)
         # keep <- rowSums(cpm(edger_dge) > 1)
         edger_dge <- edger_dge[keep, ]
+        # print(edger_dge$count)
+        # print(nrow(edger_dge))
         if (nrow(edger_dge$counts) < 10 ) {
             print("Not enough data to calculate dispersion factors!")
         } else {
