@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/mshakya/PyPiReT.svg?branch=master)](https://travis-ci.org/mshakya/PyPiReT)
 [![codecov](https://codecov.io/gh/mshakya/PyPiReT/branch/master/graph/badge.svg)](https://codecov.io/gh/mshakya/PyPiReT)
+[ ![Codeship Status for mshakya/PyPiReT](https://app.codeship.com/projects/56b51ac0-1899-0135-279d-22ebbf49dae4/status?branch=master)](https://app.codeship.com/projects/219002)
 
 # PiReT
 
