@@ -7,7 +7,6 @@ import luigi
 from luigi import ExternalTask
 from luigi import LocalTarget
 from luigi import Parameter, DictParameter, ListParameter, IntParameter
-# from luigi.contrib.sge import SGEJobTask
 from luigi import WrapperTask
 from itertools import chain
 from plumbum.cmd import FaQCs, cat
@@ -53,8 +52,6 @@ class PairedRunQC(luigi.Task):
         """Run the FaQC script."""
         faqc_options = ["-min_L", self.faqc_min_L,
                         "-n", self.n_cutoff,
-                        "-q", "15",
-                        "-lc", "0.7",
                         "-t", self.numCPUs,
                         "-prefix", self.sample,
                         "-d", os.path.abspath(self.qc_outdir),
@@ -67,60 +64,6 @@ class PairedRunQC(luigi.Task):
         """Environmental variables for this program."""
         return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
-# class SGEPairedRunQC(SGEJobTask):
-#     """Running the perl script for QC."""
-#     # TODO: Waiting on a response from luigi group
-
-#     fastqs = ListParameter()
-#     sample = Parameter()
-#     qc_outdir = Parameter()
-#     parallel_env = "smp"
-#     no_tarball = True
-#     dont_remove_tmp_dir = True
-#     job_name_format = "{sample}_{task_family}"
-
-#     def requires(self):
-#         """Require pair of fastq."""
-#         return [RefFile(self.fastqs[0])]
-
-#     def output(self):
-#         """QC output."""
-#         return LocalTarget(self.qc_outdir + "/" + self.sample + ".stats.text")
-
-#     # def run_program(self):
-#     #     subprocess.call(["perl", "scripts/illumina_fastq_QC.pl",
-#     #                     "-min_L", "60",
-#     #                     "-n", "5",
-#     #                       "-q", "15",
-#     #                       "-lc", "0.7",
-#     #                       "-t", str(self.n_cpu),
-#     #                       "-prefix", str(self.sample),
-#     #                       "-d", str(os.path.abspath(self.qc_outdir)),
-#     #                       "-p", str(self.fastqs)], shell=True, stdout=subprocess.PIPE,
-#     #                       stderr=subprocess.PIPE)
-
-#     def work(self):
-#         """Run the perl script."""
-#         # logger.info('Running test job...')
-#         # mig = os.path.abspath(self.qc_outdir)
-#         out_file = self.qc_outdir + "/" + self.sample + ".stats.txt"
-#         # out_file_full = mig + "/" + self.sample + ".stats.text"
-#         subprocess.call(["ls", "-lh"])
-#         # with open(out_file, 'w') as f:
-#         # f.write('this is a test')
-
-#         # self.run_program()
-
-#         # subprocess.call(["perl", "scripts/illumina_fastq_QC.pl",
-#         #                 "-min_L", "60",
-#         #                 "-n", "5",
-#         #                   "-q", "15",
-#         #                   "-lc", "0.7",
-#         #                   "-t", str(self.numCPUs),
-#         #                   "-prefix", str(self.sample),
-#         #                   "-d", str(os.path.abspath(self.qc_outdir)),
-#         #                   "-p", str(self.fastqs)], shell=True, stdout=subprocess.PIPE,
-#         #                   stderr=subprocess.PIPE)
 
 
 class RunAllQC(WrapperTask):
