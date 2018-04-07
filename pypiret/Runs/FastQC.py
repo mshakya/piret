@@ -112,38 +112,3 @@ class RunAllQC(WrapperTask):
                                   bindir=self.bindir,
                                   faqc_min_L=self.faqc_min_L,
                                   n_cutoff=self.n_cutoff)
-
-
-# class SGERunAllQC(WrapperTask):
-#     """Run all QC."""
-
-#     fastq_dic = DictParameter()
-#     workdir = Parameter()
-#     numCPUs = IntParameter()
-#     shared_tmp_dir = Parameter()
-
-#     def requires(self):
-#         """A wrapper for running the QC."""
-#         for samp, fastq in self.fastq_dic.iteritems():
-#             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-#             if isinstance(fastq, (list, tuple)):
-#                 fqs = list(chain.from_iterable(
-#                     [fq.split(':') for fq in fastq]))
-#                 print(fqs)
-#                 if os.path.isdir(trim_dir) is False:
-#                     os.makedirs(trim_dir)
-#                 yield SGEPairedRunQC(fastqs=fqs,
-#                                      sample=samp,
-#                                      n_cpu=self.numCPUs,
-#                                      qc_outdir=trim_dir,
-#                                      shared_tmp_dir=self.shared_tmp_dir)
-
-#             else:
-#                 if os.path.isdir(trim_dir) is False:
-#                     os.makedirs(trim_dir)
-#                 fqs = [os.path.abspath(fq) for fq in fastq.split(":")]
-#                 yield SGEPairedRunQC(fastqs=fqs,
-#                                      sample=samp,
-#                                      n_cpu=self.numCPUs,
-#                                      qc_outdir=trim_dir,
-#                                      shared_tmp_dir=self.shared_tmp_dir)
