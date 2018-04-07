@@ -29,7 +29,7 @@ class CheckDesign():
                 if all(line_status) is True:
                     return True
                 else:
-                    sys.exit('Experimental design file not correctly \
+                    sys.exit('Experimental design file is not correctly \
                               formatted!')
             else:
                 sys.exit('Experimental design file is not correctly formatted!\n \
