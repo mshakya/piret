@@ -16,6 +16,8 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
+# os.environ["LUIGI_CONFIG_PATH"] = bin_path
+
 # import logging
 from pypiret import CheckDesign, FastQC, Map, Summ, DGE
 import luigi
@@ -37,8 +39,7 @@ def cmdline_parser():
 
     parser = argparse.ArgumentParser(formatter_class=CustomFormatter,
                                      prog='runPiReT',
-                                     description="""Luigi based workflow for running
-                                     RNASeq pipeline""",
+                                     description="""Luigi based RNASeq workflow""",
                                      epilog="""
 when selecting both kingodm runs, options that are required for both eukaryotes
 and prokaryotes run are required.
@@ -68,10 +69,6 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     required_args.add_argument("-d", dest="WORKDIR", help="""working directory where all
         output files will be processed and written""", required=True)
 
-    # required_args.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
-    #     creates index if it does not exist""",
-    #                            required=True, default=argparse.SUPPRESS)
-
     required_args.add_argument("-e", dest="EXPDSN", help="""tab delimited experimental
         design file""", required=True, default=argparse.SUPPRESS)
 
@@ -92,6 +89,9 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
 
     parser.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
         creates index if it does not exist""", required=False, default=None)
+    
+    parser.add_argument("--config", help="""config file for setting
+        parameters that control each step""", required=False, default=None)
     
     parser.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
         when eukarya or both is chosen, it expects alternative splicing
@@ -138,19 +138,26 @@ def main():
     bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
     scriptdir = os.path.abspath(os.path.join(dir_path, '..', 'scripts'))
     os.environ['PATH'] = os.environ['PATH'] + ":" + bindir
-
+    # os.environ["LUIGI_CONFIG_PATH"] = os.path.abspath(args.config)
+    # print(os.environ['LUIGI_CONFIG_PATH'])
+    # luigi.interface.setup_interface_logging(conf_file=os.path.abspath(args.config), level_name='INFO')
+    # print(os.environ)
+    # luigi.logging(log_level="INFO")
     if check_exp_design(args.EXPDSN) is True:
         no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
         samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
-
+        # print(os.environ['LUIGI_CONFIG_PATH'])
         if check_method(args.METHOD, args.EXPDSN) is True:
             # Running FastQC
             luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
                                    numCPUs=args.CPU,
                                    workdir=workdir,
-                                   bindir=bindir)],
+                                   bindir=bindir,
+                                   #faqc_min_L=60,
+                                   n_cutoff=5
+                                   )],
                                   local_scheduler=args.scheduler,
-                                  workers=no_of_jobs,
+                                  workers=no_of_jobs
                                   )
             if args.INDEX_HISAT is None:
                 hisat_index_name=os.path.join(workdir, "hisat_index")
@@ -202,18 +209,21 @@ def euk_prok(ref_fasta, hisat_index, bindir, num_cpus,
              kingdom, exp_desn_file, p_value):
     """All pipelines."""
     # Creating hisat2 index
-    no_of_jobs = len(fastq_dic)
+    no_of_jobs = 2
     luigi.interface.build([Map.HisatIndex(fasta=ref_fasta,
                                           hi_index=hisat_index,
                                           bindir=bindir,
                                           numCPUs=num_cpus),
                           Map.GFF2GTF(gff_file=ref_gff,
                                       bindir=bindir,
-                                      workdir=workdir),
-                          Map.CreateSplice(gff_file=ref_gff,
-                                           bindir=bindir,
-                                           workdir=workdir)],
+                                      workdir=workdir)],
                           local_scheduler=local_scheduler)
+    if kingdom == "eukarya":
+        luigi.interface.build([Map.CreateSplice(gff_file=ref_gff,
+                                               bindir=bindir,
+                                               workdir=workdir)],
+        local_scheduler=local_scheduler)
+
 
     # Map reads to Hisat index
     luigi.interface.build([Map.HisatMapW(fastq_dic=fastq_dic,

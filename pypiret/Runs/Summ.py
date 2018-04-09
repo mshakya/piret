@@ -294,8 +294,8 @@ class ReStringTieScoresW(luigi.WrapperTask):
                 gtf = self.workdir + "/" + \
                     self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
 
-                yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                        fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
+                yield ReStringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                                trim_dir + "/" + samp + ".2.trimmed.fastq"],
                                         numCPUs=self.numCPUs,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
@@ -313,7 +313,10 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                         bindir=self.bindir,
                                         workdir=self.workdir,
-                                        in_gtf=gtf)
+                                        in_gtf=gtf,
+                                        sample=samp,
+                                        qc_outdir=trim_dir,
+                                        map_dir=map_dir)
             elif self.kingdom == 'both':
                 bg_dir_prok = self.workdir + "/ballgown/prok/" + samp
                 if os.path.isdir(bg_dir_prok) is False:
