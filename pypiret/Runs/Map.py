@@ -382,8 +382,6 @@ class SAM2BAMfileW(luigi.WrapperTask):
                 os.makedirs(map_dir)
             yield SAM2BAMfile(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                        trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                              # fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-                              # fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
                               qc_outdir=trim_dir,
                               map_dir=map_dir,
                               numCPUs=self.numCPUs,
@@ -516,31 +514,6 @@ class StringTieScores(luigi.Task):
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
     in_bam_file = luigi.Parameter()
-
-    # def requires(self):
-    #     """Require reference fasta format file."""
-    #     if ',' in self.gff_file:
-    #         gffs = self.gff_file.split(",")
-    #         gff_depen = [GFF2GTF(gff_file=self.gff_file,
-    #                              workdir=self.workdir,
-    #                              bindir=self.bindir) for gff in gffs]
-    #     else:
-    #         gff_depen = [GFF2GTF(gff_file=self.gff_file,
-    #                              workdir=self.workdir,
-    #                              bindir=self.bindir)]
-    #     return [
-    #         SortBAMfile(fastqs=[self.qc_outdir + "/" + self.samp + ".1.trimmed.fastq",
-    #                     self.qc_outdir + "/" + self.samp + ".2.trimmed.fastq"],
-    #                     numCPUs=self.numCPUs,
-    #                     indexfile=self.indexfile,
-    #                     spliceFile=self.spliceFile,
-    #                     mappingLogFile=self.mappingLogFile,
-    #                     unalned=self.unalned,
-    #                     outsam=self.outsam,
-    #                     bam_file=self.bam_file,
-    #                     sorted_bam_file=self.sorted_bam_file,
-    #                     ref_file=self.ref_file,
-    #                     bindir=self.bindir)] + gff_depen
 
     def output(self):
         """Index output."""

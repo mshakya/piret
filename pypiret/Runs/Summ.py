@@ -3,14 +3,13 @@
 """Check design."""
 from __future__ import print_function
 import os
-import luigi
 from plumbum.cmd import stringtie, featureCounts
-from luigi.contrib.external_program import ExternalProgramTask
-from luigi import LocalTarget
 from pypiret import Map
 import pandas as pd
 from luigi.util import inherits, requires
-
+from luigi.contrib.external_program import ExternalProgramTask
+from luigi import LocalTarget
+import luigi
 
 class RefFile(luigi.ExternalTask):
     """An ExternalTask like this."""
@@ -33,7 +32,8 @@ class FeatureCounts(luigi.Task):
     bindir = luigi.Parameter()
     numCPUs = luigi.Parameter()
     ref_file = luigi.Parameter()
-    ID=luigi.Parameter()
+    fid = luigi.Parameter()
+    stranded = luigi.IntParameter()
 
     def output(self):
         """Expected output of featureCounts."""
@@ -67,35 +67,34 @@ class FeatureCounts(luigi.Task):
         if ',' in self.gff:
             gff_list = self.gff.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
-            gtfs = [self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf" for gff in gff_full_path]
             for gffs in gff_full_path:
                 feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
                 for feat in feature:
                     if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
-                        fcount_cmd_opt = ["-a", gtf,
-                                      "-s", 1,
-                                      "-B",
-                                      "-p", "-P", "-C",
-                                      "-g", self.ID,
-                                      "-t", feat,
-                                      "-T", self.numCPUs,
-                                      "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
+                        fcount_cmd_opt = ["-a", self.gff,
+                                          "-s", self.stranded,
+                                          "-B",
+                                          "-p", "-P", "-C",
+                                          "-g", self.fid,
+                                          "-t", feat,
+                                          "-T", self.numCPUs,
+                                          "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
         else:
-            gtf = self.workdir + "/" + self.gff.split("/")[-1].split(".gff")[0] + ".gtf"
             feature = list(set(pd.read_csv(self.gff, sep="\t", header=None, comment='#')[2].tolist()))
             for feat in feature:
                 if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
                     fcount_cmd_opt = ["-a", self.gff,
-                                  "-s", 1,
-                                  "-B",
-                                  "-p", "-P", "-C",
-                                  "-g", self.ID,
-                                  "-t", feat,
-                                  "-T", self.numCPUs,
-                                  "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
+                                      "-s", self.stranded,
+                                      "-B",
+                                      "-p", "-P", "-C",
+                                      "-g", self.fid,
+                                      "-t", feat,
+                                      "-T", self.numCPUs,
+                                      "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.csv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
+                    print(fcount_cmd)
                     fcount_cmd()
 
 

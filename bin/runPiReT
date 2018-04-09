@@ -281,7 +281,7 @@ def euk_prok(ref_fasta, hisat_index, bindir, num_cpus,
                                                ref_file=ref_fasta,
                                                gff_file=ref_gff,
                                                kingdom=kingdom)],
-                          local_scheduler=local_scheduler, workers=2)
+                          local_scheduler=local_scheduler, workers=1)
     # Merge
     luigi.interface.build([Summ.ReStringTieScoresW(fastq_dic=fastq_dic,
                                                    numCPUs=num_cpus,
