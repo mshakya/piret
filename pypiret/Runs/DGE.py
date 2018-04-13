@@ -3,23 +3,12 @@
 """Check design."""
 from __future__ import print_function
 import os
-import sys
 import luigi
 from luigi import LocalTarget
-from luigi.contrib.external_program import ExternalProgramTask
 from pypiret import Summ
 from luigi.util import inherits, requires
 from plumbum.cmd import Rscript
 
-
-class RefFile(luigi.ExternalTask):
-    """An ExternalTask like this."""
-
-    path = luigi.Parameter()
-
-    def output(self):
-        """Check."""
-        return LocalTarget(os.path.abspath(self.path))
 
 
 @requires(Summ.FeatureCounts)
@@ -36,7 +25,7 @@ class EdgeR(luigi.Task):
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("csv"):
-                    out_file = edger_dir + "/" + file.split(".csv")[0] + "_RPKM" + ".csv"
+                    out_file = edger_dir + "/" + file.split(".csv")[0] + "_RPKM.csv"
                     return LocalTarget(out_file)
 
     def run(self):
@@ -46,17 +35,17 @@ class EdgeR(luigi.Task):
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
         for root, dirs, files in os.walk(fcount_dir):
-            print(files)
             for file in files:
                 if file.endswith("csv"):
                     name = file.split("_")[-2]
-                    EdgeR_list =  [self.bindir + "/../scripts/EdgeR", "-r", os.path.join(root, file),
-                              "-e", self.exp_design,
-                              "-p", self.p_value,
-                              "-n", name,
-                              "-o", edger_dir]
-                    EdgeR_cmd = Rscript[EdgeR_list]
-                    EdgeR_cmd()
+                    edger_list = [self.bindir + "/../scripts/EdgeR",
+                                  "-r", os.path.join(root, file),
+                                  "-e", self.exp_design,
+                                  "-p", self.p_value,
+                                  "-n", name,
+                                  "-o", edger_dir]
+                    edger_cmd = Rscript[edger_list]
+                    edger_cmd()
 
     def program_environment(self):
         """Environmental variables for this program."""
