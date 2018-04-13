@@ -60,7 +60,7 @@ R_DESeq2_VER=1.12.4
 #minimum required version of python modules
 python_pandas_VER=0.19.2
 python_Bio_VER=1.68
-python_luigi_VER=2.6.1
+python_luigi_VER=2.7.3
 python_plumbum_VER=1.6.3
 
 ################################################################################
@@ -117,7 +117,7 @@ echo "--------------------------------------------------------------------------
                 installing Python module luigi
 --------------------------------------------------------------------------------
 "
-conda install --yes -n piret -c anaconda luigi=2.3.0
+conda install --yes -n piret -c anaconda luigi=$python_luigi_VER
 # pip install luigi
 echo "
 --------------------------------------------------------------------------------
@@ -402,13 +402,6 @@ checkLocalInstallation()
     return 1
 }
 
-# checkPerlModule()
-# {
-#    # perl -e "use lib \"$ROOTDIR/lib/lib/perl5\"; use $1;"
-#    perl -e "use $1";
-#    return $?
-# }
-
 
 checkRpackages()
 {
@@ -448,28 +441,6 @@ usage: $0 options
         
 EOF
 }
-
-# print_tools_list()
-# {
-
-
-#    echo "Available tools for updates/re-install"
-#    echo -e "\nAlignment"
-#    for i in "${alignments_tools[@]}"
-#    do
-#        echo "* $i"
-#    done
-#    echo -e "\nUtility"
-#    for i in "${utility_tools[@]}"
-#    do
-#        echo "* $i"
-#    done
-#    echo -e "\nCount"
-#    for i in "${count_tools[@]}"
-#    do
-#        echo "* $i"
-#    done
-# }
 
 
 ### Main ####
@@ -617,39 +588,62 @@ fi
 # check if required bioconductor R packages are installed
 ################################################################################
 
-if ( checkRpackages edgeR )
-  then
-  R_edgeR_installed_VER=`echo "cat(unname(installed.packages()[,3][\"edgeR\"]))" | Rscript - | sed "s/\"//g"`;
-  echo $R_edgeR_installed_VER 
-  if (echo $R_edgeR_installed_VER $R_edgeR_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-  then
-  echo " - found edgeR $R_edgeR_installed_VER"
-  else
-    echo "Required version of edgeR $R_edgeR_VER was not found"
-    install_R_edgeR
-  fi
-else
-  echo "edgeR is not found"
-    install_R_edgeR
-fi
+# if ( checkRpackages edgeR )
+#   then
+#   R_edgeR_installed_VER=`echo "cat(unname(installed.packages()[,3][\"edgeR\"]))" | Rscript - | sed "s/\"//g"`;
+#   echo $R_edgeR_installed_VER 
+#   if (echo $R_edgeR_installed_VER $R_edgeR_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+#   then
+#   echo " - found edgeR $R_edgeR_installed_VER"
+#   else
+#     echo "Required version of edgeR $R_edgeR_VER was not found"
+#     install_R_edgeR
+#   fi
+# else
+#   echo "edgeR is not found"
+#     install_R_edgeR
+# fi
 
-#------------------------------------------------------------------------------#
+# #------------------------------------------------------------------------------#
 
-if ( checkRpackages DESeq2 )
-  then
-  R_DESeq2_installed_VER=`echo "cat(unname(installed.packages()[,3][\"DESeq2\"]))" | Rscript - | sed 's/\"//g'`;
-  echo $R_DESeq2_installed_VER 
-  if (echo $R_DESeq2_installed_VER $R_DESeq2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-  then
-  echo " - found DESeq2 $R_DESeq2_installed_VER"
-  else
-    echo "Required version of DESeq2 $R_DESeq2_VER was not found"
-    install_R_DESeq2
-  fi
-else
-  echo "DESeq2 is not found"
-    install_R_DESeq2
-fi
+# if ( checkRpackages DESeq2 )
+#   then
+#   R_DESeq2_installed_VER=`echo "cat(unname(installed.packages()[,3][\"DESeq2\"]))" | Rscript - | sed 's/\"//g'`;
+#   echo $R_DESeq2_installed_VER 
+#   if (echo $R_DESeq2_installed_VER $R_DESeq2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
+#   then
+#   echo " - found DESeq2 $R_DESeq2_installed_VER"
+#   else
+#     echo "Required version of DESeq2 $R_DESeq2_VER was not found"
+#     install_R_DESeq2
+#   fi
+# else
+#   echo "DESeq2 is not found"
+#     install_R_DESeq2
+# fi
+
+
+# install R ggplot2 packages
+Rscript --no-init-file -e "if('ggplot2' %in% rownames(installed.packages()) == TRUE){packageVersion('ggplot2');}"  | awk '{print " - found ggplot2 "$2}'
+Rscript --no-init-file -e "if('ggplot2' %in% rownames(installed.packages()) == FALSE){install.packages('ggplot2',repos='https://cran.r-project.org')}";
+# install R reshape2 packages
+Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == TRUE){packageVersion('reshape2');}"  | awk '{print " - found reshape2 "$2}'
+Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
+# install R pheatmap packages
+Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == TRUE){packageVersion('pheatmap');}"  | awk '{print " - found pheatmap "$2}'
+Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}";
+# install R edgeR packages
+Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == TRUE){packageVersion('edgeR');}"  | awk '{print " - found edgeR "$2}'
+Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('edgeR')}";
+# install R deseq2 packages
+Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2');}"  | awk '{print " - found DESeq2 "$2}'
+Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){source('source('https://bioconductor.org/biocLite.R');biocLite('DESeq2')}";
+# install R pathview package
+Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == TRUE){packageVersion('pathview');}"  | awk '{print " - found pathview "$2}'
+Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){source('source('https://bioconductor.org/biocLite.R');biocLite('pathview')}";
+# install R gage package
+Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage');}"  | awk '{print " - found gage "$2}'
+Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
 
 ################################################################################
 if ( checkSystemInstallation featureCounts )
@@ -795,7 +789,7 @@ conda install --yes -c conda-forge pytest-cov -n piret
 echo "
 All done! Please Restart the Terminal Session.
 Run
-runPiReT
+runPiReT -h
 for usage.
 Read the README for more information!
 To run a test data set

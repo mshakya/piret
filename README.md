@@ -31,7 +31,7 @@ PiReT uses bioinformatic tools, many of which are available in [bioconda](https:
 PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
 
 #### 0.1.0 Programming/Scripting languages
-- [Python >=v2.7.12](https://www.python.org/downloads/release/python-2712/)
+- [Python >=v3.6.3](https://www.python.org/downloads/release/python-2712/)
     - The pipeline is not compatible with Python v3.0 or higher.
 - [R >=v3.3.1](https://www.r-project.org)
 
