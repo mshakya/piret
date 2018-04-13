@@ -40,18 +40,17 @@ export R_LIBS="$ROOTDIR/ext/lib/R:$R_LIBS:$R_LIBS_USER"
 miniconda_VER=4.4.11
 samtools_VER=1.3.1
 bamtools_VER=2.4.0
-jellyfish_VER=2.2.6
 R_VER=3.4.2
 
 hisat2_VER=2.0.5
 htseq_VER=0.6.1
-jbrowse_VER=1.12.1
+#jbrowse_VER=1.12.1
 stringtie_VER=1.3.3
 subread_VER=1.5.0
 
 # minimum required version of Scripting languages
 # perl5_VER=5.16.3
-python3_VER=3.6.4
+python3_VER=3.5.2
 
 #minimum required version of R modules
 R_edgeR_VER=3.14.0
@@ -173,21 +172,6 @@ echo "
 "
 }
 
-
-install_jellyfish()
-{
-echo "--------------------------------------------------------------------------
-                           installing jellyfish v$jellyfish_VER
---------------------------------------------------------------------------------
-"
-conda install --yes -n piret -c bioconda jellyfish=$jellyfish_VER
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/jellyfish $ROOTDIR/bin/jellyfish
-echo "
-------------------------------------------------------------------------------
-                           jellyfish v$jellyfish_VER installed
-------------------------------------------------------------------------------
-"
-}
 
 install_featureCounts()
 {
@@ -317,14 +301,7 @@ echo "--------------------------------------------------------------------------
                       installing gffread
 --------------------------------------------------------------------------------
 "
-cd $ROOTDIR/thirdParty/miniconda/bin
-git clone https://github.com/gpertea/gclib
-git clone https://github.com/gpertea/gffread gffread_git
-cd gffread_git
-make
-cp gffread ../
-ln -sf $ROOTDIR/thirdParty/miniconda/bin/gffread $ROOTDIR/bin/gffread
-cd $ROOTDIR/thirdParty
+conda install --yes -c bioconda gffread -n piret
 echo "
 --------------------------------------------------------------------------------
                            gffread installed
@@ -332,25 +309,25 @@ echo "
 "
 }
 
-install_jbrowse()
-{
-echo "--------------------------------------------------------------------------
-                      installing Jbrowse
---------------------------------------------------------------------------------
-"
-cd $ROOTDIR/thirdParty
-tar xvzf JBrowse-1.11.6.tar.gz
-cd JBrowse-1.11.6
-./setup.sh
-mkdir -p -m 775 data
-cd $ROOTDIR/thirdParty
-ln -sf $ROOTDIR/thirdParty/JBrowse-1.11.6 $ROOTDIR/bin/JBrowse
-echo "
---------------------------------------------------------------------------------
-                      Jbrowse installed
---------------------------------------------------------------------------------
-"
-}
+# install_jbrowse()
+# {
+# echo "--------------------------------------------------------------------------
+#                       installing Jbrowse
+# --------------------------------------------------------------------------------
+# "
+# cd $ROOTDIR/thirdParty
+# tar xvzf JBrowse-1.11.6.tar.gz
+# cd JBrowse-1.11.6
+# ./setup.sh
+# mkdir -p -m 775 data
+# cd $ROOTDIR/thirdParty
+# ln -sf $ROOTDIR/thirdParty/JBrowse-1.11.6 $ROOTDIR/bin/JBrowse
+# echo "
+# --------------------------------------------------------------------------------
+#                       Jbrowse installed
+# --------------------------------------------------------------------------------
+# "
+# }
 
 install_R_edgeR()
 {
@@ -588,41 +565,16 @@ fi
 # check if required bioconductor R packages are installed
 ################################################################################
 
-# if ( checkRpackages edgeR )
-#   then
-#   R_edgeR_installed_VER=`echo "cat(unname(installed.packages()[,3][\"edgeR\"]))" | Rscript - | sed "s/\"//g"`;
-#   echo $R_edgeR_installed_VER 
-#   if (echo $R_edgeR_installed_VER $R_edgeR_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-#   then
-#   echo " - found edgeR $R_edgeR_installed_VER"
-#   else
-#     echo "Required version of edgeR $R_edgeR_VER was not found"
-#     install_R_edgeR
-#   fi
-# else
-#   echo "edgeR is not found"
-#     install_R_edgeR
-# fi
 
-# #------------------------------------------------------------------------------#
-
-# if ( checkRpackages DESeq2 )
-#   then
-#   R_DESeq2_installed_VER=`echo "cat(unname(installed.packages()[,3][\"DESeq2\"]))" | Rscript - | sed 's/\"//g'`;
-#   echo $R_DESeq2_installed_VER 
-#   if (echo $R_DESeq2_installed_VER $R_DESeq2_VER | awk '{if($2>=$3) exit 0; else exit 1}' )
-#   then
-#   echo " - found DESeq2 $R_DESeq2_installed_VER"
-#   else
-#     echo "Required version of DESeq2 $R_DESeq2_VER was not found"
-#     install_R_DESeq2
-#   fi
-# else
-#   echo "DESeq2 is not found"
-#     install_R_DESeq2
-# fi
-
-
+# this is required for edgeR dependency installations (Rcpp)
+conda install --yes gxx_linux-64 -n piret
+conda install --yes gfortran_linux-64 -n piret
+# install optparse
+Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
+Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
+# install dplyr
+Rscript --no-init-file -e "if('dplyr' %in% rownames(installed.packages()) == TRUE){packageVersion('dplyr');}"  | awk '{print " - found dplyr "$2}'
+Rscript --no-init-file -e "if('dplyr' %in% rownames(installed.packages()) == FALSE){install.packages('dplyr',repos='https://cran.r-project.org')}";
 # install R ggplot2 packages
 Rscript --no-init-file -e "if('ggplot2' %in% rownames(installed.packages()) == TRUE){packageVersion('ggplot2');}"  | awk '{print " - found ggplot2 "$2}'
 Rscript --no-init-file -e "if('ggplot2' %in% rownames(installed.packages()) == FALSE){install.packages('ggplot2',repos='https://cran.r-project.org')}";
@@ -637,13 +589,13 @@ Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == TRU
 Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('edgeR')}";
 # install R deseq2 packages
 Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2');}"  | awk '{print " - found DESeq2 "$2}'
-Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){source('source('https://bioconductor.org/biocLite.R');biocLite('DESeq2')}";
+Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('DESeq2')}";
 # install R pathview package
 Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == TRUE){packageVersion('pathview');}"  | awk '{print " - found pathview "$2}'
-Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){source('source('https://bioconductor.org/biocLite.R');biocLite('pathview')}";
+Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('pathview')}";
 # install R gage package
 Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage');}"  | awk '{print " - found gage "$2}'
-Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
+Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
 
 ################################################################################
 if ( checkSystemInstallation featureCounts )
@@ -652,20 +604,6 @@ then
 else
   echo "featureCounts was not found"
   install_featureCounts
-fi
-################################################################################
-if ( checkSystemInstallation jellyfish )
-then
-  jellyfish_installed_VER=`jellyfish --version | perl -nle 'print $& if m{jellyfish \d+\.\d+\.\d+}'`
-  if ( echo $jellyfish_installed_VER $jellyfish_VER | awk '{if($2>=$3) exit 0; else exit 1}')
-  then
-    echo " - found $jellyfish_installed_VER"
-  else
-    echo "Required version of jellyfish was not found"
-  fi
-else
-  echo "jellyfish was not found"
-  install_jellyfish
 fi
 
 ################################################################################
@@ -699,15 +637,6 @@ else
   install_bamtools
 fi
 
-################################################################################
-#TODO: add a way to check version here as well
-# if [ -x $ROOTDIR/bin/JBrowse/bin/prepare-refseqs.pl ]
-# then
-#   echo "JBrowse is found"
-# else
-#   echo "JBrowse is not found"
-#   install_jbrowse
-# fi
 
 ################################################################################
 if ( checkSystemInstallation gffread )

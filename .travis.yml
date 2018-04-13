@@ -4,45 +4,15 @@ sudo: false
 python:
   - "3.6.3"
 
- # cache:
-#   directories:
-#     - $HOME/build/mshakya/PyPiReT/thirdParty/miniconda
-#     - $HOME/build/mshakya/PyPiReT/ext
-#     - $HOME/.cache/pip
-
-
 install:
-  # - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-  #     wget https://repo.continuum.io/miniconda/Miniconda2-4.3.21-Linux-x86_64.sh -O miniconda.sh;
-  #   else
-  #     wget https://repo.continuum.io/miniconda/Miniconda3-4.3.21-Linux-x86_64.sh -O miniconda.sh;
-  #   fi
-  # - mv miniconda.sh $HOME/build/mshakya/PyPiReT/thirdParty/
-  # - bash $HOME/build/mshakya/PyPiReT/thirdParty/miniconda.sh -b -p $HOME/build/mshakya/PyPiReT/thirdParty/miniconda -f
-  # - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"
-  # - hash -r
-  # - conda config --set always_yes yes --set changeps1 no
-  # - conda update -q conda
-  # # Useful for debugging any issues with conda
-  # - conda info -a
-  # - conda create -q -n piret-environment python=$TRAVIS_PYTHON_VERSION luigi pandas biopython
-  # - conda install --yes -c conda-forge plumbum=1.6.3
-  # - conda install --yes -c anaconda zlib=1.2.8
-  # - pip install plumbum
-  # - pip install pytest-cov
-  # - source activate piret-environment
   - ./INSTALL.sh
   - source activate piret
   - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$PATH"
-  # - conda install -c conda-forge codecov -n piret
-  # - conda install -c conda-forge coverage -n piret
-  # - conda install -c conda-forge pytest-cov -n piret
 
 script:
   - source activate piret
-  - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$HOME/build/mshakya/PyPiReT/bin:$PATH"
-  - which python
-  # - sh tests/test_pipeline_linux.sh 
+#  - export PATH="$HOME/build/mshakya/PyPiReT/thirdParty/miniconda/bin:$HOME/build/mshakya/PyPiReT/bin:$PATH"
+  - sh tests/test_pipeline_linux.sh 
   - pytest --cov=./
 
 after_success:

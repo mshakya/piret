@@ -14,7 +14,7 @@ from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
-from plumbum.cmd import touch, bamtools, hisat2, gffread, python, cp, rm, cut, samtools, stringtie
+from plumbum.cmd import touch, bamtools, gffread, hisat2, python, cp, rm, cut, samtools, stringtie
 # from Bio import SeqIO
 
 
