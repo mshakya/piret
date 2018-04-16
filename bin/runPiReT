@@ -8,17 +8,22 @@ wrapper for running RNASeq pipeline
 """
 
 from __future__ import print_function
-
 import os
 import sys
 import argparse
-import luigi
-DIR = os.path.dirname(os.path.realpath(__file__))
-LIB = os.path.abspath(os.path.join(DIR, '..'))
-BIN = os.path.join(LIB, 'bin')
-sys.path.append(LIB)
+dir_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(dir_path, '..'))
+bin_path = os.path.join(lib_path, 'bin')
+sys.path.append(lib_path)
+os.environ["PATH"] += os.pathsep + bin_path
+# os.environ["LUIGI_CONFIG_PATH"] = bin_path
+
+# import logging
 from pypiret import CheckDesign, FastQC, Map, Summ, DGE
-os.environ["PATH"] += os.pathsep + BIN
+import luigi
+
+# from pypiret import logger
+
 
 def cmdline_parser():
     """
@@ -34,33 +39,35 @@ def cmdline_parser():
 
     parser = argparse.ArgumentParser(formatter_class=CustomFormatter,
                                      prog='runPiReT',
-                                     description="""RNASeq workflow""",
+                                     description="""Luigi based RNASeq workflow""",
                                      epilog="""
 when selecting both kingodm runs, options that are required for both eukaryotes
 and prokaryotes run are required.
 
 Example run for Prokaryotes RNA seq:\n
-        runPiReT -d <workdir> -e <design file>  -gp <gff>
+        runPiReT -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
         -k prokarya -m <EdgeR/Deseq2> -fp <FASTA>
 
 Example run for Eukaryotes RNA seq:\n
-        runPiReT -d <workdir> -e <design file>  -ge <gff>
+        runPiReT -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
         -k eukarya -m <EdgeR/Deseq2> -fe <FASTA>
 
 Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
-        runPiReT -d <workdir> -e <design file>  -gp <gff> -ge <gff>
+        runPiReT -d <workdir> -e <design file>  -gp <gff> -ge <gff> -i <hisat2 index>
         -k both -m <EdgeR/Deseq2> -fe <FASTA> -fp <FASTA>
         """)
 
-    parser.add_argument("-c", dest="CPU", help="""number of CPUs/threads to run
-        per task. Here, task refers to a processing step. For example, number
-        of CPUs specified here will be used for QC, HISAT index and mapping
-        steps.""", required=False, default=1)
+    parser.add_argument("-c", dest="CPU", help="""number of CPUs/threads to run per
+        task. Here, task refers to a processing step. For example, number of CPUs
+        specified here will be used for QC, HISAT index and mapping steps. Since QC
+        and mapping steps are run for every sample, be aware that the total
+        number of CPUs needed are your number of samples times CPU specified here.""",
+                        required=False, default=1)
 
     required_args = parser.add_argument_group('required arguments')
 
-    required_args.add_argument("-d", dest="WORKDIR", help="""working directory
-        where all output files will be processed and written""", required=True)
+    required_args.add_argument("-d", dest="WORKDIR", help="""working directory where all
+        output files will be processed and written""", required=True)
 
     required_args.add_argument("-e", dest="EXPDSN", help="""tab delimited experimental
         design file""", required=True, default=argparse.SUPPRESS)
@@ -82,25 +89,24 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
 
     parser.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
         creates index if it does not exist""", required=False, default=None)
-
+    
     parser.add_argument("--config", help="""config file for setting
         parameters that control each step""", required=False, default=None)
-
+    
     parser.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
         when eukarya or both is chosen, it expects alternative splicing
-        """, required=False, default='prokarya',
-                        choices=['prokarya', 'eukarya', 'both'])
+        """, required=False, default='prokarya', choices=['prokarya', 'eukarya',
+                                                          'both'])
 
     parser.add_argument("-m", dest="METHOD", help="""Method to use for detecting
         differentially expressed genes, Deseq2 requires 3 biological replicates
-        and ballgown only processes eukaryotes""", required=False,
-                        default='ballEdge',
+        and ballgown only processes eukaryotes""", required=False, default='ballEdge',
                         choices=['EdgeR', 'Deseq2', 'ballgown', 'DeEdge',
                                  'Degown', 'ballEdge', 'all'])
 
     parser.add_argument("-p", dest="P_VALUE", help="""P-Value to consider if genes
-        are significantly different, default is 0.001""", required=False,
-                        default=0.001, type=float)
+        are significantly different, default is 0.001""", required=False, default=0.001,
+                        type=float)
 
     parser.add_argument("--scheduler", help="""when specified, will use luigi
         scheduler which allows you to keep track of task using an url
@@ -129,29 +135,35 @@ def main():
 
     # Getting absolute path of some directories
     workdir = os.path.abspath(args.WORKDIR)
-    DIR = os.path.dirname(os.path.realpath(__file__))
-    bindir = os.path.abspath(os.path.join(DIR, '..', 'bin'))
-    # scriptdir = os.path.abspath(os.path.join(DIR, '..', 'scripts'))
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
+    scriptdir = os.path.abspath(os.path.join(dir_path, '..', 'scripts'))
     os.environ['PATH'] = os.environ['PATH'] + ":" + bindir
-    os.environ["LUIGI_CONFIG_PATH"] = os.path.abspath(args.config)
+    # os.environ["LUIGI_CONFIG_PATH"] = os.path.abspath(args.config)
+    # print(os.environ['LUIGI_CONFIG_PATH'])
+    # luigi.interface.setup_interface_logging(conf_file=os.path.abspath(args.config), level_name='INFO')
+    # print(os.environ)
+    # luigi.logging(log_level="INFO")
     if check_exp_design(args.EXPDSN) is True:
         no_of_jobs = len(CheckDesign(args.EXPDSN).extract_sample_fastqs())
         samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
+        # print(os.environ['LUIGI_CONFIG_PATH'])
         if check_method(args.METHOD, args.EXPDSN) is True:
-            # Run FaQC
-            luigi.interface.build([FastQC.SummarizeQC(fastq_dic=samp_dic,
-                                                   numCPUs=args.CPU,
-                                                   workdir=workdir,
-                                                   bindir=bindir,
-                                                   n_cutoff=5)],
+            # Running FastQC
+            luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
+                                   numCPUs=args.CPU,
+                                   workdir=workdir,
+                                   bindir=bindir,
+                                   #faqc_min_L=60,
+                                   n_cutoff=5
+                                   )],
                                   local_scheduler=args.scheduler,
-                                  workers=no_of_jobs)
-
+                                  workers=no_of_jobs
+                                  )
             if args.INDEX_HISAT is None:
-                hisat_index_name = os.path.join(workdir, "hisat_index")
+                hisat_index_name=os.path.join(workdir, "hisat_index")
             else:
-                hisat_index_name = args.INDEX_HISAT
-
+                hisat_index_name=args.INDEX_HISAT
             if args.TEST_KINGDOM == 'prokarya' and args.qsub is False:
                 check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
                 euk_prok(ref_fasta=args.FASTA_PROK,
@@ -215,7 +227,7 @@ def euk_prok(ref_fasta, hisat_index, bindir, num_cpus,
 
 
     # Map reads to Hisat index
-    luigi.interface.build([Map.SummarizeMap(fastq_dic=fastq_dic,
+    luigi.interface.build([Map.HisatMapW(fastq_dic=fastq_dic,
                                          numCPUs=num_cpus,
                                          indexfile=hisat_index,
                                          bindir=bindir,
