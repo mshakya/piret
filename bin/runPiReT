@@ -139,7 +139,7 @@ def main():
         samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
         if check_method(args.METHOD, args.EXPDSN) is True:
             # Run FaQC
-            luigi.interface.build([FastQC.RunAllQC(fastq_dic=samp_dic,
+            luigi.interface.build([FastQC.SummarizeQC(fastq_dic=samp_dic,
                                                    numCPUs=args.CPU,
                                                    workdir=workdir,
                                                    bindir=bindir,
@@ -215,7 +215,7 @@ def euk_prok(ref_fasta, hisat_index, bindir, num_cpus,
 
 
     # Map reads to Hisat index
-    luigi.interface.build([Map.HisatMapW(fastq_dic=fastq_dic,
+    luigi.interface.build([Map.SummarizeMap(fastq_dic=fastq_dic,
                                          numCPUs=num_cpus,
                                          indexfile=hisat_index,
                                          bindir=bindir,

@@ -15,6 +15,7 @@ from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
 from plumbum.cmd import touch, bamtools, gffread, hisat2, python, cp, rm, cut, samtools, stringtie
+import pandas as pd
 # from Bio import SeqIO
 
 
@@ -313,6 +314,40 @@ class HisatMapW(luigi.WrapperTask):
                         sample=samp)
 
 
+@requires(HisatMapW)
+class SummarizeMap(luigi.Task):
+    """Summarizes FaQC results of all samples into a table"""
+
+    def output(self):
+        """Maopping Summary Output."""
+        out_file = self.workdir + "/" + "MapSummary.csv"
+        return LocalTarget(out_file)
+
+    def run(self):
+        """Parse the FaQC stats."""
+        summ_dic = {}
+
+        for samp, fastq in self.fastq_dic.items():
+            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            filename = map_dir + "/" + "mapping.log"
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+                total_reads = lines[0].split("reads")[0]
+                con_unaligned = lines[2].split("(")[0]
+                con_aligned = lines[3].split("(")[0]
+                multi_aligned = lines[4].split("(")[0]
+                summ_dic[samp] = [total_reads,
+                                  con_unaligned,
+                                  con_aligned,
+                                  multi_aligned]
+        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
+        summ_table.columns = ["Paired reads", "Concordantly unaligned",
+                              "Concordantly aligned", "Multi aligned"]
+        out_file = self.workdir + "/" + "MapSummary.csv"
+        summ_table.to_csv(out_file)
+
+
+
 @inherits(HisatMapW)
 class HiSatBoth(luigi.WrapperTask):
     """Mapping."""
@@ -346,7 +381,7 @@ class HiSatBoth(luigi.WrapperTask):
 
 
 @requires(Hisat)
-class SAM2BAMfile(ExternalProgramTask):
+class SAM2BAMfile(luigi.Task):
     """Convert SAM file to BAM file with only mapped reads."""
 
     bam_file = Parameter()
@@ -355,10 +390,12 @@ class SAM2BAMfile(ExternalProgramTask):
         """Output BAM file."""
         return LocalTarget(self.bam_file)
 
-    def program_args(self):
-        """Output BAM file with only mapped reads."""
-        return ["samtools", "view", "-bSh", "-F",
-                "4", self.outsam, "-o", self.bam_file]
+    def run(self):
+        """Sort BAM file."""
+        options = ["view", "-bSh", "-F",
+                   "4", self.outsam, "-o", self.bam_file]
+        samtools_cmd = samtools[options]
+        samtools_cmd()
 
 
 @inherits(HisatMapW)
