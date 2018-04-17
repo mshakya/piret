@@ -332,10 +332,10 @@ class SummarizeMap(luigi.Task):
             filename = map_dir + "/" + "mapping.log"
             with open(filename, 'r') as file:
                 lines = file.readlines()
-                total_reads = lines[0].split("reads")[0]
-                con_unaligned = lines[2].split("(")[0]
-                con_aligned = lines[3].split("(")[0]
-                multi_aligned = lines[4].split("(")[0]
+                total_reads = lines[0].split("reads")[0].strip()
+                con_unaligned = lines[2].split("(")[0].strip()
+                con_aligned = lines[3].split("(")[0].strip()
+                multi_aligned = lines[4].split("(")[0].strip()
                 summ_dic[samp] = [total_reads,
                                   con_unaligned,
                                   con_aligned,

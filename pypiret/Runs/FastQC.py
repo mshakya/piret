@@ -132,13 +132,12 @@ class SummarizeQC(luigi.Task):
             filename = trim_dir + "/" + samp + ".stats.txt"
             with open(filename, 'r') as file:
                 lines = file.readlines()
-                reads_before_trimming = lines[1].split(":")[1]
-                read_length = lines[3].split(":")[1]
-                reads_after_trimming = lines[9].split(":")[1].split("(")[0]
+                reads_before_trimming = lines[1].split(":")[1].strip()
+                read_length = lines[3].split(":")[1].strip()
+                reads_aft_trim = lines[9].split(":")[1].split("(")[0].strip()
                 summ_dic[samp] = [read_length,
                                   reads_before_trimming,
-                                  reads_after_trimming]
-        print(summ_dic)
+                                  reads_aft_trim]
         summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
         summ_table.columns = ["Read Length", "Raw reads", "Reads after QC"]
         out_file = self.workdir + "/" + "QCsummary.csv"
