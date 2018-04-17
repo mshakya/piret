@@ -42,9 +42,9 @@ rm test_ed.txt test_edII.txt
 
 
 printf "bin/runPiReT -d tests/test_euk -e test_euk.txt \
--ge tests/data/eukarya_test.gff3 \
+-ge tests/data2/chr22_ERCC92.gff3 \
 -i tests/test_euk/euk_index -k eukarya -m all \
--fe tests/data/eukarya_test.fa"
+-fe tests/data2/chr22_ERCC92.fa --config luigi.cfg"
 
 bin/runPiReT -d tests/test_euk -e test_euk.txt \
 -ge tests/data2/chr22_ERCC92.gff3 \
