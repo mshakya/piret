@@ -32,7 +32,7 @@ class Initialize(object):
             - ``kingdom: prokaryote or eukarya or both,
             - ``gff_prok`` : prokaryoitic gff file
             - ``gff_euk`` : eukaryotic gff file
-            - ``method`` : Deseq2 or EdgeR
+            - ``method`` : Deseq2 or edgeR
         """
         self.workdir = workdir
         self.kingdom = kingdom
@@ -59,63 +59,63 @@ class Initialize(object):
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                         'eukarya', 'EdgeR']))
+                                         'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                          'prokaryote', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'prokaryote', 'EdgeR']))
+                                          'prokaryote', 'edgeR']))
                 elif self.method == 'DeSeq':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                          'prokaryote', 'DeSeq']))
-                elif self.method == 'EdgeR':
+                elif self.method == 'edgeR':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'eukarya', 'EdgeR']))
+                                          'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'prokaryote', 'EdgeR']))
+                                          'prokaryote', 'edgeR']))
             elif self.kingdom == 'prokaryote':
                 os.makedirs('/'.join([self.workdir, 'differential_gene', 'prokaryote']))
                 if self.method == 'both':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                          'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'eukarya', 'EdgeR']))
+                                          'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'prokaryote', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'prokaryote', 'EdgeR']))
+                                          'prokaryote', 'edgeR']))
                 elif self.method == 'DeSeq':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'prokaryote', 'DeSeq']))
-                elif self.method == 'EdgeR':
+                elif self.method == 'edgeR':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'eukarya', 'EdgeR']))
+                                          'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'prokaryote', 'EdgeR']))
+                                          'prokaryote', 'edgeR']))
             elif self.kingdom == 'eukarya':
                 os.makedirs('/'.join([self.workdir, 'differential_gene', 'eukarya']))
                 if self.method == 'both':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'eukarya', 'EdgeR']))
+                                          'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'prokaryote', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'prokaryote', 'EdgeR']))
+                                          'prokaryote', 'edgeR']))
                 elif self.method == 'DeSeq':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'prokaryote', 'DeSeq']))
-                elif self.method == 'EdgeR':
+                elif self.method == 'edgeR':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'eukarya', 'EdgeR']))
+                                          'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                          'prokaryote', 'EdgeR']))
+                                          'prokaryote', 'edgeR']))
             process.info("[Created directories]")
         elif os.path.exists(self.workdir):
             print("Directory already exists, Please remove the directory or name\

@@ -77,7 +77,7 @@ These shell script automatically creates `test_experimental_design.txt` and runs
 usage: runPiReT [-h] [-c CPU] -d WORKDIR -e EXPDSN [-fp FASTA_PROK]
                 [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK] [-i INDEX_HISAT]
                 [-k {prokarya,eukarya,both}]
-                [-m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}]
+                [-m {edgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}]
                 [-p P_VALUE] [--scheduler] [--qsub]
 
 Luigi based workflow for running
@@ -97,7 +97,7 @@ optional arguments:
   -k {prokarya,eukarya,both}
                         which kingdom to test, when eukarya or both is chosen,
                         it expects alternative splicing (default: prokarya)
-  -m {EdgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}
+  -m {edgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}
                         Method to use for detecting differentially expressed
                         genes, Deseq2 requires 3 biological replicates and
                         ballgown only processes eukaryotes (default: ballEdge)
@@ -130,17 +130,17 @@ and prokaryotes run are required.
 Example run for Prokaryotes RNA seq:
 
         runPiReT -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
-        -k prokarya -m <EdgeR/Deseq2> -fp <FASTA>
+        -k prokarya -m <edgeR/Deseq2> -fp <FASTA>
 
 Example run for Eukaryotes RNA seq:
 
         runPiReT -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
-        -k eukarya -m <EdgeR/Deseq2> -fe <FASTA>
+        -k eukarya -m <edgeR/Deseq2> -fe <FASTA>
 
 Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
 
         runPiReT -d <workdir> -e <design file>  -gp <gff> -ge <gff> -i <hisat2 index>
-        -k both -m <EdgeR/Deseq2> -fe <FASTA> -fp <FASTA>
+        -k both -m <edgeR/Deseq2> -fe <FASTA> -fp <FASTA>
 ```
 
 ### 2.1 Experimental design file
@@ -156,12 +156,12 @@ An experimental design file consist of sample name (ID), full path to fastq file
 
 ### 2.2 Option details
 `-m` Method to use for detecting differentially expressed genes, all of which are R packages. This option provides users with multiple tools to use which can be spcified using following keywords:
-  - `EdgeR`: Uses EdgeR.
+  - `edgeR`: Uses edgeR.
   - `Deseq2`: Uses Deseq2
   - `ballgown`: Uses ballgown. Appropriate for eukaryotes.
-  - `DeEdge`: Uses both EdgeR and Deseq2. 
+  - `DeEdge`: Uses both edgeR and Deseq2. 
   - `Degown`: Uses Deseq2 and ballgown.
-  - `ballEdge`: Uses ballgown and EdgeR.
+  - `ballEdge`: Uses ballgown and edgeR.
   - `all`: Uses all of the above methods.
 
 
@@ -223,7 +223,7 @@ If you use PiReT please cite following papers:
 - **bowtie2**: Langmead, B., & Salzberg, S. L. (2012). Fast gapped-read alignment with Bowtie 2. Nature methods, 9(4), 357-359. [PMID: 22388286]
 - **bwa**: Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform. Bioinformatics, 25:1754-60. [PMID: 19451168]
 - **DESeq2**: Love MI, Huber W and Anders S (2014). “Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.” Genome Biology, 15, pp. 550. [PMID: 25516281]
-- **EdgeR**: McCarthy, J. D, Chen, Yunshun, Smyth and K. G (2012). Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation. Nucleic Acids Research, 40(10), pp. -9. [PMID: 22287627]
+- **edgeR**: McCarthy, J. D, Chen, Yunshun, Smyth and K. G (2012). Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation. Nucleic Acids Research, 40(10), pp. -9. [PMID: 22287627]
 - **HTSeq**: Anders, S., Pyl, P. T., & Huber, W. (2014). HTSeq–a Python framework to work with high-throughput sequencing data. Bioinformatics. [PMID: 25260700]
 - **HISAT2**: Kim, D., Langmead, B., & Salzberg, S. L. (2015). HISAT: a fast spliced aligner with low memory requirements. Nature methods, 12(4), 357-360. [PMID: 25751142]
 - **BEDTools**: Quinlan AR and Hall IM, 2010. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 26, 6, pp. 841–842. [PMID: 20110278]

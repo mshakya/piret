@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-Script that joins all csv from EdgeR.
+Script that joins all csv from edgeR.
 
 It creates one csv file for easier manual analysis.
 
@@ -21,10 +21,10 @@ def cmdline_parser():
 
     for inputting options.
     """
-    parser = argparse.ArgumentParser(description="""merges EdgeR comparison files
+    parser = argparse.ArgumentParser(description="""merges edgeR comparison files
         to one csv file""")
     parser.add_argument("-i", "--INPUT_FOLDER",
-                        help="folder that has the EdgeR results")
+                        help="folder that has the edgeR results")
     return parser
 
 
