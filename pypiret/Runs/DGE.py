@@ -38,7 +38,7 @@ class edgeR(luigi.Task):
             for file in files:
                 if file.endswith("csv"):
                     name = file.split("_")[-2]
-                    edger_list = [self.bindir + "/../scripts/edgeR",
+                    edger_list = [self.bindir + "/../scripts/edgeR.R",
                                   "-r", os.path.join(root, file),
                                   "-e", self.exp_design,
                                   "-p", self.p_value,
