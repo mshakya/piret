@@ -42,6 +42,7 @@ names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
 names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
 
 
+#TODO: move this piece of code to separate R code so that its done everytime
 #rearrange/clean the table and rewrite the column to display in EDGE
 outfile = paste(strsplit(reads_file ,".csv"), "_sorted.csv", sep="")
 read.counts.sort <- read.counts

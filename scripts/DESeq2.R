@@ -54,21 +54,19 @@ group_table <- read.delim(group_file, row.names = 1)
 group_table <- select(group_table, Group)
 
 read.counts <- read.counts[, rownames(group_table)]
-print(head(read.counts))
 deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read.counts,
                                            colData = group_table,
                                            design = ~ Group,
                                            tidy = FALSE,
                                            rowRanges=gene.ranges)
 
-# # remove genes without any counts
+# remove genes without any counts
 deseq_ds <- deseq_ds[rowSums(counts(deseq_ds)) > 0, ]
 
-# # calculate size factors
+# calculate size factors
 dds <- DESeq2::DESeq(deseq_ds)
 
-
-# # print(str(dds))
+#TODO: Need to make sure that all gff lines have IDs
 # ############### calculate FPKM and FPM #########################################
 fpkm_results <- DESeq2::fpkm(deseq_ds, robust=TRUE)
 fpm_results <- DESeq2::fpm(deseq_ds)
@@ -76,7 +74,7 @@ out_fpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]]
 out_fpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_FPM.csv", sep=""))
 write.csv(fpkm_results, file = out_fpkm)
 write.csv(fpm_results, file = out_fpm)
-# ################################################################################
+################################################################################
 
 
 ################ histogram of count per million ################################

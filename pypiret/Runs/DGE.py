@@ -25,20 +25,61 @@ class edgeR(luigi.Task):
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("csv"):
-                    out_file = edger_dir + "/" + file.split(".csv")[0] + "_RPKM.csv"
-                    return LocalTarget(out_file)
+                    out_filename = file.split(".tsv")[0] + "_RPKM.csv"
+                    out_filepath = os.path.join(edger_dir, out_filename)
+                    return LocalTarget(out_filepath)
 
     def run(self):
         """Run edgeR."""
         fcount_dir = self.workdir + "/featureCounts"
         edger_dir = self.workdir + "/edgeR/" + self.kingdom
+        edger_location = os.path.join(self.bindir, "../scripts/edgeR.R")
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("tsv"):
                     name = file.split("_")[-2]
-                    edger_list = [self.bindir + "/../scripts/edgeR.R",
+                    edger_list = [edger_location,
+                                  "-r", os.path.join(root, file),
+                                  "-e", self.exp_design,
+                                  "-p", self.p_value,
+                                  "-n", name,
+                                  "-o", edger_dir]
+                    edger_cmd = Rscript[edger_list]
+                    edger_cmd()
+
+
+@requires(Summ.FeatureCounts)
+class DESeq2(luigi.Task):
+    """Find DGE using edgeR."""
+
+    exp_design = luigi.Parameter()
+    p_value = luigi.FloatParameter()
+
+    def output(self):
+        """Expected output of DGE using edgeR."""
+        fcount_dir = self.workdir + "/featureCounts"
+        edger_dir = self.workdir + "/DESeq2/" + self.kingdom
+        for root, dirs, files in os.walk(fcount_dir):
+            for file in files:
+                if file.endswith("csv"):
+                    out_filename = file.split(".tsv")[0] + "_FPKM.csv"
+                    out_filepath = os.path.join(edger_dir, out_filename)
+                    return LocalTarget(out_filepath)
+
+    def run(self):
+        """Run edgeR."""
+        fcount_dir = self.workdir + "/featureCounts"
+        edger_dir = self.workdir + "/DESeq2/" + self.kingdom
+        deseq2_location = os.path.join(self.bindir, "../scripts/DESeq2.R")
+        if not os.path.exists(edger_dir):
+            os.makedirs(edger_dir)
+        for root, dirs, files in os.walk(fcount_dir):
+            for file in files:
+                if file.endswith("tsv"):
+                    name = file.split("_")[-2]
+                    edger_list = [deseq2_location,
                                   "-r", os.path.join(root, file),
                                   "-e", self.exp_design,
                                   "-p", self.p_value,
@@ -49,39 +90,5 @@ class edgeR(luigi.Task):
 
     def program_environment(self):
         """Environmental variables for this program."""
-        return {'PATH': self.bindir + "/../scripts/" + ":" + os.environ["PATH"]}
-
-
-# class edgeR(ExternalProgramTask):
-#     """Find DGE using edgeR."""
-
-#     exp_design = luigi.Parameter()
-#     p_value = luigi.FloatParameter()
-
-#     def requires(self):
-#         """Require count file to be present."""
-#         return RefFile(os.path.join(self.workdir, "featureCounts", "CDS.count"))
-
-#     def output(self):
-#         """Expected output of DGE using edgeR."""
-#         edger_dir = self.workdir + "/edgeR/" + self.kingdom
-#         return LocalTarget(edger_dir + "/" + "CPM.csv")
-
-#     def program_args(self):
-#         """Run edgeR."""
-#         fcount_dir = self.workdir + "/featureCounts"
-#         edger_dir = self.workdir + "/edgeR/" + self.kingdom
-#         if not os.path.exists(edger_dir):
-#             os.makedirs(edger_dir)
-#         for root, dirs, files in os.walk(fcount_dir):
-#             for file in files:
-#                 if file.endswith("count"):
-#                     return ["Rscript", self.bindir + "/../scripts/edgeR",
-#                             "-r", os.path.join(root, file),
-#                             "-e", self.exp_design,
-#                             "-p", self.p_value,
-#                             "-o", edger_dir]
-
-#     def program_environment(self):
-#         """Environmental variables for this program."""
-#         return {'PATH': self.bindir + "/../scripts/" + ":" + os.environ["PATH"]}
+        scriptdir = os.path.join(self.bindir, "/../scripts/")
+        return {'PATH': scriptdir + ":" + os.environ["PATH"]}
