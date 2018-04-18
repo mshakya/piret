@@ -41,6 +41,16 @@ names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
                            perl = TRUE)
 names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
 
+
+#rearrange/clean the table and rewrite the column to display in EDGE
+outfile = paste(strsplit(reads_file ,".csv"), "_sorted.csv", sep="")
+read.counts.sort <- read.counts
+col_len <- ncol(read.counts.sort)
+read.counts.sort$sum <- rowSums(read.counts.sort[7:col_len])
+read.counts.sort <- dplyr::arrange(read.counts.sort, desc(sum))
+write.csv(read.counts.sort, file=outfile )
+
+# convert to row names
 row.names(read.counts) <- read.counts[, 1]
 
 # gene information
