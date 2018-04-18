@@ -48,6 +48,7 @@ read.counts.sort <- read.counts
 col_len <- ncol(read.counts.sort)
 read.counts.sort$sum <- rowSums(read.counts.sort[7:col_len])
 read.counts.sort <- dplyr::arrange(read.counts.sort, desc(sum))
+read.counts.sort$sum <- NULL
 write.csv(read.counts.sort, file=outfile )
 
 # convert to row names

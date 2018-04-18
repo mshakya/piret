@@ -36,7 +36,7 @@ class edgeR(luigi.Task):
             os.makedirs(edger_dir)
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
-                if file.endswith("csv"):
+                if file.endswith("tsv"):
                     name = file.split("_")[-2]
                     edger_list = [self.bindir + "/../scripts/edgeR.R",
                                   "-r", os.path.join(root, file),
