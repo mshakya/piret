@@ -42,28 +42,47 @@ names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
 names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
 
 
+# convert first column to row names
+row.names(read.counts) <- read.counts[, 1]
+
+# get gene information
+gene.info <- read.counts[, c(1:6)]
+
+# read the experimental design file
+group_table <- read.delim(group_file, row.names = 1)
+group_table <- select(group_table, Group)
+
+
 #TODO: move this piece of code to separate R code so that its done everytime
 #rearrange/clean the table and rewrite the column to display in EDGE
-outfile = paste(strsplit(reads_file ,".csv"), "_sorted.csv", sep="")
+outfile <- paste(strsplit(reads_file ,".tsv"), "_sorted.csv", sep="")
 read.counts.sort <- read.counts
 col_len <- ncol(read.counts.sort)
 read.counts.sort$sum <- rowSums(read.counts.sort[7:col_len])
 read.counts.sort <- dplyr::arrange(read.counts.sort, desc(sum))
 read.counts.sort$sum <- NULL
+read.counts.sort <- read.counts.sort[c(base::colnames(gene.info), base::row.names(group_table))]
 write.csv(read.counts.sort, file=outfile )
 
-# convert to row names
-row.names(read.counts) <- read.counts[, 1]
 
-# gene information
-gene.info <- read.counts[, c(1:6)]
+# Reformat summary files for EDGE display
+summary_file <- paste(reads_file, ".summary", sep="")
+summary_outfile <- paste(strsplit(reads_file ,".summary"), "_summary.csv", sep="")
+summary.counts <- read.table(summary_file, sep = "\t", header = TRUE, comment.char = "#")
+names(summary.counts) <- gsub(".*mapping_results.", "", names(summary.counts),
+                           perl = TRUE)
+names(summary.counts) <- gsub("_srt.bam", "", names(summary.counts), perl = TRUE)
+summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
+write.csv(summary.counts, file=summary_outfile )
+
+
+
 
 # remove first six columns that have metadata
 read.counts <- read.counts[, -c(1:6)]
 read.counts.non0<- dplyr::filter_all(read.counts, any_vars(. != 0))
 
-group_table <- read.delim(group_file, row.names = 1)
-group_table <- select(group_table, Group)
+
 
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
