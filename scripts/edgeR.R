@@ -53,7 +53,6 @@ read.counts.non0<- dplyr::filter_all(read.counts, any_vars(. != 0))
 group_table <- read.delim(group_file, row.names = 1)
 group_table <- select(group_table, Group)
 
-print(group_table)
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
 
@@ -119,7 +118,7 @@ rpkm_violin
 rpkm_violin_group
 dev.off()
 
-if (feature_name %in% c("CDS")){
+if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
 
     if (0 %in% colSums(edger_dge$counts)) {
         print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
