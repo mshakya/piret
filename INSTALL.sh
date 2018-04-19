@@ -596,7 +596,9 @@ Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == 
 # install R gage package
 Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage');}"  | awk '{print " - found gage "$2}'
 Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
-
+# install R ballgown package
+Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
+Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('ballgown')}";
 ################################################################################
 if ( checkSystemInstallation featureCounts )
 then
