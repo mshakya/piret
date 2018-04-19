@@ -43,9 +43,7 @@ names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
 
 # gene information
 gene.info <- read.counts[, c(1:5)]
-print(head(gene.info))
 gene.ranges <- makeGRangesFromDataFrame(gene.info)
-print(gene.ranges)
 # # remove first six columns that have metadata
 # read.counts <- read.counts[, -c(1:6)]
 
