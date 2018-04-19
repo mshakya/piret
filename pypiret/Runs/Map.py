@@ -237,17 +237,15 @@ class Hisat(luigi.Task):
     numCPUs = IntParameter()
     indexfile = Parameter()
     spliceFile = Parameter()
-    mappingLogFile = Parameter()
     outsam = Parameter()
-    unalned = Parameter()
     ref_file = Parameter()
     bindir = Parameter()
     map_dir = Parameter()
 
     def output(self):
         """SAM file output of the mapping."""
-        out_file = os.path.abspath(self.outsam)
-        return luigi.LocalTarget(out_file)
+        bam_file = self.outsam.split(".sam")[0] + ".bam"
+        return luigi.LocalTarget(bam_file)
 
     def run(self):
         """Run hisat2."""
@@ -257,21 +255,49 @@ class Hisat(luigi.Task):
                                       "-1", self.fastqs[0],
                                       "-2", self.fastqs[1],
                                       "-S", self.outsam,
-                                      "--un-conc", self.unalned,
-                                      "2>", self.mappingLogFile]
+                                      "--un-conc",
+                                      os.path.join(self.map_dir,
+                                                   "unaligned.fastq"),
+                                      "2>", os.path.join(self.map_dir,
+                                                         "mapping.log")]
             hisat2_cmd = hisat2[hisat2_nosplice_option]
             hisat2_cmd()
+            self.sam2bam()
+            self.sort_bam()
         else:
-            hisat2_splice_option = ["--known-splicesite-infile", self.spliceFile,
-                                    "-p", self.numCPUs,
-                                    "-x", self.indexfile,
-                                    "-1", self.fastqs[0],
-                                    "-2", self.fastqs[1],
-                                    "-S", self.outsam,
-                                    "--un-conc", self.unalned,
-                                    "2>", self.mappingLogFile]
-            hisat2_cmd = hisat2[hisat2_splice_option]
+            h2_splice_option = ["--known-splicesite-infile", self.spliceFile,
+                                "-p", self.numCPUs,
+                                "-x", self.indexfile,
+                                "-1", self.fastqs[0],
+                                "-2", self.fastqs[1],
+                                "-S", self.outsam,
+                                "--un-conc",
+                                os.path.join(self.map_dir,
+                                             "unaligned.fastq"),
+                                "2>", os.path.join(self.map_dir,
+                                                   "mapping.log")]
+            hisat2_cmd = hisat2[h2_splice_option]
             hisat2_cmd()
+            self.sam2bam()
+            self.sort_bam()
+
+    def sam2bam(self):
+        """Convert SAM to BAM file."""
+        bam_file = self.outsam.split(".sam")[0] + ".bam"
+        options = ["view", "-bSh", "-F",
+                   "4", self.outsam, "-o", bam_file]
+        samtools_cmd = samtools[options]
+        samtools_cmd()
+
+    def sort_bam(self):
+        """Sort BAM file."""
+        bam_file = self.outsam.split(".sam")[0] + ".bam"
+        sorted_bam_file = bam_file.split(".bam")[0] + "_srt.bam"
+        options = ["sort", bam_file,
+                   "-o", sorted_bam_file]
+        samtools_cmd = samtools[options]
+        samtools_cmd()
+
 
 # @requires(FastQC.RunAllQC)
 class HisatMapW(luigi.WrapperTask):
@@ -282,31 +308,29 @@ class HisatMapW(luigi.WrapperTask):
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
     workdir = luigi.Parameter()
-    numCPUs = luigi.Parameter()
+    numCPUs = luigi.IntParameter()
 
     def requires(self):
         """A wrapper task for running mapping."""
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join(splice_list)
-        elif len(splice_list) == 1:
-            splice_file = splice_list[0]
+        splist = [self.workdir + "/" +
+                  f for f in os.listdir(self.workdir) if f.endswith('.splice')]
+        if len(splist) > 1:
+            splice_file = ','.join(splist)
+        elif len(splist) == 1:
+            splice_file = splist[0]
         else:
             splice_file = ''
         for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            print(trim_dir)
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
-            yield Hisat(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq", trim_dir + "/" + samp + ".2.trimmed.fastq"],
+            yield Hisat(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                trim_dir + "/" + samp + ".2.trimmed.fastq"],
                         qc_outdir=trim_dir,
                         numCPUs=self.numCPUs,
                         indexfile=self.indexfile,
                         spliceFile=splice_file,
-                        mappingLogFile=map_dir + "/mapping.log",
-                        unalned=map_dir + "/unligned.fastq",
                         outsam=map_dir + "/" + samp + ".sam",
                         ref_file=self.ref_file,
                         bindir=self.bindir,
@@ -326,7 +350,6 @@ class SummarizeMap(luigi.Task):
     def run(self):
         """Parse the FaQC stats."""
         summ_dic = {}
-
         for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             filename = map_dir + "/" + "mapping.log"
@@ -373,123 +396,12 @@ class HiSatBoth(luigi.WrapperTask):
                         numCPUs=self.numCPUs,
                         indexfile=self.indexfile,
                         spliceFile=splice_file,
-                        mappingLogFile=map_dir + "/mapping.log",
-                        unalned=map_dir + "/unligned.fastq",
                         outsam=map_dir + "/" + samp + ".sam",
                         ref_file=self.ref_file,
                         bindir=self.bindir)
 
 
 @requires(Hisat)
-class SAM2BAMfile(luigi.Task):
-    """Convert SAM file to BAM file with only mapped reads."""
-
-    bam_file = Parameter()
-
-    def output(self):
-        """Output BAM file."""
-        return LocalTarget(self.bam_file)
-
-    def run(self):
-        """Sort BAM file."""
-        options = ["view", "-bSh", "-F",
-                   "4", self.outsam, "-o", self.bam_file]
-        samtools_cmd = samtools[options]
-        samtools_cmd()
-
-
-@inherits(HisatMapW)
-class SAM2BAMfileW(luigi.WrapperTask):
-    """From Mapping to Counting step for Eukaryotic reference."""
-
-    def requires(self):
-        """A wrapper for running the QC."""
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join(splice_list)
-        elif len(splice_list) == 1:
-            splice_file = splice_list[0]
-        else:
-            splice_file = ''
-        for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
-            if os.path.isdir(map_dir) is False:
-                os.makedirs(map_dir)
-            yield SAM2BAMfile(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                       trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                              qc_outdir=trim_dir,
-                              map_dir=map_dir,
-                              numCPUs=self.numCPUs,
-                              indexfile=self.indexfile,
-                              spliceFile=splice_file,
-                              mappingLogFile=map_dir + "/mapping.log",
-                              unalned=map_dir + "/unligned.fastq",
-                              outsam=map_dir + "/" + samp + ".sam",
-                              bam_file=map_dir + "/" + samp + ".bam",
-                              ref_file=self.ref_file,
-                              bindir=self.bindir,
-                              sample=samp
-                              )
-
-
-@requires(SAM2BAMfile)
-class SortBAMfile(luigi.Task):
-    """Sort BAM file."""
-
-    sorted_bam_file = Parameter()
-
-    def output(self):
-        """Sorted BAM file."""
-        return LocalTarget(self.sorted_bam_file)
-
-    def run(self):
-        """Sort BAM file."""
-        options = ["sort", self.bam_file,
-                   "-o", self.sorted_bam_file]
-        samtools_cmd = samtools[options]
-        samtools_cmd()
-
-
-@inherits(SAM2BAMfileW)
-class SortBAMfileW(luigi.WrapperTask):
-    """Sort all bam files."""
-
-    def requires(self):
-        """A wrapper task for converting sam to bam."""
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join(splice_list)
-        elif len(splice_list) == 1:
-            splice_file = splice_list[0]
-        else:
-            splice_file = ''
-        for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
-            if os.path.isdir(map_dir) is False:
-                os.makedirs(map_dir)
-
-            yield SortBAMfile(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                      trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                              map_dir=map_dir,
-                              qc_outdir=trim_dir,
-                              numCPUs=self.numCPUs,
-                              indexfile=self.indexfile,
-                              spliceFile=splice_file,
-                              mappingLogFile=map_dir + "/mapping.log",
-                              unalned=map_dir + "/unligned.fastq",
-                              outsam=map_dir + "/" + samp + ".sam",
-                              bam_file=map_dir + "/" + samp + ".bam",
-                              sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                              ref_file=self.ref_file,
-                              bindir=self.bindir,
-                              sample=samp)
-
-
-@requires(SortBAMfile)
 class RefNames(luigi.Task):
     """Extract the name of chromosomes where reads were mapped in BAM file."""
 
@@ -511,18 +423,18 @@ class RefNames(luigi.Task):
         subprocess.Popen(grep_cmd, shell=True)
 
 
-@inherits(SortBAMfileW)
+@inherits(HisatMapW)
 class GetRefNames(luigi.WrapperTask):
     """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
 
     def requires(self):
         """A pipeline that runs from mapping to count for euk and prok."""
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join(splice_list)
+        splist = [self.workdir + "/" +
+                  f for f in os.listdir(self.workdir) if f.endswith('.splice')]
+        if len(splist) > 1:
+            splice_file = ','.join(splist)
         else:
-            splice_file = splice_list[0]
+            splice_file = splist[0]
         for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
@@ -531,8 +443,6 @@ class GetRefNames(luigi.WrapperTask):
                            numCPUs=self.numCPUs,
                            indexfile=self.indexfile,
                            spliceFile=splice_file,
-                           mappingLogFile=map_dir + "/mapping.log",
-                           unalned=map_dir + "/unligned.fastq",
                            outsam=map_dir + "/" + samp + ".sam",
                            bam_file=map_dir + "/" + samp + ".bam",
                            sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
@@ -542,11 +452,10 @@ class GetRefNames(luigi.WrapperTask):
 
 
 @inherits(GFF2GTF)
-@requires(SortBAMfile)
+@requires(Hisat)
 class StringTieScores(luigi.Task):
     """Calculate scores using string tie."""
 
-    in_gtf = luigi.Parameter()
     out_gtf = luigi.Parameter()
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
@@ -567,8 +476,8 @@ class StringTieScores(luigi.Task):
         stringtie_cmd()
 
 
-@inherits(GFF2GTF)
-@inherits(SortBAMfileW)
+# @inherits(GFF2GTF)
+@inherits(HisatMapW)
 class StringTieScoresW(luigi.WrapperTask):
     """From Mapping to Counting step for Eukaryotic reference."""
 
@@ -577,77 +486,43 @@ class StringTieScoresW(luigi.WrapperTask):
 
     def requires(self):
         """A wrapper for running Stringtie scores on all samples."""
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join(splice_list)
-        elif len(splice_list) == 1:
-            splice_file = splice_list[0]
+        splst = [self.workdir + "/" +
+                 f for f in os.listdir(self.workdir) if f.endswith('.splice')]
+        if len(splst) > 1:
+            splice_file = ','.join(splst)
+        elif len(splst) == 1:
+            splice_file = splst[0]
         else:
             splice_file = ""
         for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            if os.path.isdir(map_dir) is False:
-                os.makedirs(map_dir)
+            stng_dir = self.workdir + "/" + samp + "/stie_results"
+            if os.path.isdir(stng_dir) is False:
+                os.makedirs(stng_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
                 if self.kingdom == 'prokarya':
-                    append_name = '_prok'
+                    apd = '_prok'
                 elif self.kingdom == 'eukarya':
-                    append_name = '_euk'
-                if ',' in self.gff_file:
-                    gff_list = [os.path.abspath(gff) for gff in self.gff_file.split(",")]
-                    for gff in gff_list:
-                        gtf = self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf"
-                        gff_name = gtf.split(".gtf")[0].split("/")[-1]
-                        yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                          trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                          numCPUs=self.numCPUs,
-                                          indexfile=self.indexfile,
-                                          spliceFile=splice_file,
-                                          mappingLogFile=map_dir + "/mapping.log",
-                                          unalned=map_dir + "/unligned.fastq",
-                                          outsam=map_dir + "/" + samp + ".sam",
-                                          bam_file=map_dir + "/" + samp + ".bam",
-                                          sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                          ref_file=self.ref_file,
-                                          in_gtf=gtf,
-                                          gff_file=self.gff_file,
-                                          out_gtf=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf",
-                                          out_cover=map_dir + "/" + samp + "_" + gff_name + append_name + "_covered_sTie.gtf",
-                                          out_abun=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.tab",
-                                          in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                          bindir=self.bindir,
-                                          workdir=self.workdir,
-                                          sample=samp,
-                                          qc_outdir=trim_dir,
-                                          map_dir=map_dir)
-
-                else:
-                    gtf = self.workdir + "/" + self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
-                    gff_name = gtf.split(".gtf")[0].split("/")[-1]
-                    yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                          trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                          numCPUs=self.numCPUs,
-                                          indexfile=self.indexfile,
-                                          spliceFile=splice_file,
-                                          mappingLogFile=map_dir + "/mapping.log",
-                                          unalned=map_dir + "/unligned.fastq",
-                                          outsam=map_dir + "/" + samp + ".sam",
-                                          bam_file=map_dir + "/" + samp + ".bam",
-                                          sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                          ref_file=self.ref_file,
-                                          in_gtf=gtf,
-                                          gff_file=self.gff_file,
-                                          out_gtf=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf",
-                                          out_cover=map_dir + "/" + samp + "_" + gff_name + append_name + "_covered_sTie.gtf",
-                                          out_abun=map_dir + "/" + samp + "_" + gff_name + append_name + "_sTie.tab",
-                                          in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                          bindir=self.bindir,
-                                          workdir=self.workdir,
-                                          sample=samp,
-                                          qc_outdir=trim_dir,
-                                          map_dir=map_dir)
+                    apd = '_euk'
+                gff_name = self.gff_file.split(".gff")[0].split("/")[-1]
+                yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                              trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                                      numCPUs=self.numCPUs,
+                                      indexfile=self.indexfile,
+                                      spliceFile=splice_file,
+                                      outsam=map_dir + "/" + samp + ".sam",
+                                      ref_file=self.ref_file,
+                                      gff_file=self.gff_file,
+                                      out_gtf=stng_dir + "/" + samp + "_" + gff_name + apd + "_sTie.gtf",
+                                      out_cover=stng_dir + "/" + samp + "_" + gff_name + apd + "_covered_sTie.gtf",
+                                      out_abun=stng_dir + "/" + samp + "_" + gff_name + apd + "_sTie.tab",
+                                      in_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                      bindir=self.bindir,
+                                      workdir=self.workdir,
+                                      sample=samp,
+                                      qc_outdir=trim_dir,
+                                      map_dir=map_dir)
             elif self.kingdom == 'both':
                 prok_gtf = self.workdir + "/" + \
                     self.gff_file.split(";")[0].split("/")[-1].split(".gff")[0] + ".gtf"
@@ -658,16 +533,12 @@ class StringTieScoresW(luigi.WrapperTask):
                                       numCPUs=self.numCPUs,
                                       indexfile=self.indexfile,
                                       spliceFile=splice_file,
-                                      mappingLogFile=map_dir + "/mapping.log",
-                                      unalned=map_dir + "/unligned.fastq",
                                       outsam=map_dir + "/" + samp + ".sam",
-                                      bam_file=map_dir + "/" + samp + ".bam",
-                                      sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                       ref_file=self.ref_file,
                                       gtf=prok_gtf,
-                                      out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
-                                      out_cover=map_dir + "/" + samp + "_prok_covered_sTie.gtf",
-                                      out_abun=map_dir + "/" + samp + "_prok_sTie.tab",
+                                      out_gtf=stng_dir + "/" + samp + "_prok_sTie.gtf",
+                                      out_cover=stng_dir + "/" + samp + "_prok_covered_sTie.gtf",
+                                      out_abun=stng_dir + "/" + samp + "_prok_sTie.tab",
                                       in_bam_file=map_dir + "/prokarya.bam",
                                       bindir=self.bindir,
                                       workdir=self.workdir,
@@ -680,16 +551,12 @@ class StringTieScoresW(luigi.WrapperTask):
                                       numCPUs=self.numCPUs,
                                       indexfile=self.indexfile,
                                       spliceFile=splice_file,
-                                      mappingLogFile=map_dir + "/mapping.log",
-                                      unalned=map_dir + "/unligned.fastq",
                                       outsam=map_dir + "/" + samp + ".sam",
-                                      bam_file=map_dir + "/" + samp + ".bam",
-                                      sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                       ref_file=self.ref_file,
                                       gtf=euk_gtf,
-                                      out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
-                                      out_cover=map_dir + "/" + samp + "_euk_covered_sTie.gtf",
-                                      out_abun=map_dir + "/" + samp + "_euk_sTie.tab",
+                                      out_gtf=stng_dir + "/" + samp + "_euk_sTie.gtf",
+                                      out_cover=stng_dir + "/" + samp + "_euk_covered_sTie.gtf",
+                                      out_abun=stng_dir + "/" + samp + "_euk_sTie.tab",
                                       in_bam_file=map_dir + "/eukarya.bam",
                                       bindir=self.bindir,
                                       workdir=self.workdir,
@@ -745,8 +612,6 @@ class SplitBAMBoth(luigi.WrapperTask):
                                numCPUs=self.numCPUs,
                                indexfile=self.indexfile,
                                spliceFile=splice_file,
-                               mappingLogFile=map_dir + "/mapping.log",
-                               unalned=map_dir + "/unligned.fastq",
                                outsam=map_dir + "/" + samp + ".sam",
                                bam_file=map_dir + "/" + samp + ".bam",
                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
@@ -815,8 +680,8 @@ class SplitProkEukBoth(luigi.WrapperTask):
                                   numCPUs=self.numCPUs,
                                   indexfile=self.indexfile,
                                   spliceFile=splice_file,
-                                  mappingLogFile=map_dir + "/mapping.log",
-                                  unalned=map_dir + "/unligned.fastq",
+                                  # mappingLogFile=map_dir + "/mapping.log",
+                                  # unalned=map_dir + "/unligned.fastq",
                                   outsam=map_dir + "/" + samp + ".sam",
                                   bam_file=map_dir + "/" + samp + ".bam",
                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
@@ -876,8 +741,7 @@ class MergeBAMfileBoth(luigi.WrapperTask):
                                numCPUs=self.numCPUs,
                                indexfile=self.indexfile,
                                spliceFile=splice_file,
-                               mappingLogFile=map_dir + "/mapping.log",
-                               unalned=map_dir + "/unligned.fastq",
+                               # mappingLogFile=map_dir + "/mapping.log",
                                outsam=map_dir + "/" + samp + ".sam",
                                bam_file=map_dir + "/" + samp + ".bam",
                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
@@ -892,8 +756,7 @@ class MergeBAMfileBoth(luigi.WrapperTask):
                                numCPUs=self.numCPUs,
                                indexfile=self.indexfile,
                                spliceFile=splice_file,
-                               mappingLogFile=map_dir + "/mapping.log",
-                               unalned=map_dir + "/unligned.fastq",
+                               # mappingLogFile=map_dir + "/mapping.log",
                                outsam=map_dir + "/" + samp + ".sam",
                                bam_file=map_dir + "/" + samp + ".bam",
                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
@@ -906,7 +769,7 @@ class MergeBAMfileBoth(luigi.WrapperTask):
                                )
 
 
-@inherits(SortBAMfileW)
+@inherits(HisatMapW)
 class StringTieScoresBoth(luigi.WrapperTask):
     """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
 
@@ -934,8 +797,7 @@ class StringTieScoresBoth(luigi.WrapperTask):
                                   numCPUs=self.numCPUs,
                                   indexfile=self.indexfile,
                                   spliceFile=splice_file,
-                                  mappingLogFile=map_dir + "/mapping.log",
-                                  unalned=map_dir + "/unligned.fastq",
+                                  # mappingLogFile=map_dir + "/mapping.log",
                                   outsam=map_dir + "/" + samp + ".sam",
                                   bam_file=map_dir + "/" + samp + ".bam",
                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
@@ -951,8 +813,7 @@ class StringTieScoresBoth(luigi.WrapperTask):
                                   numCPUs=self.numCPUs,
                                   indexfile=self.indexfile,
                                   spliceFile=splice_file,
-                                  mappingLogFile=map_dir + "/mapping.log",
-                                  unalned=map_dir + "/unligned.fastq",
+                                  # mappingLogFile=map_dir + "/mapping.log",
                                   outsam=map_dir + "/" + samp + ".sam",
                                   bam_file=map_dir + "/" + samp + ".bam",
                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",

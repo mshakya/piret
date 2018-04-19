@@ -21,7 +21,7 @@ class RefFile(luigi.ExternalTask):
         return LocalTarget(os.path.abspath(self.path))
 
 
-@requires(Map.SortBAMfileW)
+@requires(Map.HisatMapW)
 class FeatureCounts(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
@@ -30,7 +30,7 @@ class FeatureCounts(luigi.Task):
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
-    numCPUs = luigi.Parameter()
+    numCPUs = luigi.IntParameter()
     ref_file = luigi.Parameter()
     fid = luigi.Parameter()
     stranded = luigi.IntParameter()
@@ -98,7 +98,7 @@ class FeatureCounts(luigi.Task):
                     fcount_cmd()
 
 
-@requires(Map.SortBAMfileW)
+@requires(Map.HisatMapW)
 class FeatureCountsBoth(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
@@ -108,7 +108,7 @@ class FeatureCountsBoth(luigi.Task):
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
-    numCPUs = luigi.Parameter()
+    numCPUs = luigi.IntParameter()
     ref_file = luigi.Parameter()
 
     def output(self):
@@ -177,10 +177,10 @@ class MergeStringTies(luigi.Task):
     def ouput(self):
         """Ouptut of string tie merge."""
         if self.kingdom in ['prokarya', 'eukarya']:
-            return [Map.RefFile(self.workdir + "/" + "merged_transcript.gtf")]
+            return [Map.RefFile(self.workdir + "/" + "stringtie_merged_transcript.gtf")]
         elif self.kingdom == 'both':
-            return [Map.RefFile(self.workdir + "/" + "prok_merged_transcript.gtf"),
-                    Map.RefFile(self.workdir + "/" + "euk_merged_transcript.gtf")]
+            return [Map.RefFile(self.workdir + "/" + "prok_stringtie_merged_transcript.gtf"),
+                    Map.RefFile(self.workdir + "/" + "euk_stringtie_merged_transcript.gtf")]
 
     def run(self):
         """Running stringtie merge."""
@@ -190,21 +190,15 @@ class MergeStringTies(luigi.Task):
                 append_name = '_prok'
             elif self.kingdom == 'eukarya':
                 append_name = '_euk'
-            # gtf = self.workdir + "/" + \
-            #     self.gff_file.split(";")[0].split(
-            #         "/")[-1].split(".gff")[0] + ".gtf"
-
-            # if ',' in self.gff_file:
             gtf = self.workdir + "/" + \
-                    self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
+                self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
             gff_name = gtf.split(".gtf")[0].split("/")[-1]
-            out_gtf_list = [self.workdir + "/" + samp + "/" +
-                            "mapping_results" + "/" + samp + "_" + gff_name + append_name + "_sTie.gtf"
-                            for samp in samp_list]
-
+            out_gtf_list = [self.workdir + "/" + samp + "/" + "stie_results" +
+                            "/" + samp + "_" + gff_name + append_name +
+                            "_sTie.gtf" for samp in samp_list]
             stie_cmd_opt = ["--merge", "-G", self.gff_file,
                             "-o", self.workdir +
-                            "/" + "merged_transcript.gtf"] + out_gtf_list
+                            "/" + "stringtie_merged_transcript.gtf"] + out_gtf_list
             stie_cmd = stringtie[stie_cmd_opt]
             stie_cmd()
         elif self.kingdom == 'both':
@@ -223,13 +217,13 @@ class MergeStringTies(luigi.Task):
                                for samp in samp_list]
             stie_cmd_euk_opt = ["--merge", "-G", euk_gtf,
                                 "-o", self.workdir +
-                                "/" + "/euk_merged_transcript.gtf"] + eukout_gtf_list
+                                "/" + "/euk_stringtie_merged_transcript.gtf"] + eukout_gtf_list
             stie_cmd_euk = stringtie[stie_cmd_euk_opt]
             stie_cmd_euk()
 
             stie_cmd_prok_opt = ["--merge", "-G", prok_gtf,
                                  "-o", self.workdir +
-                                 "/" + "/prok_merged_transcript.gtf"] + prokout_gtf_list
+                                 "/" + "/prok_stringtie_merged_transcript.gtf"] + prokout_gtf_list
             stie_cmd_prok = stringtie[stie_cmd_prok_opt]
             stie_cmd_prok()
 
@@ -263,7 +257,7 @@ class ReStringTieScores(ExternalProgramTask):
                 self.in_bam_file]
 
 
-@inherits(Map.SortBAMfileW)
+@inherits(Map.HisatMapW)
 class ReStringTieScoresW(luigi.WrapperTask):
     """Recount to only have common transcripts."""
 
@@ -274,12 +268,12 @@ class ReStringTieScoresW(luigi.WrapperTask):
 
     def requires(self):
         """A wrapper for running the QC."""
-        splice_list = [self.workdir + "/" +
-                       f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splice_list) > 1:
-            splice_file = ','.join(splice_list)
-        elif len(splice_list) == 1:
-            splice_file = splice_list[0]
+        splist = [self.workdir + "/" +
+                  f for f in os.listdir(self.workdir) if f.endswith('.splice')]
+        if len(splist) > 1:
+            splice_file = ','.join(splist)
+        elif len(splist) == 1:
+            splice_file = splist[0]
         else:
             splice_file = ''
 
@@ -290,29 +284,23 @@ class ReStringTieScoresW(luigi.WrapperTask):
                 bg_dir = self.workdir + "/ballgown/" + samp
                 if os.path.isdir(bg_dir) is False:
                     os.makedirs(bg_dir)
-                gtf = self.workdir + "/" + \
-                    self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
-
-                yield ReStringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                                trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                yield ReStringTieScores(fastqs=[trim_dir + "/" + samp +
+                                                ".1.trimmed.fastq",
+                                                trim_dir + "/" + samp +
+                                                ".2.trimmed.fastq"],
                                         numCPUs=self.numCPUs,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
-                                        mappingLogFile=map_dir + "/mapping.log",
-                                        unalned=map_dir + "/unligned.fastq",
                                         outsam=map_dir + "/" + samp + ".sam",
-                                        bam_file=map_dir + "/" + samp + ".bam",
-                                        sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
-                                        gtf=self.workdir + "/" + "merged_transcript.gtf",
-                                        out_gtf=bg_dir + "/" + samp + "merged_sTie.gtf",
-                                        out_cover=bg_dir + "/" + samp + "merged_covered_sTie.gtf",
-                                        out_abun=bg_dir + "/" + samp + "merged_sTie.tab",
+                                        gtf=self.workdir + "/" + "stringtie_merged_transcript.gtf",
+                                        out_gtf=bg_dir + "/" + samp + "_merged_sTie.gtf",
+                                        out_cover=bg_dir + "/" + samp + "_merged_covered_sTie.gtf",
+                                        out_abun=bg_dir + "/" + samp + "_merged_sTie.tab",
                                         in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                         bindir=self.bindir,
                                         workdir=self.workdir,
-                                        in_gtf=gtf,
                                         sample=samp,
                                         qc_outdir=trim_dir,
                                         map_dir=map_dir)
@@ -335,18 +323,14 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         numCPUs=self.numCPUs,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
-                                        mappingLogFile=map_dir + "/mapping.log",
-                                        unalned=map_dir + "/unligned.fastq",
-                                        outsam=map_dir + "/" + samp + ".sam",
-                                        bam_file=map_dir + "/" + samp + ".bam",
-                                        sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                        outsam=self.map_dir + "/" + samp + ".sam",
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
                                         gtf=prok_gtf,
                                         out_gtf=bg_dir_prok + "/" + samp + "_prok_sTie.gtf",
                                         out_cover=bg_dir_prok + "/" + samp + "_prok_covered_sTie.gtf",
                                         out_abun=bg_dir_prok + "/" + samp + "_prok_sTie.tab",
-                                        in_bam_file=map_dir + "/prokarya.bam",
+                                        in_bam_file=self.map_dir + "/prokarya.bam",
                                         bindir=self.bindir,
                                         workdir=self.workdir)
                 yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
@@ -354,18 +338,14 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         numCPUs=self.numCPUs,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
-                                        mappingLogFile=map_dir + "/mapping.log",
-                                        unalned=map_dir + "/unligned.fastq",
-                                        outsam=map_dir + "/" + samp + ".sam",
-                                        bam_file=map_dir + "/" + samp + ".bam",
-                                        sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
+                                        outsam=self.map_dir + "/" + samp + ".sam",
                                         ref_file=self.ref_file,
                                         gff_file=self.gff_file,
                                         gtf=euk_gtf,
                                         out_gtf=bg_dir_euk + "/" + samp + "_euk_sTie.gtf",
                                         out_cover=bg_dir_euk + "/" + samp + "_euk_covered_sTie.gtf",
                                         out_abun=bg_dir_euk + "/" + samp + "_euk_sTie.tab",
-                                        in_bam_file=map_dir + "/eukarya.bam",
+                                        in_bam_file=self.map_dir + "/eukarya.bam",
                                         bindir=self.bindir,
                                         workdir=self.workdir)
 
