@@ -76,50 +76,68 @@ write.csv(fpm_results, file = out_fpm)
 
 
 ################ histogram of count per million ################################
-out_fpm_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_histogram.pdf", sep=""))
+out_fpm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_histogram.pdf", sep=""))
+out_fpm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_histogram.png", sep=""))
 fpm_results <- dplyr::filter_all(as.data.frame(fpm_results), any_vars(. != 0))
-fpm_data <- reshape2::melt(as.data.frame(fpm_results), variable.name="sample", value.name="CPM")
-fpm_hist <- ggplot(data = fpm_data, mapping = aes(x = CPM)) +  theme_bw() +
-        geom_histogram(bins=100) + xlab("CPM") + ylab(feature_name) + facet_wrap(~sample)
-ggsave(out_fpm_hist, fpm_hist, device = "pdf")
+fpm_data <- reshape2::melt(as.data.frame(fpm_results), variable.name="sample", value.name="FPM")
+fpm_hist <- ggplot(data = fpm_data, mapping = aes(x = FPM)) +  theme_bw() +
+        geom_histogram(bins=100) + xlab("FPM") + ylab(feature_name) + facet_wrap(~sample)
+ggsave(out_fpm_hist_pdf, fpm_hist, device = "pdf")
+ggsave(out_fpm_hist_png, fpm_hist, device = "png")
 
 ################## boxplot of fragments per million ################################
 group_table2 <- add_rownames(group_table, "sample")
 fpm_data_boxplot <- merge(x=fpm_data, y=group_table2)
-out_fpm_violin <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_violin.pdf", sep=""))
-fpm_violin <- ggplot(data = fpm_data_boxplot, mapping = aes(x=sample, y=CPM)) +  theme_bw() +
+out_fpm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_violin.pdf", sep=""))
+out_fpm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_violin.png", sep=""))
+fpm_violin <- ggplot(data = fpm_data_boxplot, mapping = aes(x=sample, y=FPM)) +  theme_bw() +
         geom_violin(aes(fill = factor(Group)))
-fpm_violin_group <- ggplot(data = fpm_data_boxplot, mapping = aes(x=Group, y=CPM)) +  theme_bw() +
+fpm_violin_group <- ggplot(data = fpm_data_boxplot, mapping = aes(x=Group, y=FPM)) +  theme_bw() +
         geom_violin(aes(fill = factor(Group)))
-pdf(out_fpm_violin)
+
+pdf(out_fpm_violin_pdf)
 fpm_violin
 fpm_violin_group
 dev.off()
 
+png(out_fpm_violin_png)
+fpm_violin
+fpm_violin_group
+dev.off()
+
+
 ##############################histogram of fpkm ################################
-out_fpkm_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_histogram.pdf", sep=""))
+out_fpkm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_histogram.pdf", sep=""))
+out_fpkm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_histogram.png", sep=""))
 fpkm_results <- dplyr::filter_all(as.data.frame(fpkm_results), any_vars(. != 0))
 fpkm_data <- reshape2::melt(as.data.frame(fpkm_results), variable.name="sample", value.name="fpkm")
 fpkm_hist <- ggplot(data=fpkm_data, mapping=aes(x=fpkm)) +  theme_bw() +
         geom_histogram(bins=100) + xlab("fpkm") + ylab(feature_name) + facet_wrap(~sample)
-ggsave(out_fpkm_hist, fpkm_hist, device = "pdf")
+ggsave(out_fpkm_hist_pdf, fpkm_hist, device = "pdf")
+ggsave(out_fpkm_hist_png, fpkm_hist, device = "png")
 
 ##############################heatmap of fpkm ################################
-out_fpkm_heatmap <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_heatmap.pdf", sep=""))
-pheatmap(as.matrix(fpkm_results), legend=TRUE, filename=out_fpkm_heatmap)
-
+out_fpkm_heatmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_heatmap.pdf", sep=""))
+out_fpkm_heatmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_heatmap.png", sep=""))
+pheatmap(as.matrix(fpkm_results), legend=TRUE, filename=out_fpkm_heatmap_pdf)
+pheatmap(as.matrix(fpkm_results), legend=TRUE, filename=out_fpkm_heatmap_png)
 ################## boxplot of fPKM #############################################
 fpkm_data_boxplot <- merge(x=fpkm_data, y=group_table2)
-out_fpkm_violin <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_violin.pdf", sep=""))
+out_fpkm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_violin.pdf", sep=""))
+out_fpkm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_violin.png", sep=""))
 fpkm_violin <- ggplot(data = fpkm_data_boxplot, mapping = aes(x=sample, y=fpkm)) +  theme_bw() +
         geom_violin(aes(fill = factor(Group)))
 fpkm_violin_group <- ggplot(data = fpkm_data_boxplot, mapping = aes(x=Group, y=fpkm)) +  theme_bw() +
         geom_violin(aes(fill = factor(Group)))
-pdf(out_fpkm_violin)
+pdf(out_fpkm_violin_pdf)
 fpkm_violin
 fpkm_violin_group
 dev.off()
 
+png(out_fpkm_violin_png)
+fpkm_violin
+fpkm_violin_group
+dev.off()
 
 
 
@@ -160,11 +178,14 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
 
 
         #plot
-        out_ma <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
-        pdf(out_ma)
+        out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
+        pdf(out_ma_pdf)
         plotMA(deseq_diff)
         dev.off()
-
+        out_ma <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.png", sep = "__"))
+        png(out_ma_pdf)
+        plotMA(deseq_diff)
+        dev.off()
         # full path to output directory
         out_table <- file.path(out_dir, filename)
         out_table_sig <- file.path(out_dir, filename_sig)
