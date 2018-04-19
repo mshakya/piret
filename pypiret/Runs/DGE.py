@@ -7,6 +7,7 @@ import luigi
 from luigi import LocalTarget
 from pypiret import Summ
 from luigi.util import inherits, requires
+import pandas as pd
 from plumbum.cmd import Rscript
 
 
@@ -48,6 +49,21 @@ class edgeR(luigi.Task):
                                   "-o", edger_dir]
                     edger_cmd = Rscript[edger_list]
                     edger_cmd()
+        self.summ_summ()
+
+    def summ_summ(self):
+        """Summarize the summary table to be displayed in edge"""
+        edger_dir = self.workdir + "/edgeR/" + self.kingdom
+        all_files = os.listdir(edger_dir)
+        out_file = os.path.join(edger_dir, "summary_updown.csv")
+        summ_files = [pd.read_csv(os.path.join(edger_dir, file),
+                                  index_col=0) for file in all_files if "summary.csv" in file ]
+        summ_df = pd.concat(summ_files, axis=1)
+        summ_df.to_csv(out_file)
+
+
+
+
 
 
 @requires(Summ.FeatureCounts)

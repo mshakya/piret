@@ -3,7 +3,6 @@
 library(optparse)
 library(limma)
 library(edgeR)
-#library(rtracklayer)
 library(dplyr)
 library(ggplot2)
 library(pheatmap)
@@ -76,13 +75,9 @@ summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
 write.csv(summary.counts, file=summary_outfile )
 
 
-
-
 # remove first six columns that have metadata
 read.counts <- read.counts[, -c(1:6)]
 read.counts.non0<- dplyr::filter_all(read.counts, any_vars(. != 0))
-
-
 
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
@@ -205,6 +200,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
            # write summary table
             out_file_summ <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
             summ_table <- summary(decideTests(edger_et))
+            colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
             write.csv(summ_table, out_file_summ)
             
             #plot
@@ -225,130 +221,3 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
     }
 }
 }
-
-# rRNA
-
-# if (feature_name == "CDS") {
-
-    # convert to a DGElist, remove rows where there are no reads mapped
-    # edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
-                            # remove.zeros = FALSE, genes = gene.info)
-
-    # calculate RPKM and CPM
-    # rpkm_results <- edgeR::rpkm(edger_dge)
-    # cpm_results <- edgeR::cpm(edger_dge)
-    # out_rpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_RPKM.csv", sep=""))
-    # out_cpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_CPM.csv", sep=""))
-    # write.csv(rpkm_results, file = out_rpkm)
-    # write.csv(cpm_results, file = out_cpm)
-
-#     # histogram of count per million
-#     out_cpm_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_cpm_histograpm.pdf", sep=""))
-#     pdf(out_cpm_hist)
-#     ggplot(data = melt(as.data.frame(cpm_results)), mapping = aes(x = value)) + 
-#         geom_histogram(bins = 10) + facet_wrap(~variable)
-#     dev.off()
-#     } else {
-
-#     # create heatmap of count data.
-#     out_heatmap <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_heatmap.pdf", sep=""))
-#     pdf(out_heatmap)
-#     heatmap(as.matrix(read.counts), legend=TRUE)
-#     dev.off()
-
-#     # convert to a DGElist
-#     edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
-#                             remove.zeros = FALSE, genes = gene.info)
-#     # print(edger_dge$counts)
-#     # print(sum(edger_dge$counts[,4]))
-#     # calculate RPKM and CPM
-#     rpkm_results <- edgeR::rpkm(edger_dge)
-#     cpm_results <- edgeR::cpm(edger_dge)
-#     out_rpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_RPKM.csv", sep=""))
-#     out_cpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_CPM.csv", sep=""))
-#     write.csv(rpkm_results, file = out_rpkm)
-#     write.csv(cpm_results, file = out_cpm)
-
-#     # histogram of count per million
-#     out_cpm_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_cpm_histograpm.pdf", sep=""))
-#     pdf(out_cpm_hist)
-#     ggplot(data = melt(as.data.frame(cpm_results)), mapping = aes(x = value)) + 
-#     geom_histogram(bins = 10) + facet_wrap(~variable)
-#     dev.off()
-
-#     if (0 %in% colSums(edger_dge$counts)) {
-#         print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
-#     } else {
-#         # only keep genes/features that have an average of 1 CPM
-#         # keep <- rowSums(edgeR::cpm(edger_dge) > 1) >= nrow(group_table)
-#         keep <- rowSums(edgeR::cpm(edger_dge)) >= nrow(group_table)
-
-#         print(rowSums(cpm(edger_dge)))
-#         print("Rows to keep")
-#         print(length(keep))
-#         # print(keep)
-#         # keep <- rowSums(cpm(edger_dge) > 1)
-#         edger_dge <- edger_dge[keep, ]
-#         # print(edger_dge$count)
-#         # print(nrow(edger_dge))
-#         if (nrow(edger_dge$counts) < 10 ) {
-#             print("Not enough data to calculate dispersion factors!")
-#         } else {
-
-
-
-#         # recompute library size after filtering
-#         edger_dge$samples$lib.size <- colSums(edger_dge$counts)
-#         # calculate the normalization factors for the library size
-#         edger_dge <- edgeR::calcNormFactors(edger_dge, method = "TMM")
-#         print(edger_dge)
-#         # estimate the dispersion for all read counts across all samples
-#         edger_dge <- edgeR::estimateDisp(edger_dge, design.robust = TRUE)
-
-#         # plot MDS
-#         out_mds_hist <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_MDS.pdf", sep=""))
-#         pdf(out_mds_hist)
-#         limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
-#                main = "edgeR MDS Plot")
-#         dev.off()
-
-#         # Create pairwise comparisons to find DGEs
-#         pair.comb <- function(exp_des){
-#         # get all pariwise combination from experimental design file
-#         exp_desn <- read.table(exp_des, sep = "\t", header = TRUE)
-#         categories <- unique(exp_desn$Group)
-#         pairs <- combn(categories, 2, simplify = FALSE)
-#         return(pairs)
-#         }
-
-#         # get all possible pairs
-#         all_pairs <- pair.comb(group_file)
-
-#         for (n in 1:length(all_pairs) ) {
-#             # filename strings for each comparisons
-#             filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
-#             filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name,"sig.csv", sep = "__")
-
-#             # sample matrix
-#             pair1 <- as.character(all_pairs[[n]][1])
-#             pair2 <- as.character(all_pairs[[n]][2])
-#             pairs <- c(pair1, pair2)
-
-#           # exact test
-#             edger_et <- edgeR::exactTest(edger_dge, pair = pairs)
-#             edger_et_table <- edgeR::topTags(edger_et, n = nrow( edger_et$table ), sort.by = "PValue" )$table
-#             edger_et_sigtable <-  subset(edger_et_table, PValue < pcutoff)
-
-#           # full path to output directory
-#             out_table <- file.path(out_dir, filename)
-#             out_table_sig <- file.path(out_dir, filename_sig)
-
-#           # write the file
-#             write.csv(edger_et_table, out_table)
-#             write.csv(edger_et_sigtable, out_table_sig)
-#             }
-
-#     }
-# }
-# }
-
