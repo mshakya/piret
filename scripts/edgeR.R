@@ -88,8 +88,9 @@ pheatmap(as.matrix(read.counts.non0), legend=TRUE)
 dev.off()
 
 edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
-                            remove.zeros = FALSE, genes = gene.info)
+                            remove.zeros = TRUE, genes = gene.info)
 
+# TODO: make these calculation skip if there are sample that have only 0s
 ############### calculate RPKM and CPM #########################################
 rpkm_results <- edgeR::rpkm(edger_dge)
 cpm_results <- edgeR::cpm(edger_dge)
