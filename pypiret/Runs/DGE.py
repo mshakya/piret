@@ -58,12 +58,8 @@ class edgeR(luigi.Task):
         out_file = os.path.join(edger_dir, "summary_updown.csv")
         summ_files = [pd.read_csv(os.path.join(edger_dir, file),
                                   index_col=0) for file in all_files if "summary.csv" in file ]
-        summ_df = pd.concat(summ_files, axis=1)
+        summ_df = pd.concat(summ_files)
         summ_df.to_csv(out_file)
-
-
-
-
 
 
 @requires(Summ.FeatureCounts)

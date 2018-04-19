@@ -234,7 +234,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
             out_file_summ <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
             summ_table <- summary(decideTests(edger_et))
             colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
-            write.csv(summ_table, out_file_summ)
+            write.csv(t(summ_table), out_file_summ)
             
             #plot
             out_md_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
