@@ -167,13 +167,13 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         deseq_diff <- deseq_diff[order(as.numeric(deseq_diff$pvalue)),]
         deseq_sig <- subset(deseq_diff, pvalue < as.numeric(pcutoff))
 
-
+        print(as.data.frame(summary(deseq_diff)))
         #plot
         out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
         pdf(out_ma_pdf)
         plotMA(deseq_diff)
         dev.off()
-        out_ma <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.png", sep = "__"))
+        out_ma_png <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.png", sep = "__"))
         png(out_ma_png)
         plotMA(deseq_diff)
         dev.off()
