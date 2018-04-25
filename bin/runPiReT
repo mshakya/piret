@@ -308,12 +308,12 @@ def dual_seq(fastq_dic, prok_ref_fasta, prok_gff,
                           workers=no_of_jobs)
     # Mapping
     luigi.interface.build([Map.SummarizeMap(fastq_dic=fastq_dic,
-                                         numCPUs=num_cpus,
-                                         indexfile=hisat_index,
-                                         workdir=workdir,
-                                         bindir=bindir,
-                                         ref_file=",".join([prok_ref_fasta,
-                                                            euk_ref_fasta])
+                                            numCPUs=num_cpus,
+                                            indexfile=hisat_index,
+                                            workdir=workdir,
+                                            bindir=bindir,
+                                            ref_file=",".join([prok_ref_fasta,
+                                                               euk_ref_fasta])
                                             )],
                           local_scheduler=local_scheduler,
                           workers=no_of_jobs)
@@ -339,17 +339,18 @@ def dual_seq(fastq_dic, prok_ref_fasta, prok_gff,
                                                workdir=workdir,
                                                bindir=bindir,
                                                ref_file=",".join([prok_ref_fasta, euk_ref_fasta
-                                                ])
-                          )],
-    #                       Summ.FeatureCountsBoth(fastq_dic=fastq_dic,
-    #                                              numCPUs=num_cpus,
-    #                                              euk_gff=euk_gff,
-    #                                              prok_gff=prok_gff,
-    #                                              indexfile=hisat_index,
-    #                                              kingdom='both',
-    #                                              workdir=workdir,
-    #                                              bindir=bindir,
-    #                                              ref_file=",".join([prok_ref_fasta, prok_ref_fasta]))],
+                                                ])),
+
+                          Summ.FeatureCountsBoth(fastq_dic=fastq_dic,
+                                                 numCPUs=num_cpus,
+                                                 gff_file=",".join([prok_gff,
+                                                                    euk_gff]),
+                                                 indexfile=hisat_index,
+                                                 kingdom='both',
+                                                 workdir=workdir,
+                                                 bindir=bindir,
+                                                 ref_file=",".join([prok_ref_fasta, prok_ref_fasta]))
+                          ],
                           local_scheduler=local_scheduler,
                           workers=no_of_jobs)
 

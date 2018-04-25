@@ -4,6 +4,7 @@
 
 Mapping is done using hisat2 and counting is done using featurecounts and stringtie
 """
+
 from __future__ import print_function
 import os
 import luigi
@@ -14,8 +15,8 @@ from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FastQC
-from plumbum.cmd import touch, bamtools, gffread, hisat2, python
-from plumbum.cmd import cp, rm, cut, samtools, stringtie, mv, awk
+from plumbum.cmd import gffread, hisat2, python
+from plumbum.cmd import samtools, stringtie, mv, awk
 import pandas as pd
 # from Bio import SeqIO
 
@@ -654,215 +655,6 @@ class Split2ProkEukW(luigi.WrapperTask):
                                 workdir=self.workdir,
                                 sample=samp,
                                 qc_outdir=trim_dir)
-
-
-# @requires(RefNames)
-# class SplitBAMfile(luigi.Task):
-#     """Split BAM file to individual chromosomes."""
-
-#     split_logfile = Parameter()
-
-#     def get_file_path(self):
-#         """Get bam filename."""
-#         bam_file = self.outsam.split(".sam")[0] + ".bam"
-#         sorted_bam_file = bam_file.split(".bam")[0] + "_srt.bam"
-#         with open(self.map_ref, 'r') as mrf:
-#             bam = sorted_bam_file.split(
-#                 ".")[0] + "_REF_" + str(mrf.readline()) + ".bam"
-#         return bam
-
-#     def output(self):
-#         """Split Files."""
-#         return luigi.LocalTarget(self.split_logfile)
-
-#     def run(self):
-#         """Split BAM file based on chromosome."""
-#         bam_file = self.outsam.split(".sam")[0] + ".bam"
-#         sorted_bam_file = bam_file.split(".bam")[0] + "_srt.bam"
-#         bam_cmd_opt = ["split", "-reference", "-in", sorted_bam_file]
-#         bam_cmd = bamtools[bam_cmd_opt]
-#         bam_cmd()
-#         touch[self.split_logfile]()
-
-
-# @inherits(GetRefNames)
-# class SplitBAMBoth(luigi.WrapperTask):
-#     """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
-
-#     def requires(self):
-#         """A pipeline that runs from mapping to count for euk and prok."""
-#         splice_list = [self.workdir + "/" +
-#                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-#         if len(splice_list) > 1:
-#             splice_file = ','.join(splice_list)
-#         else:
-#             splice_file = splice_list[0]
-#         for samp, fastq in self.fastq_dic.items():
-#             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-#             map_dir = self.workdir + "/" + samp + "/mapping_results"
-
-#             yield SplitBAMfile(fastqs=[trim_dir + "/" + samp +
-#                                        ".1.trimmed.fastq",
-#                                        trim_dir + "/" + samp +
-#                                        ".2.trimmed.fastq"],
-#                                numCPUs=self.numCPUs,
-#                                indexfile=self.indexfile,
-#                                spliceFile=splice_file,
-#                                outsam=map_dir + "/" + samp + ".sam",
-#                                map_ref=map_dir + "/" + samp + ".reflist",
-#                                bindir=self.bindir,
-#                                split_logfile=map_dir + "/" + samp + ".splitlog",
-#                                sample=samp,
-#                                qc_outdir=trim_dir,
-#                                map_dir=map_dir)
-
-
-# @requires(RefNames)
-# class SplitRefProkEuk(luigi.Task):
-#     """Create a input BAM file list of prok and euk."""
-
-#     map_dir = Parameter()
-#     workdir = Parameter()
-
-#     def output(self):
-#         """Two files, with full paths to prok and euk."""
-#         euk_chroms_fp = self.map_dir + "/" + "eukarya_chromos.fullpath"
-#         prok_chroms_fp = self.map_dir + "/" + "prokarya_chromos.fullpath"
-#         return [luigi.LocalTarget(euk_chroms_fp), luigi.LocalTarget(prok_chroms_fp)]
-
-#     def run(self):
-#         """Split BAM file based on chromosome."""
-#         ref_bams = [f for f in os.listdir(self.map_dir) if 'REF_' in f]
-#         prok_ref_file = self.workdir + '/' + 'prok.chroms'
-#         prok_refs = [line.rstrip() for line in open(prok_ref_file, 'r')]
-#         euk_ref_file = self.workdir + '/' + 'euk.chroms'
-#         euk_refs = [line.rstrip() for line in open(euk_ref_file, 'r')]
-#         euk_list = []
-#         prok_list = []
-#         for ref in ref_bams:
-#             if ref.split('REF_')[1].split('.bam')[0] in prok_refs:
-#                 ref1 = self.map_dir + "/" + ref
-#                 prok_list.append(ref1)
-#             elif ref.split('REF_')[1].split('.bam')[0] in euk_refs:
-#                 ref1 = self.map_dir + "/" + ref
-#                 euk_list.append(ref1)
-#         euk_chroms_fp = self.map_dir + "/" + "eukarya_chromos.fullpath"
-#         prok_chroms_fp = self.map_dir + "/" + "prokarya_chromos.fullpath"
-#         with open(euk_chroms_fp, 'w') as ecf:
-#             for f in euk_list:
-#                 ecf.write("%s\n" % f)
-#         with open(prok_chroms_fp, 'w') as pcf:
-#             for f in prok_list:
-#                 pcf.write("%s\n" % f)
-
-
-# @inherits(GetRefNames)
-# class SplitProkEukBoth(luigi.WrapperTask):
-#     """Group chromosomes to prokaryotic and eukaryotic."""
-
-#     def requires(self):
-#         """A pipeline that runs from mapping to count for euk and prok."""
-#         splice_list = [self.workdir + "/" +
-#                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-#         if len(splice_list) > 1:
-#             splice_file = ','.join(splice_list)
-#         else:
-#             splice_file = splice_list[0]
-#         for samp, fastq in self.fastq_dic.items():
-#             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-#             map_dir = self.workdir + "/" + samp + "/mapping_results"
-#             yield SplitRefProkEuk(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-#                                   fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                   numCPUs=self.numCPUs,
-#                                   indexfile=self.indexfile,
-#                                   spliceFile=splice_file,
-#                                   # mappingLogFile=map_dir + "/mapping.log",
-#                                   # unalned=map_dir + "/unligned.fastq",
-#                                   outsam=map_dir + "/" + samp + ".sam",
-#                                   bam_file=map_dir + "/" + samp + ".bam",
-#                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-#                                   map_ref=map_dir + "/" + samp + ".reflist",
-#                                   map_dir=map_dir,
-#                                   ref_file=self.ref_file,
-#                                   bindir=self.bindir,
-#                                   workdir=self.workdir)
-
-
-# @requires(SplitRefProkEuk)
-# class MergeBAMfile(ExternalProgramTask):
-#     """Merge BAM file to prokaryotic and Eukaryotic."""
-
-#     kingdom = Parameter()
-
-#     def output(self):
-#         """Split Files."""
-#         if self.kingdom == 'prokarya':
-#             prok_bam = self.map_dir + "/" + "prokarya.bam"
-#             return luigi.LocalTarget(prok_bam)
-#         elif self.kingdom == 'eukarya':
-#             euk_bam = self.map_dir + "/" + "eukarya.bam"
-#             return luigi.LocalTarget(euk_bam)
-
-#     def program_args(self):
-#         """Merge BAM files to euk and prok."""
-#         if self.kingdom == 'prokarya':
-#             prok_list = self.map_dir + "/" + "prokarya_chromos.fullpath"
-#             prok_bam = self.map_dir + "/" + "prokarya.bam"
-#             return["bamtools", "merge", "-list", prok_list,
-#                    "-out", prok_bam]
-#         elif self.kingdom == 'eukarya':
-#             euk_list = self.map_dir + "/" + "eukarya_chromos.fullpath"
-#             euk_bam = self.map_dir + "/" + "eukarya.bam"
-#             return["bamtools", "merge", "-list",
-#                    euk_list, "-out", euk_bam]
-
-
-# @inherits(SplitProkEukBoth)
-# class MergeBAMfileBoth(luigi.WrapperTask):
-#     """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
-
-#     def requires(self):
-#         """A pipeline that runs from mapping to count for euk and prok."""
-#         splice_list = [self.workdir + "/" +
-#                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-#         if len(splice_list) > 1:
-#             splice_file = ','.join(splice_list)
-#         else:
-#             splice_file = splice_list[0]
-#         for samp, fastq in self.fastq_dic.items():
-#             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-#             map_dir = self.workdir + "/" + samp + "/mapping_results"
-#             yield MergeBAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-#                                fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                numCPUs=self.numCPUs,
-#                                indexfile=self.indexfile,
-#                                spliceFile=splice_file,
-#                                # mappingLogFile=map_dir + "/mapping.log",
-#                                outsam=map_dir + "/" + samp + ".sam",
-#                                bam_file=map_dir + "/" + samp + ".bam",
-#                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-#                                map_ref=map_dir + "/" + samp + ".reflist",
-#                                map_dir=map_dir,
-#                                ref_file=self.ref_file,
-#                                bindir=self.bindir,
-#                                workdir=self.workdir,
-#                                kingdom='prokarya')
-#             yield MergeBAMfile(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-#                                fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                numCPUs=self.numCPUs,
-#                                indexfile=self.indexfile,
-#                                spliceFile=splice_file,
-#                                # mappingLogFile=map_dir + "/mapping.log",
-#                                outsam=map_dir + "/" + samp + ".sam",
-#                                bam_file=map_dir + "/" + samp + ".bam",
-#                                sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-#                                map_ref=map_dir + "/" + samp + ".reflist",
-#                                map_dir=map_dir,
-#                                ref_file=self.ref_file,
-#                                bindir=self.bindir,
-#                                workdir=self.workdir,
-#                                kingdom='eukarya'
-#                                )
 
 
 # @inherits(HisatMapW)

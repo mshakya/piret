@@ -103,25 +103,30 @@ class FeatureCountsBoth(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
     kingdom = luigi.Parameter()
-    euk_gff = luigi.Parameter()
-    prok_gff = luigi.Parameter()
+    gff_file = luigi.Parameter()
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
     numCPUs = luigi.IntParameter()
     ref_file = luigi.Parameter()
+    fid = luigi.Parameter()
+    stranded = luigi.IntParameter()
 
     def output(self):
         """Index output."""
         counts_dir = self.workdir + "/featureCounts"
-        prok_gtf = self.workdir + "/" + \
-            self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-        prok_features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
-        prok_target = [LocalTarget(counts_dir + "/prok_" + feat + ".count") for feat in prok_features]
-        euk_gtf = self.workdir + "/" + \
-            self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-        euk_features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
-        euk_target = [LocalTarget(counts_dir + "/euk_" + feat + ".count") for feat in euk_features]
+        prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
+                                             sep="\t",
+                                             header=None,
+                                             comment="#")[2].tolist()))
+        prok_target = [LocalTarget(counts_dir + "/prok_" +
+                                   feat + ".count") for feat in prok_features]
+        euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
+                                            sep="\t",
+                                            header=None,
+                                            comment="#")[2].tolist()))
+        euk_target = [LocalTarget(counts_dir + "/euk_" +
+                                  feat + ".count") for feat in euk_features]
         loc_target = prok_target + euk_target
         return loc_target
 
@@ -134,34 +139,40 @@ class FeatureCountsBoth(luigi.Task):
                           for samp in samp_list]
         if not os.path.exists(self.workdir + "/featureCounts"):
             os.makedirs(self.workdir + "/featureCounts")
-        prok_gtf = self.workdir + "/" + \
-            self.prok_gff.split(";")[0].split(
-                "/")[-1].split(".gff")[0] + ".gtf"
-        prok_features = list(set(pd.read_csv(prok_gtf, sep="\t", header=None)[2].tolist()))
-        euk_gtf = self.workdir + "/" + \
-            self.euk_gff.split(";")[0].split(
-                "/")[-1].split(".gff")[0] + ".gtf"
-        euk_features = list(set(pd.read_csv(euk_gtf, sep="\t", header=None)[2].tolist()))
+        prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
+                                             sep="\t",
+                                             header=None,
+                                             comment="#")[2].tolist()))
+        euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
+                                            sep="\t",
+                                            header=None,
+                                            comment="#")[2].tolist()))
         for feat in euk_features:
-            fcount_euk_cmd_opt = ["-a", euk_gtf,
-                                  "-s", 1,
-                                  "-B",
-                                  "-p", "-P", "-C",
-                                  "-g", "gene_name",
-                                  "-t", feat,
-                                  "-T", self.numCPUs,
-                                  "-o", counts_dir + "/euk_" + feat + ".count"] + in_srtbam_list
+            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
+                fcount_euk_cmd_opt = ["-a", self.gff_file.split(",")[1],
+                                      "-s", self.stranded,
+                                      "-B",
+                                      "-p", "-P", "-C",
+                                      "-g", self.fid,
+                                      "-t", feat,
+                                      "-T", self.numCPUs,
+                                      "-o",
+                                      counts_dir + "/euk_" + feat +
+                                      "_count.tsv"] + in_srtbam_list
             fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
             fcount_euk_cmd()
         for feat in prok_features:
-            fcount_prok_cmd_opt = ["-a", prok_gtf,
-                                   "-s", 1,
-                                   "-B",
-                                   "-p", "-P", "-C",
-                                   "-g", "gene_name",
-                                   "-t", feat,
-                                   "-T", self.numCPUs,
-                                   "-o", counts_dir + "/prok_" + feat + ".count"] + in_srtbam_list
+            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
+                fcount_prok_cmd_opt = ["-a", self.gff_file.split(",")[0],
+                                       "-s", self.stranded,
+                                       "-B",
+                                       "-p", "-P", "-C",
+                                       "-g", self.fid,
+                                       "-t", feat,
+                                       "-T", self.numCPUs,
+                                       "-o",
+                                       counts_dir + "/prok_" + feat +
+                                       "_count.tsv"] + in_srtbam_list
             fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
             fcount_prok_cmd()
 
