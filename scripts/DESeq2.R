@@ -5,6 +5,8 @@ library(DESeq2)
 library(dplyr)
 library(ggplot2)
 library(pheatmap)
+library(GenomicRanges)
+
 option_list <- list(
   make_option(c("-r", "--reads_table"), action = "store",
               help = "reads table generated from featureCounts"),
@@ -28,6 +30,31 @@ out_dir <- opt$out_dir
 
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
+
+feat2deseq2 <- function(feat_count, exp_desn){
+    # function to convert feature count table (tsv) to deseq2 objects
+
+    read.counts <- utils::read.table(reads_file, sep = "\t", header=TRUE, row.names=1)
+    names(read.counts) <- base::gsub(".*mapping_results.", "", names(read.counts),
+                           perl = TRUE)
+    names(read.counts) <- base::gsub("_srt.bam", "", names(read.counts), perl = TRUE)
+    gene.info <- read.counts[, c(1:5)]
+    gene.ranges <- GenomicRanges::makeGRangesFromDataFrame(gene.info)
+
+    # read in the table with group info
+    group_table <- utils::read.delim(group_file, row.names = 1)
+    group_table <- dplyr::select(group_table, Group)
+    read.counts <- read.counts[, rownames(group_table)]
+    deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read.counts,
+                                           colData = group_table,
+                                           design = ~ Group,
+                                           tidy = FALSE,
+                                           rowRanges=gene.ranges)
+
+    # remove genes without any counts
+    deseq_ds <- deseq_ds[base::rowSums(counts(deseq_ds)) > 0, ]
+
+    }
 
 # read the output of featureCounts
 read.counts <- read.table(reads_file, sep = "\t", header=TRUE, row.names=1)
@@ -92,15 +119,8 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
     fpm_violin_group <- ggplot(data = fpm_data_boxplot, mapping = aes(x=Group, y=FPM)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
 
-    pdf(out_fpm_violin_pdf)
-    fpm_violin
-    fpm_violin_group
-    dev.off()
-
-    png(out_fpm_violin_png)
-    fpm_violin
-    fpm_violin_group
-    dev.off()
+    ggsave(out_fpm_violin_pdf, fpm_violin, device = "pdf")
+    ggsave(out_fpm_violin_png, fpm_violin, device = "png")
 
     ##############################histogram of fpkm ################################
     out_fpkm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_histogram.pdf", sep=""))
@@ -125,15 +145,19 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
             geom_violin(aes(fill = factor(Group)))
     fpkm_violin_group <- ggplot(data = fpkm_data_boxplot, mapping = aes(x=Group, y=fpkm)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
-    pdf(out_fpkm_violin_pdf)
-    fpkm_violin
-    fpkm_violin_group
-    dev.off()
+    ggsave(out_fpkm_violin_pdf, fpkm_violin, device = "pdf")
+    ggsave(out_fpkm_violin_png, fpkm_violin, device = "png")
 
-    png(out_fpkm_violin_png)
-    fpkm_violin
-    fpkm_violin_group
-    dev.off()
+
+    #####P##########CA plot#####P###############P###############P##########
+    out_pca <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_PCA.pdf", sep=""))
+    out_pca_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_PCA.png", sep=""))
+    dds_vts <- DESeq2::varianceStabilizingTransformation(dds)
+    pca <- DESeq2::plotPCA(dds_vts, intgroup = c("Group"))
+    ggsave(out_pca, pca, device = "pdf")
+    ggsave(out_pca_png, pca, device = "png")    
+    #####P###############P###############P###############P###############P######
+
     # Create pairwise comparisons to find DGEs
     pair.comb <- function(exp_des){
         # get all pariwise combination from experimental design file
@@ -145,12 +169,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
     # get all possible pairs
     all_pairs <- pair.comb(group_file)
 
-    #PCA plot
-    out_pca <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_PCA.pdf", sep=""))
-    pdf(out_pca)
-    dds_vts <- DESeq2::varianceStabilizingTransformation(dds)
-    DESeq2::plotPCA(dds_vts, intgroup = c("Group"))
-    dev.off()
+
 
     for (n in 1:length(all_pairs) ) {
         # filename strings for each comparisons
@@ -167,7 +186,6 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         deseq_diff <- deseq_diff[order(as.numeric(deseq_diff$pvalue)),]
         deseq_sig <- subset(deseq_diff, pvalue < as.numeric(pcutoff))
 
-        print(as.data.frame(summary(deseq_diff)))
         #plot
         out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
         pdf(out_ma_pdf)

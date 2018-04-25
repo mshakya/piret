@@ -137,15 +137,8 @@ if (0 %in% colSums(edger_dge$counts)) {
     cpm_violin_group <- ggplot(data = cpm_data_boxplot, mapping = aes(x=Group, y=CPM)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
 
-    pdf(out_cpm_violin_pdf)
-    cpm_violin
-    cpm_violin_group
-    dev.off()
-
-    png(out_cpm_violin_png)
-    cpm_violin
-    cpm_violin_group
-    dev.off()
+    ggsave(out_cpm_violin_pdf, cpm_violin, device = "pdf")
+    ggsave(out_cpm_violin_png, cpm_violin, device = "png")
 
     ##############################histogram of rpkm ################################
     out_rpkm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.pdf", sep=""))
@@ -170,14 +163,8 @@ if (0 %in% colSums(edger_dge$counts)) {
             geom_violin(aes(fill = factor(Group)))
     rpkm_violin_group <- ggplot(data = rpkm_data_boxplot, mapping = aes(x=Group, y=rpkm)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
-    pdf(out_rpkm_violin_pdf)
-    rpkm_violin
-    rpkm_violin_group
-    dev.off()
-    png(out_rpkm_violin_png)
-    rpkm_violin
-    rpkm_violin_group
-    dev.off()
+    ggsave(out_rpkm_violin_pdf, rpkm_violin, device = "pdf")
+    ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
 }
 
 if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
@@ -201,12 +188,12 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
             out_mds_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.pdf", sep=""))
             out_mds_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.png", sep=""))
             pdf(out_mds_hist_pdf)
-            MDS <- limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
+            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
                    main = "edgeR MDS Plot")
-            MDS
             dev.off()
             png(out_mds_hist_png)
-            MDS
+            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
+                   main = "edgeR MDS Plot")
             dev.off()
 
         # get all possible pairs
@@ -238,7 +225,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         pdf(out_md_pdf)
         plotMD(edger_et)
         dev.off()
-        pdf(out_md_png)
+        png(out_md_png)
         plotMD(edger_et)
         dev.off()
               # full path to output directory
