@@ -28,7 +28,7 @@ bin/runPiReT -d tests/test_prok -e test_prok.txt \
 
 printf "${blue}fininshed testing pipeline for prokarya only\n${normal}"
 # #==============================================================================#
-printf "${blue}testing pipeline with eukarya now\n${normal}"
+printf "${blue}testing pipeline with eukarya \n${normal}"
 
 find tests/data2/fastqs -iname "*read2.fastq" | sort > testR2.txt
 find tests/data2/fastqs -iname "*read1.fastq" | sort | sed 's/read1\.fastq/read1\.fastq:/g' > testR1.txt
@@ -56,10 +56,10 @@ printf "${blue}fininshed testing pipeline for eukarya\n${normal}"
 # #==============================================================================#
 # printf "${blue}testing pipeline with prok and euk now \n${normal}"
 
-# printf "bin/runPiReT -d tests/test_both -e test_experimental_design.txt \
-# -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
-# -i tests/test_both/prok_euk_index -k both -m all \
-# -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa\n"
+printf "bin/runPiReT -d tests/test_both -e test_prok.txt \
+-gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+-i tests/test_both/prok_euk_index -k both -m all \
+-fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa"
 
 # mkdir -p tests/test_both/samp1/trimming_results 
 # mkdir -p tests/test_both/samp2/trimming_results 
@@ -75,12 +75,12 @@ printf "${blue}fininshed testing pipeline for eukarya\n${normal}"
 # cp tests/test_both/samp5/trimming_results/*.* tests/test_euk/samp5/trimming_results/ 
 # cp tests/test_both/samp6/trimming_results/*.* tests/test_euk/samp6/trimming_results/ 
 
-# bin/runPiReT -d tests/test_both -e test_experimental_design.txt \
-# -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
-# -i tests/test_both/prok_euk_index -k both -m all \
-# -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa
+bin/runPiReT -d tests/test_both -e test_prok.txt \
+-gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+-i tests/test_both/prok_euk_index -k both -m all \
+-fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa
 
-# printf "${blue}fininshed testing pipeline for prok and euk\n${normal}"
+printf "${blue}fininshed testing pipeline for prok and euk\n${normal}"
 
 
 # printf "${blue}Cleanning up!!\n${normal}"

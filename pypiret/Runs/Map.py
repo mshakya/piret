@@ -615,7 +615,7 @@ class Split2ProkEuk(luigi.Task):
 
     def run(self):
         """ Split BAM file to proks and euks"""
-        fastas = self.ref_fastas.split(",")
+        fastas = self.ref_file.split(",")
         bam_file = self.outsam.split(".sam")[0] + "_srt.bam"
         prok_out = bam_file.split(".bam")[0] + "_prok.bam"
         euk_out = bam_file.split(".bam")[0] + "_euk.bam"
