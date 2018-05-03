@@ -6,6 +6,7 @@ library(dplyr)
 library(ggplot2)
 library(pheatmap)
 library(GenomicRanges)
+library(RPiReT)
 
 option_list <- list(
   make_option(c("-r", "--reads_table"), action = "store",
@@ -31,156 +32,47 @@ out_dir <- opt$out_dir
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
 
-feat2deseq2 <- function(feat_count, exp_desn){
-    # function to convert feature count table (tsv) to deseq2 objects
-
-    read.counts <- utils::read.table(reads_file, sep = "\t", header=TRUE, row.names=1)
-    names(read.counts) <- base::gsub(".*mapping_results.", "", names(read.counts),
-                           perl = TRUE)
-    names(read.counts) <- base::gsub("_srt.bam", "", names(read.counts), perl = TRUE)
-    gene.info <- read.counts[, c(1:5)]
-    gene.ranges <- GenomicRanges::makeGRangesFromDataFrame(gene.info)
-
-    # read in the table with group info
-    group_table <- utils::read.delim(group_file, row.names = 1)
-    group_table <- dplyr::select(group_table, Group)
-    read.counts <- read.counts[, rownames(group_table)]
-    deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read.counts,
-                                           colData = group_table,
-                                           design = ~ Group,
-                                           tidy = FALSE,
-                                           rowRanges=gene.ranges)
-
-    # remove genes without any counts
-    deseq_ds <- deseq_ds[base::rowSums(counts(deseq_ds)) > 0, ]
-
-    }
-
-# read the output of featureCounts
-read.counts <- read.table(reads_file, sep = "\t", header=TRUE, row.names=1)
-
-# # rename the column headers
-names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
-                           perl = TRUE)
-names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
-
-# # assign row names as gene names
-# row.names(read.counts) <- read.counts[, 1]
-
-
-# gene information
-gene.info <- read.counts[, c(1:5)]
-gene.ranges <- makeGRangesFromDataFrame(gene.info)
-
-# read in the table with group info
-group_table <- read.delim(group_file, row.names = 1)
-group_table <- select(group_table, Group)
-
-read.counts <- read.counts[, rownames(group_table)]
-
-if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
-    deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read.counts,
-                                           colData = group_table,
-                                           design = ~ Group,
-                                           tidy = FALSE,
-                                           rowRanges=gene.ranges)
-
-    # remove genes without any counts
-    deseq_ds <- deseq_ds[rowSums(counts(deseq_ds)) > 0, ]
-
-    # calculate size factors
-    dds <- DESeq2::DESeq(deseq_ds)
-
-    #TODO: Need to make sure that all gff lines have IDs
-    # ############### calculate FPKM and FPM #########################################
-    fpkm_results <- DESeq2::fpkm(deseq_ds, robust=TRUE)
-    fpm_results <- DESeq2::fpm(deseq_ds)
-    out_fpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_FPKM.csv", sep=""))
-    out_fpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".csv")[[1]], "_FPM.csv", sep=""))
-    write.csv(fpkm_results, file = out_fpkm)
-    write.csv(fpm_results, file = out_fpm)
-    ################ histogram of count per million ################################
-    out_fpm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_histogram.pdf", sep=""))
-    out_fpm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_histogram.png", sep=""))
-    fpm_results <- dplyr::filter_all(as.data.frame(fpm_results), any_vars(. != 0))
-    fpm_data <- reshape2::melt(as.data.frame(fpm_results), variable.name="sample", value.name="FPM")
-    fpm_hist <- ggplot(data = fpm_data, mapping = aes(x = FPM)) +  theme_bw() +
-            geom_histogram(bins=100) + xlab("FPM") + ylab(feature_name) + facet_wrap(~sample)
-    ggsave(out_fpm_hist_pdf, fpm_hist, device = "pdf")
-    ggsave(out_fpm_hist_png, fpm_hist, device = "png")
-
-    ################## boxplot of fragments per million ################################
-    group_table2 <- add_rownames(group_table, "sample")
-    fpm_data_boxplot <- merge(x=fpm_data, y=group_table2)
-    out_fpm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_violin.pdf", sep=""))
-    out_fpm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpm_violin.png", sep=""))
-    fpm_violin <- ggplot(data = fpm_data_boxplot, mapping = aes(x=sample, y=FPM)) +  theme_bw() +
-            geom_violin(aes(fill = factor(Group)))
-    fpm_violin_group <- ggplot(data = fpm_data_boxplot, mapping = aes(x=Group, y=FPM)) +  theme_bw() +
-            geom_violin(aes(fill = factor(Group)))
-
-    ggsave(out_fpm_violin_pdf, fpm_violin, device = "pdf")
-    ggsave(out_fpm_violin_png, fpm_violin, device = "png")
-
-    ##############################histogram of fpkm ################################
-    out_fpkm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_histogram.pdf", sep=""))
-    out_fpkm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_histogram.png", sep=""))
-    fpkm_results <- dplyr::filter_all(as.data.frame(fpkm_results), any_vars(. != 0))
-    fpkm_data <- reshape2::melt(as.data.frame(fpkm_results), variable.name="sample", value.name="fpkm")
-    fpkm_hist <- ggplot(data=fpkm_data, mapping=aes(x=fpkm)) +  theme_bw() +
-            geom_histogram(bins=100) + xlab("fpkm") + ylab(feature_name) + facet_wrap(~sample)
-    ggsave(out_fpkm_hist_pdf, fpkm_hist, device = "pdf")
-    ggsave(out_fpkm_hist_png, fpkm_hist, device = "png")
-
-    ##############################heatmap of fpkm ################################
-    out_fpkm_heatmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_heatmap.pdf", sep=""))
-    out_fpkm_heatmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_heatmap.png", sep=""))
-    pheatmap(as.matrix(fpkm_results), legend=TRUE, filename=out_fpkm_heatmap_pdf)
-    pheatmap(as.matrix(fpkm_results), legend=TRUE, filename=out_fpkm_heatmap_png)
-    ################## boxplot of fPKM #############################################
-    fpkm_data_boxplot <- merge(x=fpkm_data, y=group_table2)
-    out_fpkm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_violin.pdf", sep=""))
-    out_fpkm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_fpkm_violin.png", sep=""))
-    fpkm_violin <- ggplot(data = fpkm_data_boxplot, mapping = aes(x=sample, y=fpkm)) +  theme_bw() +
-            geom_violin(aes(fill = factor(Group)))
-    fpkm_violin_group <- ggplot(data = fpkm_data_boxplot, mapping = aes(x=Group, y=fpkm)) +  theme_bw() +
-            geom_violin(aes(fill = factor(Group)))
-    ggsave(out_fpkm_violin_pdf, fpkm_violin, device = "pdf")
-    ggsave(out_fpkm_violin_png, fpkm_violin, device = "png")
-
-
-    #####P##########CA plot#####P###############P###############P##########
-    out_pca <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_PCA.pdf", sep=""))
-    out_pca_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_PCA.png", sep=""))
-    dds_vts <- DESeq2::varianceStabilizingTransformation(dds)
-    pca <- DESeq2::plotPCA(dds_vts, intgroup = c("Group"))
-    ggsave(out_pca, pca, device = "pdf")
-    ggsave(out_pca_png, pca, device = "png")    
-    #####P###############P###############P###############P###############P######
 
     # Create pairwise comparisons to find DGEs
-    pair.comb <- function(exp_des){
+pair.comb <- function(exp_des){
         # get all pariwise combination from experimental design file
         exp_desn <- read.table(exp_des, sep = "\t", header = TRUE)
         categories <- unique(exp_desn$Group)
         pairs <- combn(categories, 2, simplify = FALSE)
         return(pairs)
     }
+
+if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
+    deseq_ds <- RPiReT::feat2deseq2(feat_count = reads_file, exp_desn = group_file)
+    fpkm_table <- RPiReT::DESeq2FPKM(deseq_ds, reads_file, out_dir )
+    fpm_table <- RPiReT::DESeq2FPM(deseq_ds, reads_file, out_dir )
+    out_fpkm <- file.path(out_dir, paste(strsplit(basename(reads_file),
+                                              ".tsv")[[1]],
+                                    "_FPKM.csv", sep=""))
+    out_fpm <- file.path(out_dir, paste(strsplit(basename(reads_file),
+                                              ".tsv")[[1]],
+                                    "_FPM.csv", sep=""))
+    RPiReT::FPKM_heatmap(out_fpkm, group_table, out_dir)
+    RPiReT::FPM_heatmap(out_fpm, group_table, out_dir)
+    RPiReT::DESeq2_histogram(out_fpm, group_file, "FPM", feature_name, out_dir)
+    RPiReT::DESeq2_histogram(out_fpkm, group_file, "FPKM", feature_name, out_dir)
+    RPiReT::DESeq2_violin(out_fpm, group_file, "FPM", feature_name, out_dir)
+    RPiReT::DESeq2_violin(out_fpkm, group_file, "FPKM", feature_name, out_dir)
+    RPiReT::DESeq2_CAplot(feat_count = reads_file, DESeq2_object = deseq_ds,
+                          outdir = out_dir, feature_name = feature_name)
+    # calculate size factors
+    dds <- DESeq2::DESeq(deseq_ds)
     # get all possible pairs
     all_pairs <- pair.comb(group_file)
-
-
 
     for (n in 1:length(all_pairs) ) {
         # filename strings for each comparisons
         filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
         filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "sig.csv", sep = "__")
-
         # sample matrix
         pair1 <- as.character(all_pairs[[n]][1])
         pair2 <- as.character(all_pairs[[n]][2])
         pairs <- c(pair1, pair2)
-
         # exact test
         deseq_diff <- DESeq2::results(dds, contrast = c("Group", pair1, pair2))
         deseq_diff <- deseq_diff[order(as.numeric(deseq_diff$pvalue)),]
@@ -188,6 +80,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
 
         #plot
         out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
+        
         pdf(out_ma_pdf)
         plotMA(deseq_diff)
         dev.off()
@@ -204,4 +97,6 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         write.csv(deseq_sig, out_table_sig)
 
     } 
-    } 
+}
+
+#TODO: Need to make sure that all gff lines have IDs
