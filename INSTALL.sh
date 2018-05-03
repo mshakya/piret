@@ -572,12 +572,12 @@ conda install --yes gfortran_linux-64 -n piret
 # install optparse
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
-# install dplyr
-Rscript --no-init-file -e "if('dplyr' %in% rownames(installed.packages()) == TRUE){packageVersion('dplyr');}"  | awk '{print " - found dplyr "$2}'
-Rscript --no-init-file -e "if('dplyr' %in% rownames(installed.packages()) == FALSE){install.packages('dplyr',repos='https://cran.r-project.org')}";
-# install R ggplot2 packages
-Rscript --no-init-file -e "if('ggplot2' %in% rownames(installed.packages()) == TRUE){packageVersion('ggplot2');}"  | awk '{print " - found ggplot2 "$2}'
-Rscript --no-init-file -e "if('ggplot2' %in% rownames(installed.packages()) == FALSE){install.packages('ggplot2',repos='https://cran.r-project.org')}";
+# install tidyverse
+Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == TRUE){packageVersion('tidyverse');}"  | awk '{print " - found tidyverse "$2}'
+Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}";
+# install tidyverse
+Rscript --no-init-file -e "if('devtools' %in% rownames(installed.packages()) == TRUE){packageVersion('devtools');}"  | awk '{print " - found devtools "$2}'
+Rscript --no-init-file -e "if('devtools' %in% rownames(installed.packages()) == FALSE){install.packages('devtools',repos='https://cran.r-project.org')}";
 # install R reshape2 packages
 Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == TRUE){packageVersion('reshape2');}"  | awk '{print " - found reshape2 "$2}'
 Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
@@ -599,6 +599,9 @@ Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALS
 # install R ballgown package
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('ballgown')}";
+# install RPiReT
+Rscript --no-init-file -e "if('RPiReT' %in% rownames(installed.packages()) == FALSE){library(devtools);install_github('mshakya/RPiReT')}";
+
 ################################################################################
 if ( checkSystemInstallation featureCounts )
 then
