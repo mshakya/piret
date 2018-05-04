@@ -83,22 +83,33 @@ class DESeq2(luigi.Task):
     def run(self):
         """Run edgeR."""
         fcount_dir = self.workdir + "/featureCounts"
-        edger_dir = self.workdir + "/DESeq2/" + self.kingdom
+        DESeq2_dir = self.workdir + "/DESeq2/" + self.kingdom
         deseq2_location = os.path.join(self.bindir, "../scripts/DESeq2.R")
-        if not os.path.exists(edger_dir):
-            os.makedirs(edger_dir)
+        if not os.path.exists(DESeq2_dir):
+            os.makedirs(DESeq2_dir)
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("tsv"):
                     name = file.split("_")[-2]
-                    edger_list = [deseq2_location,
+                    deseq2_list = [deseq2_location,
                                   "-r", os.path.join(root, file),
                                   "-e", self.exp_design,
                                   "-p", self.p_value,
                                   "-n", name,
-                                  "-o", edger_dir]
-                    edger_cmd = Rscript[edger_list]
-                    edger_cmd()
+                                  "-o", DESeq2_dir]
+                    deseq2_cmd = Rscript[deseq2_list]
+                    deseq2_cmd()
+        self.summ_summ()
+
+    def summ_summ(self):
+        """Summarize the summary table to be displayed in edge"""
+        deseq2_dir = self.workdir + "/DESeq2/" + self.kingdom
+        all_files = os.listdir(deseq2_dir)
+        out_file = os.path.join(deseq2_dir, "summary_updown.csv")
+        summ_files = [pd.read_csv(os.path.join(deseq2_dir, file),
+                                  index_col=0) for file in all_files if "summary.csv" in file ]
+        summ_df = pd.concat(summ_files)
+        summ_df.to_csv(out_file)
 
     def program_environment(self):
         """Environmental variables for this program."""

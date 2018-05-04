@@ -75,12 +75,13 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         pairs <- c(pair1, pair2)
         # exact test
         deseq_diff <- DESeq2::results(dds, contrast = c("Group", pair1, pair2))
+        summ <- DESeq2::summary.DESeqResults(deseq_diff)
+        write.csv(summ, "test_summ.txt")
         deseq_diff <- deseq_diff[order(as.numeric(deseq_diff$pvalue)),]
         deseq_sig <- subset(deseq_diff, pvalue < as.numeric(pcutoff))
 
         #plot
         out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
-        
         pdf(out_ma_pdf)
         plotMA(deseq_diff)
         dev.off()
@@ -88,6 +89,11 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         png(out_ma_png)
         plotMA(deseq_diff)
         dev.off()
+
+        RPiReT::DESeq2_summary(object = deseq_diff, alpha = 0.1,
+                    pair1 = pair1, pair2 = pair2, feature_name = feature_name,
+                    outdir = out_dir)
+
         # full path to output directory
         out_table <- file.path(out_dir, filename)
         out_table_sig <- file.path(out_dir, filename_sig)
