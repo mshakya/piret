@@ -600,7 +600,7 @@ Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALS
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('ballgown')}";
 # install RPiReT
-Rscript --no-init-file -e "if('RPiReT' %in% rownames(installed.packages()) == FALSE){library(devtools);install_github('mshakya/RPiReT')}";
+Rscript --no-init-file -e "if('RPiReT' %in% rownames(installed.packages()) == FALSE){library('devtools');install_github('mshakya/RPiReT')}";
 
 ################################################################################
 if ( checkSystemInstallation featureCounts )
