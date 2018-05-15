@@ -92,6 +92,7 @@ read.counts.non0<- dplyr::filter_all(read.counts, any_vars(. != 0))
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
 
+if(dim(read.counts.non0)[[1]] > 2 ){
 out_hmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.pdf", sep=""))
 # A pdf and png image
 pdf(out_hmap_pdf)
@@ -101,6 +102,7 @@ out_hmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[
 png(out_hmap_png)
 pheatmap(as.matrix(read.counts.non0), legend=TRUE)
 dev.off()
+
 
 edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
                             remove.zeros = TRUE, genes = gene.info)
@@ -166,7 +168,7 @@ if (0 %in% colSums(edger_dge$counts)) {
     ggsave(out_rpkm_violin_pdf, rpkm_violin, device = "pdf")
     ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
 }
-
+}
 if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
 #     if (0 %in% colSums(edger_dge$counts)) {
 #         print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
@@ -201,8 +203,11 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
 
     for (n in 1:length(all_pairs) ) {
         # filename strings for each comparisons
-        filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
-        filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name,"sig.csv", sep = "__")
+        r_fn <- strsplit(basename(reads_file), ".tsv")[[1]]
+        filename <- paste(r_fn,
+            all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
+        filename_sig <- paste(r_fn,
+            all_pairs[[n]][1], all_pairs[[n]][2], feature_name,"sig.csv", sep = "__")
 
         # sample matrix
         pair1 <- as.character(all_pairs[[n]][1])
@@ -212,7 +217,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
               # exact test
         edger_et <- edgeR::exactTest(edger_dge, pair = pairs)
         edger_et_table <- edgeR::topTags(edger_et, n = nrow( edger_et$table ), sort.by = "PValue" )$table
-        edger_et_sigtable <-  subset(edger_et_table, PValue < pcutoff)
+        edger_et_sigtable <-  subset(edger_et_table, FDR < pcutoff)
                
                # write summary table
         out_file_summ <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
@@ -220,8 +225,10 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
         write.csv(t(summ_table), out_file_summ)
         # plot
-        out_md_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
-        out_md_png <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.png", sep = "__"))
+        out_md_pdf <- file.path(out_dir, paste(r_fn,
+            all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
+        out_md_png <- file.path(out_dir, paste(r_fn,
+            all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.png", sep = "__"))
         pdf(out_md_pdf)
         plotMD(edger_et)
         dev.off()

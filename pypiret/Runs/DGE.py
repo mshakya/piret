@@ -21,8 +21,8 @@ class edgeR(luigi.Task):
 
     def output(self):
         """Expected output of DGE using edgeR."""
-        fcount_dir = self.workdir + "/featureCounts"
-        edger_dir = self.workdir + "/edgeR/" + self.kingdom
+        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
+        edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("csv"):
@@ -32,8 +32,8 @@ class edgeR(luigi.Task):
 
     def run(self):
         """Run edgeR."""
-        fcount_dir = self.workdir + "/featureCounts"
-        edger_dir = self.workdir + "/edgeR/" + self.kingdom
+        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
+        edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
         edger_location = os.path.join(self.bindir, "../scripts/edgeR.R")
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
@@ -71,19 +71,19 @@ class DESeq2(luigi.Task):
 
     def output(self):
         """Expected output of DGE using edgeR."""
-        fcount_dir = self.workdir + "/featureCounts"
-        edger_dir = self.workdir + "/DESeq2/" + self.kingdom
+        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
+        DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("csv"):
                     out_filename = file.split(".tsv")[0] + "_FPKM.csv"
-                    out_filepath = os.path.join(edger_dir, out_filename)
+                    out_filepath = os.path.join(DESeq2_dir, out_filename)
                     return LocalTarget(out_filepath)
 
     def run(self):
         """Run edgeR."""
-        fcount_dir = self.workdir + "/featureCounts"
-        DESeq2_dir = self.workdir + "/DESeq2/" + self.kingdom
+        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
+        DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
         deseq2_location = os.path.join(self.bindir, "../scripts/DESeq2.R")
         if not os.path.exists(DESeq2_dir):
             os.makedirs(DESeq2_dir)
@@ -92,11 +92,11 @@ class DESeq2(luigi.Task):
                 if file.endswith("tsv"):
                     name = file.split("_")[-2]
                     deseq2_list = [deseq2_location,
-                                  "-r", os.path.join(root, file),
-                                  "-e", self.exp_design,
-                                  "-p", self.p_value,
-                                  "-n", name,
-                                  "-o", DESeq2_dir]
+                                   "-r", os.path.join(root, file),
+                                   "-e", self.exp_design,
+                                   "-p", self.p_value,
+                                   "-n", name,
+                                   "-o", DESeq2_dir]
                     deseq2_cmd = Rscript[deseq2_list]
                     deseq2_cmd()
         self.summ_summ()

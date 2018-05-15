@@ -54,10 +54,10 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
                                     "_FPM.csv", sep=""))
     RPiReT::FPKM_heatmap(out_fpkm, group_table, out_dir)
     RPiReT::FPM_heatmap(out_fpm, group_table, out_dir)
-    RPiReT::DESeq2_histogram(out_fpm, group_file, "FPM", feature_name, out_dir)
-    RPiReT::DESeq2_histogram(out_fpkm, group_file, "FPKM", feature_name, out_dir)
-    RPiReT::DESeq2_violin(out_fpm, group_file, "FPM", feature_name, out_dir)
-    RPiReT::DESeq2_violin(out_fpkm, group_file, "FPKM", feature_name, out_dir)
+    RPiReT::DESeq2_histogram(out_fpm, group_file, out_dir, "FPM", feature_name)
+    RPiReT::DESeq2_histogram(out_fpkm, group_file, out_dir, "FPKM", feature_name)
+    RPiReT::DESeq2_violin(out_fpm, group_file, out_dir, "FPM", feature_name)
+    RPiReT::DESeq2_violin(out_fpkm, group_file, out_dir, "FPKM", feature_name)
     RPiReT::DESeq2_CAplot(feat_count = reads_file, DESeq2_object = deseq_ds,
                           outdir = out_dir, feature_name = feature_name)
     # calculate size factors

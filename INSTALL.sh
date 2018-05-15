@@ -44,12 +44,10 @@ R_VER=3.4.2
 
 hisat2_VER=2.0.5
 htseq_VER=0.6.1
-#jbrowse_VER=1.12.1
 stringtie_VER=1.3.3
 subread_VER=1.5.0
 
 # minimum required version of Scripting languages
-# perl5_VER=5.16.3
 python3_VER=3.5.2
 
 #minimum required version of R modules

@@ -3,6 +3,7 @@
 """Check design."""
 from __future__ import print_function
 import os
+from os.path import basename, splitext
 from plumbum.cmd import stringtie, featureCounts
 from pypiret import Map
 import pandas as pd
@@ -37,7 +38,8 @@ class FeatureCounts(luigi.Task):
 
     def output(self):
         """Expected output of featureCounts."""
-        counts_dir = self.workdir + "/featureCounts"
+        counts_dir = os.path.join(self.workdir, "featureCounts",
+                                  self.kingdom)
         if ',' in self.gff:
             gff_list = self.gff.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
@@ -61,16 +63,20 @@ class FeatureCounts(luigi.Task):
         in_srtbam_list = [self.workdir + "/" + samp + "/" +
                           "mapping_results" + "/" + samp + "_srt.bam"
                           for samp in samp_list]
-        counts_dir = self.workdir + "/featureCounts"
+        counts_dir = os.path.join(self.workdir, "featureCounts",
+                                  self.kingdom)
         if not os.path.exists(counts_dir):
             os.makedirs(counts_dir)
         if ',' in self.gff:
             gff_list = self.gff.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
             for gffs in gff_full_path:
-                feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
+                feature = list(set(pd.read_csv(gffs,
+                                               sep="\t", header=None,
+                                               comment='#')[2].tolist()))
                 for feat in feature:
-                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
+                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene',
+                                'transcript']:
                         fcount_cmd_opt = ["-a", self.gff,
                                           "-s", self.stranded,
                                           "-B",
@@ -79,10 +85,11 @@ class FeatureCounts(luigi.Task):
                                           "-t", feat,
                                           "-T", self.numCPUs,
                                           "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.tsv"] + in_srtbam_list
-                    fcount_cmd = featureCounts[fcount_cmd_opt]
-                    fcount_cmd()
+                        fcount_cmd = featureCounts[fcount_cmd_opt]
+                        fcount_cmd()
         else:
-            feature = list(set(pd.read_csv(self.gff, sep="\t", header=None, comment='#')[2].tolist()))
+            feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
+                                            comment='#')[2].tolist()))
             for feat in feature:
                 if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
                     fcount_cmd_opt = ["-a", self.gff,
@@ -94,7 +101,6 @@ class FeatureCounts(luigi.Task):
                                       "-T", self.numCPUs,
                                       "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.tsv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
-                    print(fcount_cmd)
                     fcount_cmd()
 
 
@@ -159,8 +165,8 @@ class FeatureCountsBoth(luigi.Task):
                                       "-o",
                                       counts_dir + "/euk_" + feat +
                                       "_count.tsv"] + in_srtbam_list
-            fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
-            fcount_euk_cmd()
+                fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
+                fcount_euk_cmd()
         for feat in prok_features:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
                 fcount_prok_cmd_opt = ["-a", self.gff_file.split(",")[0],
@@ -173,8 +179,8 @@ class FeatureCountsBoth(luigi.Task):
                                        "-o",
                                        counts_dir + "/prok_" + feat +
                                        "_count.tsv"] + in_srtbam_list
-            fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
-            fcount_prok_cmd()
+                fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
+                fcount_prok_cmd()
 
     def program_environment(self):
         """Environmental variables for this program."""
