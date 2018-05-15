@@ -78,7 +78,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         summ <- DESeq2::summary.DESeqResults(deseq_diff)
         write.csv(summ, "test_summ.txt")
         deseq_diff <- deseq_diff[order(as.numeric(deseq_diff$pvalue)),]
-        deseq_sig <- subset(deseq_diff, pvalue < as.numeric(pcutoff))
+        deseq_sig <- subset(deseq_diff, padj < as.numeric(pcutoff))
 
         #plot
         out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
@@ -90,7 +90,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         plotMA(deseq_diff)
         dev.off()
 
-        RPiReT::DESeq2_summary(object = deseq_diff, alpha = 0.1,
+        RPiReT::DESeq2_summary(object = deseq_diff, alpha = as.numeric(pcutoff),
                     pair1 = pair1, pair2 = pair2, feature_name = feature_name,
                     outdir = out_dir)
 

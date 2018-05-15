@@ -44,12 +44,12 @@ rm test_ed.txt test_edII.txt
 printf "bin/runPiReT -d tests/test_euk -e test_euk.txt \
 -ge tests/data2/chr22_ERCC92.gff3 \
 -i tests/test_euk/euk_index -k eukarya -m all \
--fe tests/data2/chr22_ERCC92.fa --config luigi.cfg"
+-fe tests/data2/chr22_ERCC92.fa --config luigi.cfg -p 0.05"
 
 bin/runPiReT -d tests/test_euk -e test_euk.txt \
 -ge tests/data2/chr22_ERCC92.gff3 \
 -i tests/test_euk/euk_index -k eukarya -m all \
--fe tests/data2/chr22_ERCC92.fa --config luigi.cfg
+-fe tests/data2/chr22_ERCC92.fa --config luigi.cfg -p 0.05
 
 printf "${blue}fininshed testing pipeline for eukarya\n${normal}"
 
