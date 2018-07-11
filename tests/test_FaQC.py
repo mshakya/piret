@@ -3,13 +3,14 @@
 import sys
 import os
 import unittest
-import pytest
-dir_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(dir_path, '..'))
-sys.path.append(lib_path)
-from pypiret.Runs import FastQC  # noqa
-import luigi
 import shutil
+from luigi.interface import build
+DIR = os.path.dirname(os.path.realpath(__file__))
+LIB = os.path.abspath(os.path.join(DIR, '..'))
+sys.path.append(LIB)
+from pypiret.Runs import FaQC
+
+
 
 class TestFaQC(unittest.TestCase):
     """Unittest testcase."""
@@ -25,16 +26,15 @@ class TestFaQC(unittest.TestCase):
         """Test FaQC function."""
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bindir = os.path.abspath(os.path.join(dirpath, '..', 'bin'))
-        luigi.interface.build([FastQC.PairedRunQC(fastqs=["tests/data/fastqs/BTT_test15_R1.fastq",
-                                                          "tests/data/fastqs/BTT_test15_R1.fastq"],
-                                                  sample="samp1",
-                                                  numCPUs=1,
-                                                  qc_outdir="test_faqc",
-                                                  bindir=bindir,
-                                                  faqc_min_L=50,
-                                                  n_cutoff=5)],
-                              local_scheduler=True,
-                              workers=1)
+        build([FaQC.PairedRunQC(fastqs=["tests/data/fastqs/BTT_test15_R1.fastq",
+                                        "tests/data/fastqs/BTT_test15_R1.fastq"],
+                                sample="samp1",
+                                num_cpus=1,
+                                qc_outdir="test_faqc",
+                                bindir=bindir,
+                                faqc_min_L=50,
+                                n_cutoff=5)],
+              local_scheduler=True, workers=1)
 
     def test_fq_out(self):
         """Test if fq has expected line number"""

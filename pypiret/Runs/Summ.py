@@ -31,7 +31,7 @@ class FeatureCounts(luigi.Task):
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
-    numCPUs = luigi.IntParameter()
+    num_cpus = luigi.IntParameter()
     ref_file = luigi.Parameter()
     fid = luigi.Parameter()
     stranded = luigi.IntParameter()
@@ -76,14 +76,14 @@ class FeatureCounts(luigi.Task):
                                                comment='#')[2].tolist()))
                 for feat in feature:
                     if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene',
-                                'transcript']:
+                                'novel_region', 'transcript']:
                         fcount_cmd_opt = ["-a", self.gff,
                                           "-s", self.stranded,
                                           "-B",
                                           "-p", "-P", "-C",
                                           "-g", self.fid,
                                           "-t", feat,
-                                          "-T", self.numCPUs,
+                                          "-T", self.num_cpus,
                                           "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.tsv"] + in_srtbam_list
                         fcount_cmd = featureCounts[fcount_cmd_opt]
                         fcount_cmd()
@@ -91,14 +91,15 @@ class FeatureCounts(luigi.Task):
             feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
                                             comment='#')[2].tolist()))
             for feat in feature:
-                if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
+                if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript',
+                            'novel_region']:
                     fcount_cmd_opt = ["-a", self.gff,
                                       "-s", self.stranded,
                                       "-B",
                                       "-p", "-P", "-C",
                                       "-g", self.fid,
                                       "-t", feat,
-                                      "-T", self.numCPUs,
+                                      "-T", self.num_cpus,
                                       "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.tsv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
@@ -113,7 +114,7 @@ class FeatureCountsBoth(luigi.Task):
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
-    numCPUs = luigi.IntParameter()
+    num_cpus = luigi.IntParameter()
     ref_file = luigi.Parameter()
     fid = luigi.Parameter()
     stranded = luigi.IntParameter()
@@ -161,7 +162,7 @@ class FeatureCountsBoth(luigi.Task):
                                       "-p", "-P", "-C",
                                       "-g", self.fid,
                                       "-t", feat,
-                                      "-T", self.numCPUs,
+                                      "-T", self.num_cpus,
                                       "-o",
                                       counts_dir + "/euk_" + feat +
                                       "_count.tsv"] + in_srtbam_list
@@ -175,7 +176,7 @@ class FeatureCountsBoth(luigi.Task):
                                        "-p", "-P", "-C",
                                        "-g", self.fid,
                                        "-t", feat,
-                                       "-T", self.numCPUs,
+                                       "-T", self.num_cpus,
                                        "-o",
                                        counts_dir + "/prok_" + feat +
                                        "_count.tsv"] + in_srtbam_list
@@ -305,7 +306,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                                 ".1.trimmed.fastq",
                                                 trim_dir + "/" + samp +
                                                 ".2.trimmed.fastq"],
-                                        numCPUs=self.numCPUs,
+                                        num_cpus=self.num_cpus,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
                                         outsam=map_dir + "/" + samp + ".sam",
@@ -337,7 +338,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
 
                 yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                         fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-                                        numCPUs=self.numCPUs,
+                                        num_cpus=self.num_cpus,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
                                         outsam=self.map_dir + "/" + samp + ".sam",
@@ -352,7 +353,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         workdir=self.workdir)
                 yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                         fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-                                        numCPUs=self.numCPUs,
+                                        num_cpus=self.num_cpus,
                                         indexfile=self.indexfile,
                                         spliceFile=splice_file,
                                         outsam=self.map_dir + "/" + samp + ".sam",

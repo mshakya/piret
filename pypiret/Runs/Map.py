@@ -8,13 +8,17 @@ Mapping is done using hisat2 and counting is done using featurecounts and string
 from __future__ import print_function
 import os
 import luigi
+import sys
+dir_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(dir_path, '..'))
+sys.path.append(lib_path)
 from luigi.contrib.external_program import ExternalProgramTask
 from luigi import ExternalTask
 from luigi import LocalTarget
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
 import subprocess
-from pypiret import FastQC
+from pypiret import FaQC
 from plumbum.cmd import gffread, hisat2, python
 from plumbum.cmd import samtools, stringtie, mv, awk
 import pandas as pd
@@ -68,7 +72,7 @@ class HisatIndex(ExternalProgramTask):
     fasta = Parameter()
     hi_index = Parameter()
     bindir = Parameter()
-    numCPUs = IntParameter()
+    num_cpus = IntParameter()
 
     def requires(self):
         """Require reference fasta format file."""
@@ -87,7 +91,7 @@ class HisatIndex(ExternalProgramTask):
         """Run hisat2-build command."""
         return ["hisat2-build",
                 "--large-index",
-                "-q", "-p", self.numCPUs,
+                "-q", "-p", self.num_cpus,
                 self.fasta, self.hi_index]
 
     def program_environment(self):
@@ -237,64 +241,15 @@ class CreateSplice(ExternalProgramTask):
             hess_cmd = python[hess_opt]
             hess_cmd()
 
-
-# @requires(GFF2GTF)
-# class GetIntGenRegions(ExternalProgramTask):
-#     """Find splice sites off gtf file."""
-
-#     def output(self):
-#         """Splice site output."""
-#         if ',' in self.gff_file:
-#             gffs = self.gff_file.split(",")
-#             return [LocalTarget(self.workdir + "/" +
-#                                 gff.split("/")[-1].split(".")[0] +
-#                                 ".ints") for gff in gffs]
-#         else:
-#             return LocalTarget(self.workdir + "/" +
-#                                self.gff_file.split("/")[-1].split(".")[0] +
-#                                ".ints")
-
-#     def run(self):
-#         """Main."""
-#         if ',' in self.ref_file:
-#             refs = self.refs.split(",")
-#             for ref in refs:
-#                 target_fa = self.workdir + "/" + ref
-#                 cp_opt = [ref, target_fa]
-#                 cp_cmd = cp[cp_opt]
-#                 cp_cmd()
-#                 sam_opt = ["faidx", target_fa]
-#                 sam_cmd = samtools[sam_opt]
-#                 sam_cmd()
-#                 rm_opt = [target_fa]
-#                 rm_cmd = rm[rm_opt]
-#                 rm_cmd()
-#                 index_file = target_fa + ".fai"
-#                 cut_opt = ["-f1,2", index_file]
-#                 cut_cmd = cut[cut_opt]
-#                 cut_cmd()
-
-
-
-#         else:
-#             gtf_file = self.workdir + "/" +\
-#                 self.gff_file.split("/")[-1].split(".")[0] + ".gtf"
-#             hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
-#             hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
-#             hess_cmd = python[hess_opt]
-
-
-@requires(FastQC.PairedRunQC)
+@requires(FaQC.PairedRunQC)
 class Hisat(luigi.Task):
     """Mapping the QCed sequences to reference."""
 
     fastqs = ListParameter()
-    numCPUs = IntParameter()
     indexfile = Parameter()
     spliceFile = Parameter()
     outsam = Parameter()
     ref_file = Parameter()
-    bindir = Parameter()
     map_dir = Parameter()
 
     def output(self):
@@ -305,7 +260,7 @@ class Hisat(luigi.Task):
     def run(self):
         """Run hisat2."""
         if self.spliceFile is "":
-            hisat2_nosplice_option = ["-p", self.numCPUs,
+            hisat2_nosplice_option = ["-p", self.num_cpus,
                                       "-x", self.indexfile,
                                       "-1", self.fastqs[0],
                                       "-2", self.fastqs[1],
@@ -322,7 +277,7 @@ class Hisat(luigi.Task):
             self.sort_bam()
         else:
             h2_splice_option = ["--known-splicesite-infile", self.spliceFile,
-                                "-p", self.numCPUs,
+                                "-p", self.num_cpus,
                                 "-x", self.indexfile,
                                 "-1", self.fastqs[0],
                                 "-2", self.fastqs[1],
@@ -356,7 +311,6 @@ class Hisat(luigi.Task):
         samtools_cmd()
 
 
-# @requires(FastQC.RunAllQC)
 class HisatMapW(luigi.WrapperTask):
     """A wrapper task for mapping."""
 
@@ -365,7 +319,7 @@ class HisatMapW(luigi.WrapperTask):
     indexfile = luigi.Parameter()
     bindir = luigi.Parameter()
     workdir = luigi.Parameter()
-    numCPUs = luigi.IntParameter()
+    num_cpus = luigi.IntParameter()
 
     def requires(self):
         """A wrapper task for running mapping."""
@@ -385,7 +339,7 @@ class HisatMapW(luigi.WrapperTask):
             yield Hisat(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                 trim_dir + "/" + samp + ".2.trimmed.fastq"],
                         qc_outdir=trim_dir,
-                        numCPUs=self.numCPUs,
+                        num_cpus=self.num_cpus,
                         indexfile=self.indexfile,
                         spliceFile=splice_file,
                         outsam=map_dir + "/" + samp + ".sam",
@@ -393,38 +347,6 @@ class HisatMapW(luigi.WrapperTask):
                         bindir=self.bindir,
                         map_dir=map_dir,
                         sample=samp)
-
-
-@requires(HisatMapW)
-class SummarizeMap(luigi.Task):
-    """Summarizes FaQC results of all samples into a table"""
-
-    def output(self):
-        """Maopping Summary Output."""
-        out_file = self.workdir + "/" + "MapSummary.csv"
-        return LocalTarget(out_file)
-
-    def run(self):
-        """Parse the FaQC stats."""
-        summ_dic = {}
-        for samp, fastq in self.fastq_dic.items():
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
-            filename = map_dir + "/" + "mapping.log"
-            with open(filename, 'r') as file:
-                lines = file.readlines()
-                total_reads = lines[0].split("reads")[0].strip()
-                con_unaligned = lines[2].split("(")[0].strip()
-                con_aligned = lines[3].split("(")[0].strip()
-                multi_aligned = lines[4].split("(")[0].strip()
-                summ_dic[samp] = [total_reads,
-                                  con_unaligned,
-                                  con_aligned,
-                                  multi_aligned]
-        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
-        summ_table.columns = ["Paired reads", "Concordantly unaligned",
-                              "Concordantly aligned", "Multi aligned"]
-        out_file = self.workdir + "/" + "MapSummary.csv"
-        summ_table.to_csv(out_file)
 
 
 @requires(Hisat)
@@ -468,7 +390,7 @@ class GetRefNames(luigi.WrapperTask):
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             yield RefNames(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                    trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                           numCPUs=self.numCPUs,
+                           num_cpus=self.num_cpus,
                            indexfile=self.indexfile,
                            spliceFile=splice_file,
                            outsam=map_dir + "/" + samp + ".sam",
@@ -538,7 +460,7 @@ class StringTieScoresW(luigi.WrapperTask):
 
                 yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                               trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                      numCPUs=self.numCPUs,
+                                      num_cpus=self.num_cpus,
                                       indexfile=self.indexfile,
                                       spliceFile=splice_file,
                                       outsam=map_dir + "/" + samp + ".sam",
@@ -560,7 +482,7 @@ class StringTieScoresW(luigi.WrapperTask):
                                               ".1.trimmed.fastq",
                                               trim_dir + "/" + samp +
                                               ".2.trimmed.fastq"],
-                                      numCPUs=self.numCPUs,
+                                      num_cpus=self.num_cpus,
                                       indexfile=self.indexfile,
                                       spliceFile=splice_file,
                                       outsam=map_dir + "/" + samp + ".sam",
@@ -577,7 +499,7 @@ class StringTieScoresW(luigi.WrapperTask):
                                       map_dir=map_dir)
                 yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                       trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                      numCPUs=self.numCPUs,
+                                      num_cpus=self.num_cpus,
                                       indexfile=self.indexfile,
                                       spliceFile=splice_file,
                                       outsam=map_dir + "/" + samp + ".sam",
@@ -645,7 +567,7 @@ class Split2ProkEukW(luigi.WrapperTask):
                                         ".1.trimmed.fastq",
                                         trim_dir + "/" + samp +
                                         ".2.trimmed.fastq"],
-                                numCPUs=self.numCPUs,
+                                num_cpus=self.num_cpus,
                                 indexfile=self.indexfile,
                                 spliceFile=splice_file,
                                 outsam=map_dir + "/" + samp + ".sam",
@@ -682,7 +604,7 @@ class Split2ProkEukW(luigi.WrapperTask):
 #             trim_dir = self.workdir + "/" + samp + "/trimming_results"
 #             yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
 #                                   fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                   numCPUs=self.numCPUs,
+#                                   num_cpus=self.num_cpus,
 #                                   indexfile=self.indexfile,
 #                                   spliceFile=splice_file,
 #                                   # mappingLogFile=map_dir + "/mapping.log",
@@ -698,7 +620,7 @@ class Split2ProkEukW(luigi.WrapperTask):
 #                                   bindir=self.bindir)
 #             yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
 #                                   fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                   numCPUs=self.numCPUs,
+#                                   num_cpus=self.num_cpus,
 #                                   indexfile=self.indexfile,
 #                                   spliceFile=splice_file,
 #                                   # mappingLogFile=map_dir + "/mapping.log",

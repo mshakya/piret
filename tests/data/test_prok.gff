@@ -4,7 +4,7 @@
 #!genome-build ASM844v1
 #!genome-build-accession NCBI_Assembly:GCF_000008445.1
 #!annotation-date 05/15/2017 12:57:22
-#!annotation-source NCBI 
+#!annotation-source NCBI
 ##sequence-region NC_007530.2 1 5227419
 ##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=261594
 NC_007530.2	RefSeq	region	1	5227419	.	+	.	ID=id0;Dbxref=taxon:261594;Is_circular=true;Name=ANONYMOUS;gbkey=Src;genome=chromosome;mol_type=genomic DNA;note=MLVA types GT62 and A3.b;strain=Ames Ancestor%3B A2084
@@ -11122,7 +11122,6 @@ NC_007530.2	Protein Homology	CDS	4857461	4858366	.	-	0	ID=cds5345;Parent=gene547
 NC_007530.2	RefSeq	gene	4858510	4859805	.	-	.	ID=gene5474;Name=GBAA_RS26160;gbkey=Gene;gene_biotype=protein_coding;locus_tag=GBAA_RS26160;old_locus_tag=GBAA5364%2CGBAA_5364
 NC_007530.2	Protein Homology	CDS	4858510	4859805	.	-	0	ID=cds5346;Parent=gene5474;Dbxref=Genbank:WP_000103949.1;Name=WP_000103949.1;gbkey=CDS;inference=COORDINATES: similar to AA sequence:RefSeq:NP_847538.1;product=enolase;protein_id=WP_000103949.1;transl_table=11
 NC_007530.2	RefSeq	gene	4859836	4861365	.	-	.	ID=gene5475;Name=GBAA_RS26165;gbkey=Gene;gene_biotype=protein_coding;locus_tag=GBAA_RS26165;old_locus_tag=GBAA5365%2CGBAA_5365
-NC_007530.2	Protein Homology	CDS	4859836	4861365	.	-	0	ID=cds5347;Parent=gene5475;Dbxref=Genbank:WP_001231153.1;Name=WP_001231153.1;gbkey=CDS;inference=COORDINATES: similar to AA sequence:RefSeq:NP_847539.1;product=2%2C3-bisphosphoglycerate-independent phosphoglycerate mutase;protein_id=WP_001231153.1;transl_table=11
 NC_007530.2	RefSeq	gene	4861362	4862117	.	-	.	ID=gene5476;Name=GBAA_RS26170;gbkey=Gene;gene_biotype=protein_coding;locus_tag=GBAA_RS26170;old_locus_tag=GBAA5366%2CGBAA_5366
 NC_007530.2	Protein Homology	CDS	4861362	4862117	.	-	0	ID=cds5348;Parent=gene5476;Dbxref=Genbank:WP_001231039.1;Name=WP_001231039.1;gbkey=CDS;inference=COORDINATES: similar to AA sequence:RefSeq:NP_847540.1;product=triose-phosphate isomerase;protein_id=WP_001231039.1;transl_table=11
 NC_007530.2	RefSeq	gene	4862150	4863334	.	-	.	ID=gene5477;Name=pgk;gbkey=Gene;gene=pgk;gene_biotype=protein_coding;locus_tag=GBAA_RS26175;old_locus_tag=GBAA5367%2CGBAA_5367

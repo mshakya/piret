@@ -57,7 +57,8 @@ row.names(read.counts) <- read.counts[, 1]
 gene.info <- read.counts[, c(1:6)]
 
 # read the experimental design file
-group_table <- read.delim(group_file, row.names = 1)
+group_table <- read.delim(group_file, colClasses=c("character"))
+row.names(group_table) <- as.character(group_table[, 1])
 group_table <- select(group_table, Group)
 
 #TODO: move this piece of code to separate R code so that its done everytime
@@ -169,7 +170,7 @@ if (0 %in% colSums(edger_dge$counts)) {
     ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
 }
 }
-if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
+if (feature_name %in% c("CDS", "gene", "transcript", "exon", "novel_region")){
 #     if (0 %in% colSums(edger_dge$counts)) {
 #         print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
 #     } else {

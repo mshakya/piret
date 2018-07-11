@@ -6,7 +6,8 @@ sys.path.append(dir_path)
 
 from Checks.Design import CheckDesign
 from Checks.Fasta import CheckFasta
-from Runs import FastQC
+from Runs import FaQC
+from Runs import srna
 from Runs import Map
 from Runs import Summ
 from Runs import DGE

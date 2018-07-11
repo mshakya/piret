@@ -2,13 +2,13 @@
 """A suite to test file_exist."""
 import sys
 import os
-import luigi
 import unittest
 import shutil
-dir_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(dir_path, '..'))
-sys.path.append(lib_path)
-from pypiret.Runs import Map, FastQC  # noqa
+import luigi
+DIR = os.path.dirname(os.path.realpath(__file__))
+LIB = os.path.abspath(os.path.join(DIR, '..'))
+sys.path.append(LIB)
+from pypiret.Runs import Map, FaQC  # noqa
 
 
 class TestGFF2GTF(unittest.TestCase):
@@ -100,98 +100,29 @@ class TestHisatMapping(unittest.TestCase):
         # shutil.rmtree("tests/test_hisatmapping/")
 
     def test_hisat(self):
-        """Test hisat index creation, FastQC, and mapping."""
+        """Test hisat index creation, FaQC, and mapping."""
         dir_path = os.path.dirname(os.path.realpath(__file__))
         bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
         luigi.interface.build([
             Map.HisatIndex(fasta="tests/data/test_prok.fa",
                            hi_index="tests/test_hisatmapping/prok_index",
                            bindir=bindir,
-                           numCPUs=1),
+                           num_cpus=1),
             Map.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
                               "tests/data/BTT_test15_R2.1000.fastq"],
-                      numCPUs=1,
+                      num_cpus=1,
                       sample="samp1",
                       faqc_min_L=50, n_cutoff=5,
                       qc_outdir="tests/test_hisatmapping/trimming_results",
                       map_dir="tests/test_hisatmapping/mapping_results",                      
                       indexfile="tests/test_hisatmapping/prok_index",
                       spliceFile="",
-                      mappingLogFile="tests/test_hisatmapping/mapping.log",
-                      unalned="tests/test_hisatmapping//unligned.fastq",
                       outsam="tests/test_hisatmapping/samp1.sam",
                       ref_file="tests/data/test_prok.fa",
                       bindir=bindir)], local_scheduler=True)
 
         self.assertTrue(os.path.exists("tests/test_hisatmapping/prok_index.8.ht2l"))
         self.assertTrue(os.path.exists("tests/test_hisatmapping/samp1.sam"))
-
-
-class TestSAM2BAMFILE(unittest.TestCase):
-    """Unittest testcase."""
-
-    def Setup(self):
-        """Setting up the working directory."""
-        if os.path.exists("tests/test_hisatmapping") is False:
-            os.makedirs("tests/test_hisatmapping")
-
-    def test_sam2bam(self):
-        """Test sam2bam function."""
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
-        luigi.interface.build([
-            Map.SAM2BAMfile(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
-                                    "tests/data/BTT_test15_R2.1000.fastq"],
-                            numCPUs=1,
-                            sample="samp1",
-                            faqc_min_L=50, n_cutoff=5,
-                            qc_outdir="tests/test_hisatmapping/trimming_results",
-                            map_dir="tests/test_hisatmapping/mapping_results",
-                            indexfile="tests/test_hisatmapping/prok_index",
-                            spliceFile="",
-                            mappingLogFile="tests/test_hisatmapping/mapping.log",
-                            unalned="tests/test_hisatmapping//unligned.fastq",
-                            outsam="tests/test_hisatmapping/samp1.sam",
-                            ref_file="tests/data/test_prok.fa",
-                            bindir=bindir,
-                            bam_file="tests/test_hisatmapping/samp1.bam")],
-                              local_scheduler=True)
-
-        self.assertTrue(os.path.exists("tests/test_hisatmapping/samp1.bam"))
-
-
-class TestSortBAMFILE(unittest.TestCase):
-    """Unittest testcase."""
-
-    def Setup(self):
-        """Setting up the working directory."""
-        if os.path.exists("tests/test_hisatmapping") is False:
-            os.makedirs("tests/test_hisatmapping")
-
-    def test_sam2bam(self):
-        """Test sam2bam function."""
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
-        luigi.interface.build([
-            Map.SortBAMfile(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
-                                    "tests/data/BTT_test15_R2.1000.fastq"],
-                            numCPUs=1,
-                            sample="samp1",
-                            faqc_min_L=50, n_cutoff=5,
-                            qc_outdir="tests/test_hisatmapping/trimming_results",
-                            map_dir="tests/test_hisatmapping/mapping_results",
-                            indexfile="tests/test_hisatmapping/prok_index",
-                            spliceFile="",
-                            mappingLogFile="tests/test_hisatmapping/mapping.log",
-                            unalned="tests/test_hisatmapping//unligned.fastq",
-                            outsam="tests/test_hisatmapping/samp1.sam",
-                            ref_file="tests/data/test_prok.fa",
-                            bindir=bindir,
-                            bam_file="tests/test_hisatmapping/samp1.bam",
-                            sorted_bam_file="tests/test_hisatmapping/samp1_sort.bam")],
-                              local_scheduler=True)
-
-        self.assertTrue(os.path.exists("tests/test_hisatmapping/samp1_sort.bam"))
 
 
 
