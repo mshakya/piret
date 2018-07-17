@@ -27,7 +27,7 @@ from argparse import ArgumentParser, FileType
 
 
 def extract_splice_sites(gtf_file, splice, verbose=False):
-    """Function."""
+    """Function from hisat2_extract_splice_sites.py script."""
     genes = dd(list)
     trans = {}
 

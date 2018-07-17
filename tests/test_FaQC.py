@@ -31,7 +31,6 @@ class TestFaQC(unittest.TestCase):
                                 sample="samp1",
                                 num_cpus=1,
                                 qc_outdir="test_faqc",
-                                bindir=bindir,
                                 faqc_min_L=50,
                                 n_cutoff=5)],
               local_scheduler=True, workers=1)

@@ -22,6 +22,8 @@ from pypiret import FaQC
 from plumbum.cmd import gffread, hisat2, python
 from plumbum.cmd import samtools, stringtie, mv, awk
 import pandas as pd
+from sys import stderr, exit
+from collections import defaultdict as dd, Counter
 # from Bio import SeqIO
 
 
@@ -71,7 +73,6 @@ class HisatIndex(ExternalProgramTask):
 
     fasta = Parameter()
     hi_index = Parameter()
-    bindir = Parameter()
     num_cpus = IntParameter()
 
     def requires(self):
@@ -94,13 +95,9 @@ class HisatIndex(ExternalProgramTask):
                 "-q", "-p", self.num_cpus,
                 self.fasta, self.hi_index]
 
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
-
 
 class SAMindex(luigi.Task):
-    """Create Hisat Indeices from given fasta file."""
+    """Create Hisat Indices from given fasta file."""
 
     fasta = Parameter()
     workdir = Parameter()
@@ -157,7 +154,6 @@ class GFF2GTF(luigi.Task):
 
     gff_file = Parameter()
     workdir = Parameter()
-    bindir = Parameter()
 
     def requires(self):
         """Require reference gff(s) file."""
@@ -217,6 +213,102 @@ class CreateSplice(ExternalProgramTask):
                                gff.split("/")[-1].split(".")[0] +
                                ".splice")
 
+    def extract_splice_sites(self, gtf_file, splice, verbose=False):
+        """"Function from hisat2_extract_splice_sites.py script."""
+        genes = dd(list)
+        trans = {}
+
+        # Parse valid exon lines from the GTF file into a dict by transcript_id
+        for line in gtf_file:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if '#' in line:
+                line = line.split('#')[0].strip()
+
+            try:
+                chrom, source, feature, left, right, score, \
+                    strand, frame, values = line.split('\t')
+            except ValueError:
+                continue
+            left, right = int(left), int(right)
+
+            if feature != 'exon' or left >= right:
+                continue
+
+            values_dict = {}
+            for attr in values.split(';')[:-1]:
+                attr, _, val = attr.strip().partition(' ')
+                values_dict[attr] = val.strip('"')
+
+            if 'gene_id' not in values_dict or \
+                    'transcript_id' not in values_dict:
+                continue
+
+            transcript_id = values_dict['transcript_id']
+            if transcript_id not in trans:
+                trans[transcript_id] = [chrom, strand, [[left, right]]]
+                genes[values_dict['gene_id']].append(transcript_id)
+            else:
+                trans[transcript_id][2].append([left, right])
+
+        # Sort exons and merge where separating introns are <=5 bps
+        for tran, [chrom, strand, exons] in trans.items():
+                exons.sort()
+                tmp_exons = [exons[0]]
+                for i in range(1, len(exons)):
+                    if exons[i][0] - tmp_exons[-1][1] <= 5:
+                        tmp_exons[-1][1] = exons[i][1]
+                    else:
+                        tmp_exons.append(exons[i])
+                trans[tran] = [chrom, strand, tmp_exons]
+
+        # Calculate and print the unique junctions
+        junctions = set()
+        for chrom, strand, exons in trans.values():
+            for i in range(1, len(exons)):
+                junctions.add((chrom, exons[i-1][1], exons[i][0], strand))
+        junctions = sorted(junctions)
+        with open(splice, 'w') as out:
+            for chrom, left, right, strand in junctions:
+                # Zero-based offset
+                out.write('{}\t{}\t{}\t{}\n'.format(chrom, left-1, right-1, strand))
+                # print('{}\t{}\t{}\t{}'.format(chrom, left-1, right-1, strand))
+
+        # Print some stats if asked
+        if verbose:
+            exon_lengths, intron_lengths, trans_lengths = \
+                Counter(), Counter(), Counter()
+            for chrom, strand, exons in trans.values():
+                tran_len = 0
+                for i, exon in enumerate(exons):
+                    exon_len = exon[1]-exon[0]+1
+                    exon_lengths[exon_len] += 1
+                    tran_len += exon_len
+                    if i == 0:
+                        continue
+                    intron_lengths[exon[0] - exons[i-1][1]] += 1
+                trans_lengths[tran_len] += 1
+
+            print('genes: {}, genes with multiple isoforms: {}'.format(
+                  len(genes), sum(len(v) > 1 for v in genes.values())),
+                  file=stderr)
+            print('transcripts: {}, transcript avg. length: {:d}'.format(
+                    len(trans), sum(trans_lengths.elements())/len(trans)),
+                  file=stderr)
+            print('exons: {}, exon avg. length: {:d}'.format(
+                    sum(exon_lengths.values()),
+                    sum(exon_lengths.elements())/sum(exon_lengths.values())),
+                  file=stderr)
+            print('introns: {}, intron avg. length: {:d}'.format(
+                    sum(intron_lengths.values()),
+                    sum(intron_lengths.elements())/sum(intron_lengths.values())),
+                  file=stderr)
+            print('average number of exons per transcript: {:d}'.format(
+                    sum(exon_lengths.values())/len(trans)),
+                  file=stderr)
+
+
     def run(self):
         """Main."""
         if ',' in self.gff_file:
@@ -226,20 +318,15 @@ class CreateSplice(ExternalProgramTask):
                     gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
                 out_file = self.workdir + "/" +\
                     gff.split("/")[-1].rsplit(".", 1)[0] + ".splice"
-                hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
-                hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
-                hess_cmd = python[hess_opt]
-                hess_cmd()
+                self.extract_splice_sites(gtf_file, out_file)
         else:
             gff = os.path.abspath(self.gff_file)
             gtf_file = self.workdir + "/" +\
                 gff.split("/")[-1].rsplit(".", 1)[0] + ".gtf"
             out_file = self.workdir + "/" +\
                 self.gff_file.split("/")[-1].rsplit(".", 1)[0] + ".splice"
-            hess_fpath = self.bindir + "/../scripts/hisat2_extract_splice_sites.py"
-            hess_opt = [hess_fpath, "-i", gtf_file, "-o", out_file]
-            hess_cmd = python[hess_opt]
-            hess_cmd()
+            self.extract_splice_sites(gtf_file, out_file)
+
 
 @requires(FaQC.PairedRunQC)
 class Hisat(luigi.Task):
@@ -251,6 +338,7 @@ class Hisat(luigi.Task):
     outsam = Parameter()
     ref_file = Parameter()
     map_dir = Parameter()
+    workdir = Parameter()
 
     def output(self):
         """SAM file output of the mapping."""
@@ -317,7 +405,6 @@ class HisatMapW(luigi.WrapperTask):
     fastq_dic = DictParameter()
     ref_file = luigi.Parameter()
     indexfile = luigi.Parameter()
-    bindir = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
 
@@ -344,9 +431,9 @@ class HisatMapW(luigi.WrapperTask):
                         spliceFile=splice_file,
                         outsam=map_dir + "/" + samp + ".sam",
                         ref_file=self.ref_file,
-                        bindir=self.bindir,
                         map_dir=map_dir,
-                        sample=samp)
+                        sample=samp,
+                        workdir=self.workdir)
 
 
 @requires(Hisat)
@@ -396,7 +483,6 @@ class GetRefNames(luigi.WrapperTask):
                            outsam=map_dir + "/" + samp + ".sam",
                            map_ref=map_dir + "/" + samp + ".reflist",
                            ref_file=self.ref_file,
-                           bindir=self.bindir,
                            sample=samp,
                            qc_outdir=trim_dir,
                            map_dir=map_dir)
@@ -470,14 +556,13 @@ class StringTieScoresW(luigi.WrapperTask):
                                       out_cover=stng_dir + "/" + samp + "_" + gff_name + apd + "_covered_sTie.gtf",
                                       out_abun=stng_dir + "/" + samp + "_" + gff_name + apd + "_sTie.tab",
                                       in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      bindir=self.bindir,
                                       workdir=self.workdir,
                                       sample=samp,
                                       qc_outdir=trim_dir,
                                       map_dir=map_dir)
             elif self.kingdom == 'both':
-                prok_gff = os.path.basename(self.gff_file.split(";")[0]).split(".gff")[0]
-                euk_gff = os.path.basename(self.gff_file.split(";")[1]).split(".gff")[0]
+                prok_gff = os.path.basename(self.gff_file.split(",")[0]).split(".gff")[0]
+                euk_gff = os.path.basename(self.gff_file.split(",")[1]).split(".gff")[0]
                 yield StringTieScores(fastqs=[trim_dir + "/" + samp +
                                               ".1.trimmed.fastq",
                                               trim_dir + "/" + samp +
@@ -491,9 +576,8 @@ class StringTieScoresW(luigi.WrapperTask):
                                       out_cover=stng_dir + "/" + samp + "_" + prok_gff + "_prok" + "_covered_sTie.gtf",
                                       out_abun=stng_dir + "/" + samp + "_" + prok_gff + "_prok" + "_sTie.tab",
                                       in_bam_file=map_dir + "/" + samp + "_srt_prok.bam",
-                                      bindir=self.bindir,
                                       workdir=self.workdir,
-                                      gff_file=self.gff_file.split(";")[0],
+                                      gff_file=self.gff_file.split(",")[0],
                                       sample=samp,
                                       qc_outdir=trim_dir,
                                       map_dir=map_dir)
@@ -508,9 +592,8 @@ class StringTieScoresW(luigi.WrapperTask):
                                       out_cover=stng_dir + "/" + samp + "_" + euk_gff + "_euk" + "_covered_sTie.gtf",
                                       out_abun=stng_dir + "/" + samp + "_" + euk_gff + "_euk" + "_sTie.tab",
                                       in_bam_file=map_dir + "/" + samp + "_srt_prok.bam",
-                                      bindir=self.bindir,
                                       workdir=self.workdir,
-                                      gff_file=self.gff_file.split(";")[0],
+                                      gff_file=self.gff_file.split(",")[1],
                                       sample=samp,
                                       qc_outdir=trim_dir,
                                       map_dir=map_dir)
@@ -573,7 +656,7 @@ class Split2ProkEukW(luigi.WrapperTask):
                                 outsam=map_dir + "/" + samp + ".sam",
                                 map_dir=map_dir,
                                 ref_file=self.ref_file,
-                                bindir=self.bindir,
+                                
                                 workdir=self.workdir,
                                 sample=samp,
                                 qc_outdir=trim_dir)

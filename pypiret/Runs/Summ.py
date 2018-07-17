@@ -30,7 +30,6 @@ class FeatureCounts(luigi.Task):
     gff = luigi.Parameter()
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
-    bindir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
     ref_file = luigi.Parameter()
     fid = luigi.Parameter()
@@ -76,7 +75,7 @@ class FeatureCounts(luigi.Task):
                                                comment='#')[2].tolist()))
                 for feat in feature:
                     if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene',
-                                'novel_region', 'transcript']:
+                                'novel_region', 'transcript', 'mRNA', ]:
                         fcount_cmd_opt = ["-a", self.gff,
                                           "-s", self.stranded,
                                           "-B",
@@ -105,87 +104,83 @@ class FeatureCounts(luigi.Task):
                     fcount_cmd()
 
 
-@requires(Map.HisatMapW)
-class FeatureCountsBoth(luigi.Task):
-    """Summarize mapped reads classificaion using FeatureCount."""
+# @requires(Map.HisatMapW)
+# class FeatureCountsBoth(luigi.Task):
+#     """Summarize mapped reads classificaion using FeatureCount."""
 
-    kingdom = luigi.Parameter()
-    gff_file = luigi.Parameter()
-    workdir = luigi.Parameter()
-    indexfile = luigi.Parameter()
-    bindir = luigi.Parameter()
-    num_cpus = luigi.IntParameter()
-    ref_file = luigi.Parameter()
-    fid = luigi.Parameter()
-    stranded = luigi.IntParameter()
+#     kingdom = luigi.Parameter()
+#     gff_file = luigi.Parameter()
+#     workdir = luigi.Parameter()
+#     indexfile = luigi.Parameter()
+#     num_cpus = luigi.IntParameter()
+#     ref_file = luigi.Parameter()
+#     fid = luigi.Parameter()
+#     stranded = luigi.IntParameter()
 
-    def output(self):
-        """Index output."""
-        counts_dir = self.workdir + "/featureCounts"
-        prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
-                                             sep="\t",
-                                             header=None,
-                                             comment="#")[2].tolist()))
-        prok_target = [LocalTarget(counts_dir + "/prok_" +
-                                   feat + ".count") for feat in prok_features]
-        euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
-                                            sep="\t",
-                                            header=None,
-                                            comment="#")[2].tolist()))
-        euk_target = [LocalTarget(counts_dir + "/euk_" +
-                                  feat + ".count") for feat in euk_features]
-        loc_target = prok_target + euk_target
-        return loc_target
+#     def output(self):
+#         """Index output."""
+#         counts_dir = self.workdir + "/featureCounts"
+#         prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
+#                                              sep="\t",
+#                                              header=None,
+#                                              comment="#")[2].tolist()))
+#         prok_target = [LocalTarget(counts_dir + "/prok_" +
+#                                    feat + ".count") for feat in prok_features]
+#         euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
+#                                             sep="\t",
+#                                             header=None,
+#                                             comment="#")[2].tolist()))
+#         euk_target = [LocalTarget(counts_dir + "/euk_" +
+#                                   feat + ".count") for feat in euk_features]
+#         loc_target = prok_target + euk_target
+#         return loc_target
 
-    def run(self):
-        """Running featureCounts on all."""
-        counts_dir = self.workdir + "/featureCounts"
-        samp_list = list(self.fastq_dic.keys())
-        in_srtbam_list = [self.workdir + "/" + samp + "/" +
-                          "mapping_results" + "/" + samp + "_srt.bam"
-                          for samp in samp_list]
-        if not os.path.exists(self.workdir + "/featureCounts"):
-            os.makedirs(self.workdir + "/featureCounts")
-        prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
-                                             sep="\t",
-                                             header=None,
-                                             comment="#")[2].tolist()))
-        euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
-                                            sep="\t",
-                                            header=None,
-                                            comment="#")[2].tolist()))
-        for feat in euk_features:
-            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
-                fcount_euk_cmd_opt = ["-a", self.gff_file.split(",")[1],
-                                      "-s", self.stranded,
-                                      "-B",
-                                      "-p", "-P", "-C",
-                                      "-g", self.fid,
-                                      "-t", feat,
-                                      "-T", self.num_cpus,
-                                      "-o",
-                                      counts_dir + "/euk_" + feat +
-                                      "_count.tsv"] + in_srtbam_list
-                fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
-                fcount_euk_cmd()
-        for feat in prok_features:
-            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
-                fcount_prok_cmd_opt = ["-a", self.gff_file.split(",")[0],
-                                       "-s", self.stranded,
-                                       "-B",
-                                       "-p", "-P", "-C",
-                                       "-g", self.fid,
-                                       "-t", feat,
-                                       "-T", self.num_cpus,
-                                       "-o",
-                                       counts_dir + "/prok_" + feat +
-                                       "_count.tsv"] + in_srtbam_list
-                fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
-                fcount_prok_cmd()
+#     def run(self):
+#         """Running featureCounts on all."""
+#         counts_dir = self.workdir + "/featureCounts"
+#         samp_list = list(self.fastq_dic.keys())
+#         in_srtbam_list = [self.workdir + "/" + samp + "/" +
+#                           "mapping_results" + "/" + samp + "_srt.bam"
+#                           for samp in samp_list]
+#         if not os.path.exists(self.workdir + "/featureCounts"):
+#             os.makedirs(self.workdir + "/featureCounts")
+#         prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
+#                                              sep="\t",
+#                                              header=None,
+#                                              comment="#")[2].tolist()))
+#         euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
+#                                             sep="\t",
+#                                             header=None,
+#                                             comment="#")[2].tolist()))
+#         for feat in euk_features:
+#             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
+#                 fcount_euk_cmd_opt = ["-a", self.gff_file.split(",")[1],
+#                                       "-s", self.stranded,
+#                                       "-B",
+#                                       "-p", "-P", "-C",
+#                                       "-g", self.fid,
+#                                       "-t", feat,
+#                                       "-T", self.num_cpus,
+#                                       "-o",
+#                                       counts_dir + "/euk_" + feat +
+#                                       "_count.tsv"] + in_srtbam_list
+#                 fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
+#                 fcount_euk_cmd()
+#         for feat in prok_features:
+#             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
+#                 fcount_prok_cmd_opt = ["-a", self.gff_file.split(",")[0],
+#                                        "-s", self.stranded,
+#                                        "-B",
+#                                        "-p", "-P", "-C",
+#                                        "-g", self.fid,
+#                                        "-t", feat,
+#                                        "-T", self.num_cpus,
+#                                        "-o",
+#                                        counts_dir + "/prok_" + feat +
+#                                        "_count.tsv"] + in_srtbam_list
+#                 fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
+#                 fcount_prok_cmd()
 
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
 
 @requires(Map.StringTieScoresW)
@@ -317,7 +312,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         out_cover=bg_dir + "/" + samp + "_merged_covered_sTie.gtf",
                                         out_abun=bg_dir + "/" + samp + "_merged_sTie.tab",
                                         in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                        bindir=self.bindir,
                                         workdir=self.workdir,
                                         sample=samp,
                                         qc_outdir=trim_dir,
@@ -349,7 +343,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         out_cover=bg_dir_prok + "/" + samp + "_prok_covered_sTie.gtf",
                                         out_abun=bg_dir_prok + "/" + samp + "_prok_sTie.tab",
                                         in_bam_file=self.map_dir + "/prokarya.bam",
-                                        bindir=self.bindir,
                                         workdir=self.workdir)
                 yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
                                         fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
@@ -364,7 +357,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         out_cover=bg_dir_euk + "/" + samp + "_euk_covered_sTie.gtf",
                                         out_abun=bg_dir_euk + "/" + samp + "_euk_sTie.tab",
                                         in_bam_file=self.map_dir + "/eukarya.bam",
-                                        bindir=self.bindir,
                                         workdir=self.workdir)
 
 # class SampleInfo(luigi.task):

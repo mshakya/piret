@@ -18,6 +18,7 @@ class edgeR(luigi.Task):
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
+    bindir = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
@@ -68,6 +69,7 @@ class DESeq2(luigi.Task):
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
+    bindir = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""

@@ -5,6 +5,7 @@ import os
 import unittest
 import shutil
 import luigi
+from plumbum.cmd import rm
 DIR = os.path.dirname(os.path.realpath(__file__))
 LIB = os.path.abspath(os.path.join(DIR, '..'))
 sys.path.append(LIB)
@@ -22,7 +23,6 @@ class TestGFF2GTF(unittest.TestCase):
     def test_gtf_creation(self):
         """Test if GFF2GTF works."""
         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff",
-                                           bindir="bin",
                                            workdir="tests/test_gff2gtf")],
                               local_scheduler=True)
 
@@ -31,7 +31,6 @@ class TestGFF2GTF(unittest.TestCase):
     def test_gtfs_creation(self):
         """Test if GFF2GTF works for multiple gffs."""
         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff,tests/data/eukarya_test.gff3",
-                                           bindir="bin",
                                            workdir="tests/test_gff2gtf")],
                               local_scheduler=True)
 
@@ -60,10 +59,8 @@ class TestCreateSplice(unittest.TestCase):
     def test_splice_creation(self):
         """Test if CreateSplice works."""
         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff",
-                                           bindir="bin",
                                            workdir="tests/test_createsplice"),
                                Map.CreateSplice(gff_file="tests/data/test_prok.gff",
-                                                bindir="bin",
                                                 workdir="tests/test_createsplice")],
                               local_scheduler=True)
         self.assertTrue(os.path.exists("tests/test_createsplice/test_prok.splice"))
@@ -71,10 +68,8 @@ class TestCreateSplice(unittest.TestCase):
     def test_splices_creation(self):
         """Test if GFF2GTF works for multiple gffs."""
         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok1.1.gff,tests/data/eukarya_test.gff3",
-                                           bindir="bin",
                                            workdir="tests/test_createsplice"),
                                Map.CreateSplice(gff_file="tests/data/test_prok1.1.gff,tests/data/eukarya_test.gff3",
-                                                bindir="bin",
                                                 workdir="tests/test_createsplice")],
                               local_scheduler=True)
 
@@ -95,9 +90,9 @@ class TestHisatMapping(unittest.TestCase):
         if os.path.exists("tests/test_hisatmapping") is False:
             os.makedirs("tests/test_hisatmapping")
 
-    # def tearDown(self):
-        # """Remove created files and directories."""
-        # shutil.rmtree("tests/test_hisatmapping/")
+    @classmethod
+    def tearDownClass(cls):
+        rm["-rf", 'tests/test_hisatmapping']()
 
     def test_hisat(self):
         """Test hisat index creation, FaQC, and mapping."""
@@ -106,7 +101,6 @@ class TestHisatMapping(unittest.TestCase):
         luigi.interface.build([
             Map.HisatIndex(fasta="tests/data/test_prok.fa",
                            hi_index="tests/test_hisatmapping/prok_index",
-                           bindir=bindir,
                            num_cpus=1),
             Map.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
                               "tests/data/BTT_test15_R2.1000.fastq"],
@@ -119,7 +113,7 @@ class TestHisatMapping(unittest.TestCase):
                       spliceFile="",
                       outsam="tests/test_hisatmapping/samp1.sam",
                       ref_file="tests/data/test_prok.fa",
-                      bindir=bindir)], local_scheduler=True)
+                      workdir="tests/test_hisatmapping/")], local_scheduler=True)
 
         self.assertTrue(os.path.exists("tests/test_hisatmapping/prok_index.8.ht2l"))
         self.assertTrue(os.path.exists("tests/test_hisatmapping/samp1.sam"))

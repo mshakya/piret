@@ -4,9 +4,9 @@ import os
 import sys
 import unittest
 from plumbum.cmd import rm
-dir_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(dir_path, '..'))
-sys.path.append(lib_path)
+DIR = os.path.dirname(os.path.realpath(__file__))
+LIB = os.path.abspath(os.path.join(DIR, '..'))
+sys.path.append(LIB)
 from pypiret.Runs.srna import ExtractPP
 from pypiret.Runs.srna import FindNovelRegions, CompileGFF
 
@@ -17,7 +17,7 @@ class TestPP(unittest.TestCase):
 
     def test_split(self):
         """Test if true."""
-        ExtractPP.prop_paired(self, "samp5", self.bam_file)
+        ExtractPP.prop_paired(self, self.bam_file)
         assert os.path.exists("/tmp/samp5_f163.bam") == 1
 
     def test_merge(self):
@@ -81,6 +81,7 @@ class TestNovelGFF(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         rm["-rf", 'test.gff']()
+        rm["-rf", 'all_novel.txt']()
 
 if __name__ == '__main__':
     unittest.main()

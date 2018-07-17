@@ -16,43 +16,70 @@ import pandas as pd
 @requires(Map.Hisat)
 class ExtractPP(luigi.Task):
     """Extract properly paried reads."""
-    
+    kingdom = luigi.Parameter()
 
     def output(self):
         """SAM file output of the mapping."""
-        bam_file = self.map_dir + "/" + self.sample + ".bam"
-        fbam = bam_file.split(".bam")[0] + ".fw_srt.bam"
-        return luigi.LocalTarget(fbam)
+        if self.kingdom in ['prokarya', 'eukarya']:
+            bam_file = self.map_dir + "/" + self.sample + ".bam"
+            fbam = bam_file.split(".bam")[0] + ".fw_srt.bam"
+            return luigi.LocalTarget(fbam)
+        elif self.kingdom in ['both']:
+            prok_bam_srt = self.map_dir + "/" + self.sample + "_srt_prok.fw_srt.bam"
+            return luigi.LocalTarget(prok_bam_srt)
+
 
     def run(self):
         """Run split and merges."""
-        bam_file = self.map_dir + "/" + self.sample + ".bam"
-        fbam = bam_file.split(".bam")[0] + ".fw.bam"
-        bbam = bam_file.split(".bam")[0] + ".bw.bam"
-        self.prop_paired(self.sample, bam_file)
-        self.merge_prop_paired(self.sample, fbam, bbam)
-        self.sort_bam(fbam.split(".bam")[0] + ".bam")
-        self.sort_bam(bbam.split(".bam")[0] + ".bam")
+        if self.kingdom in ['prokarya', 'eukarya']:
+            bam_file = self.map_dir + "/" + self.sample + ".bam"
+            fbam = bam_file.split(".bam")[0] + ".fw.bam"
+            bbam = bam_file.split(".bam")[0] + ".bw.bam"
+            self.prop_paired(bam_file)
+            self.merge_prop_paired(self.sample, fbam, bbam)
+            self.sort_bam(fbam.split(".bam")[0] + ".bam")
+            self.sort_bam(bbam.split(".bam")[0] + ".bam")
+        elif self.kingdom == "both":
+            euk_bam_file = self.map_dir + "/" + self.sample + "_srt_euk.bam"
+            prok_bam_file = self.map_dir + "/" + self.sample + "_srt_prok.bam"
+            euk_fbam = euk_bam_file.split(".bam")[0] + ".fw.bam"
+            prok_fbam = prok_bam_file.split(".bam")[0] + ".fw.bam"
+            euk_bbam = euk_bam_file.split(".bam")[0] + ".bw.bam"
+            prok_bbam = prok_bam_file.split(".bam")[0] + ".bw.bam"
+            self.prop_paired(euk_bam_file)
+            self.prop_paired(prok_bam_file)
+            self.merge_prop_paired(euk_bam_file, euk_fbam, euk_bbam)
+            self.merge_prop_paired(prok_bam_file, prok_fbam, prok_bbam)
+            self.sort_bam(euk_fbam.split(".bam")[0] + ".bam")
+            self.sort_bam(prok_fbam.split(".bam")[0] + ".bam")
+            self.sort_bam(euk_bbam.split(".bam")[0] + ".bam")
+            self.sort_bam(prok_bbam.split(".bam")[0] + ".bam")
 
-    def prop_paired(self, samp, bam_file):
+
+    def prop_paired(self, bam_file):
         """Extract properly paired reads."""
 
         for flag in ["-f99", "-f147", "-f163", "-f83"]:
             options = ["view", "-h", "-b", flag, bam_file, "-o",
-                       "/tmp/" + str(samp) + "_" + flag.split("-")[1] + ".bam"]
+                       "/tmp/" + basename(bam_file).split(".bam")[0] + "_" +
+                       flag.split("-")[1] + ".bam"]
             samtools_cmd = samtools[options]
             samtools_cmd()
 
-    def merge_prop_paired(self, samp, fbam, bbam):
+    def merge_prop_paired(self, bam_file, fbam, bbam):
         """Merge properly paired files."""
         options = ["merge", fbam,
-                   "/tmp/" + samp + "_" + "f99.bam",
-                   "/tmp/" + samp + "_" + "f147.bam", "-f"]
+                   "/tmp/" + basename(bam_file).split(".bam")[0] + 
+                   "_" + "f99.bam",
+                   "/tmp/" + basename(bam_file).split(".bam")[0] + 
+                   "_" + "f147.bam", "-f"]
         merge_cmd = samtools[options]
         merge_cmd()        
         options = ["merge", bbam,
-                   "/tmp/" + samp + "_" + "f163.bam",
-                   "/tmp/" + samp + "_" + "f83.bam",
+                   "/tmp/" + basename(bam_file).split(".bam")[0] +
+                   "_" + "f163.bam",
+                   "/tmp/" + basename(bam_file).split(".bam")[0] +
+                   "_" + "f83.bam",
                    "-f"]
         merge_cmd = samtools[options]
         merge_cmd()
@@ -72,9 +99,9 @@ class ExtractPPW(luigi.WrapperTask):
     fastq_dic = luigi.DictParameter()
     ref_file = luigi.Parameter()
     indexfile = luigi.Parameter()
-    bindir = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
+    kingdom = luigi.Parameter()
 
     def requires(self):
         """A wrapper task for running mapping."""
@@ -91,17 +118,34 @@ class ExtractPPW(luigi.WrapperTask):
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
-            yield ExtractPP(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                    trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                            qc_outdir=trim_dir,
-                            num_cpus=self.num_cpus,
-                            indexfile=self.indexfile,
-                            spliceFile=splice_file,
-                            outsam=map_dir + "/" + samp + ".sam",
-                            ref_file=self.ref_file,
-                            bindir=self.bindir,
-                            map_dir=map_dir,
-                            sample=samp)
+            if self.kingdom in ['prokarya', 'eukarya']:
+                yield ExtractPP(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                        trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                                qc_outdir=trim_dir,
+                                num_cpus=self.num_cpus,
+                                indexfile=self.indexfile,
+                                spliceFile=splice_file,
+                                outsam=map_dir + "/" + samp + ".sam",
+                                ref_file=self.ref_file,
+                                map_dir=map_dir,
+                                sample=samp,
+                                kingdom=self.kingdom,
+                                workdir=self.workdir)
+            elif self.kingdom == 'both':
+                # prok_gff = os.path.basename(self.gff_file.split(";")[0]).split(".gff")[0]
+                # euk_gff = os.path.basename(self.gff_file.split(";")[1]).split(".gff")[0]
+                yield ExtractPP(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                        trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                                qc_outdir=trim_dir,
+                                num_cpus=self.num_cpus,
+                                indexfile=self.indexfile,
+                                spliceFile=splice_file,
+                                outsam=map_dir + "/" + samp + ".sam",
+                                ref_file=self.ref_file,
+                                map_dir=map_dir,
+                                sample=samp,
+                                kingdom=self.kingdom,
+                                workdir=self.workdir)
 
 
 @requires(ExtractPPW)
@@ -140,44 +184,81 @@ class SummarizeMap(luigi.Task):
 class FindNovelRegions(luigi.Task):
     """create a new gff file based on coverage of intergenic regions"""
 
-    gff = luigi.Parameter()
-    workdir = luigi.Parameter()
+    kingdom = luigi.Parameter()
+    gff_file = luigi.Parameter()
 
     def output(self):
-        novels = self.map_dir + "/" + self.sample + "_bw_novel.bedfile"
+        """Check for presence of bedfile."""
+        if self.kingdom in ['prokarya', 'eukarya']:
+            novels = self.map_dir + "/" + self.sample + "_bw_novel.bedfile"
+        elif self.kingdom == "both":
+            novels = self.map_dir + "/" + self.sample + "_prok_bw_novel.bedfile"
         return luigi.LocalTarget(novels)
 
-    def run(self):
-        srt_bam_file = self.map_dir + "/" + self.sample + "_srt.bam"
-        chrom_sizes = self.map_dir + "/" + self.sample + "_size.txt"
-        fw_srt_bam_file = self.map_dir + "/" + self.sample + ".fw_srt.bam"
-        bw_srt_bam_file = self.map_dir + "/" + self.sample + ".bw_srt.bam"
-        fw_gcov = self.map_dir + "/" + self.sample + "_fw_gcov.bedfile"
-        bw_gcov = self.map_dir + "/" + self.sample + "_bw_gcov.bedfile"
-        fw_novels = self.map_dir + "/" + self.sample + "_fw_novel.bedfile"
-        bw_novels = self.map_dir + "/" + self.sample + "_bw_novel.bedfile"
-        out_gff = os.path.join(self.workdir, "no_region.gff")
 
-        self.get_genome_ref(srt_bam_file, chrom_sizes)
-        self.remove_region(self.gff, out_gff)
-        self.genome_coverage(fw_srt_bam_file, chrom_sizes, fw_gcov)
-        self.genome_coverage(bw_srt_bam_file, chrom_sizes, bw_gcov)
-        self.novel_regions(out_gff, fw_gcov, fw_novels)
-        self.novel_regions(out_gff, bw_gcov, bw_novels)
+    def run(self):
+        """Based on eukarya or prokarya or both, run these commands"""        
+        if self.kingdom in ['prokarya', 'eukarya']:
+            srt_bam_file = self.map_dir + "/" + self.sample + "_srt.bam"
+            chrom_sizes = self.map_dir + "/" + self.sample + "_size.txt"
+            fw_srt_bam_file = self.map_dir + "/" + self.sample + ".fw_srt.bam"
+            bw_srt_bam_file = self.map_dir + "/" + self.sample + ".bw_srt.bam"
+            fw_gcov = self.map_dir + "/" + self.sample + "_fw_gcov.bedfile"
+            bw_gcov = self.map_dir + "/" + self.sample + "_bw_gcov.bedfile"
+            fw_novels = self.map_dir + "/" + self.sample + "_fw_novel.bedfile"
+            bw_novels = self.map_dir + "/" + self.sample + "_bw_novel.bedfile"
+            out_gff = os.path.join(self.workdir, "no_region.gff")
+            self.get_genome_ref(srt_bam_file, chrom_sizes)
+            self.remove_region(self.gff_file, out_gff)
+            self.genome_coverage(fw_srt_bam_file, fw_gcov)
+            self.genome_coverage(bw_srt_bam_file, bw_gcov)
+            self.novel_regions(out_gff, fw_gcov, fw_novels)
+            self.novel_regions(out_gff, bw_gcov, bw_novels)
+        elif self.kingdom == "both":
+            prok_gff = self.gff_file.split(",")[0]
+            euk_gff = self.gff_file.split(",")[1]
+            euk_srt_bam_file = self.map_dir + "/" + self.sample + "_srt_euk.bam"
+            euk_chrom_sizes = self.map_dir + "/" + self.sample + "_euk_size.txt"
+            prok_srt_bam_file = self.map_dir + "/" + self.sample + "_srt_prok.bam"
+            prok_chrom_sizes = self.map_dir + "/" + self.sample + "_size_prok.txt"
+            euk_fw_srt_bam_file = self.map_dir + "/" + self.sample + "_srt_euk.fw_srt.bam"
+            prok_fw_srt_bam_file = self.map_dir + "/" + self.sample + "_srt_prok.fw_srt.bam"
+            euk_bw_srt_bam_file = self.map_dir + "/" + self.sample + "_srt_euk.bw_srt.bam"
+            prok_bw_srt_bam_file = self.map_dir + "/" + self.sample + "_srt_prok.bw_srt.bam"
+            euk_fw_gcov = self.map_dir + "/" + self.sample + "_euk_fw_gcov.bedfile"
+            prok_fw_gcov = self.map_dir + "/" + self.sample + "_prok_fw_gcov.bedfile"
+            euk_bw_gcov = self.map_dir + "/" + self.sample + "_euk_bw_gcov.bedfile"
+            prok_bw_gcov = self.map_dir + "/" + self.sample + "_prok_bw_gcov.bedfile"
+            euk_fw_novels = self.map_dir + "/" + self.sample + "_euk_fw_novel.bedfile"
+            prok_fw_novels = self.map_dir + "/" + self.sample + "_prok_fw_novel.bedfile"
+            euk_bw_novels = self.map_dir + "/" + self.sample + "_euk_bw_novel.bedfile"
+            prok_bw_novels = self.map_dir + "/" + self.sample + "_prok_bw_novel.bedfile"
+            euk_out_gff = os.path.join(self.workdir, "euk_no_region.gff")
+            prok_out_gff = os.path.join(self.workdir, "prok_no_region.gff")
+            self.get_genome_ref(euk_srt_bam_file, euk_chrom_sizes)
+            self.get_genome_ref(prok_srt_bam_file, prok_chrom_sizes)
+            self.remove_region(euk_gff, euk_out_gff)
+            self.remove_region(prok_gff, prok_out_gff)
+            self.genome_coverage(euk_fw_srt_bam_file, euk_fw_gcov)
+            self.genome_coverage(prok_fw_srt_bam_file, prok_fw_gcov)
+            self.genome_coverage(euk_bw_srt_bam_file, euk_bw_gcov)
+            self.genome_coverage(prok_bw_srt_bam_file, prok_bw_gcov)
+            self.novel_regions(euk_out_gff, euk_fw_gcov, euk_fw_novels)
+            self.novel_regions(prok_out_gff, prok_fw_gcov, prok_fw_novels)
+            self.novel_regions(euk_out_gff, euk_bw_gcov, euk_bw_novels)
+            self.novel_regions(prok_out_gff, prok_bw_gcov, prok_bw_novels)
 
     def get_genome_ref(self, sorted_bam_file, chrom_sizes):
         """Calculate the size of each chromosome/contig."""
         (samtools["view", "-H", sorted_bam_file] | grep["@SQ"] |
          sed["s/@SQ.*SN://g"] | sed["s/LN://g"] > chrom_sizes)()
 
-    def genome_coverage(self, srt_bam, chrom_sizes, gcov):
+    def genome_coverage(self, srt_bam, gcov):
         """Get the coverage info."""
-        (bedtools["genomecov", "-split", "-bg", "-ibam", srt_bam, "-g",
-                  chrom_sizes] > gcov)()
+        (bedtools["genomecov", "-split", "-bg", "-ibam", srt_bam] > gcov)()
 
     def remove_region(self, in_gff, out_gff):
         """Remove region feature from gff table."""
-        
         with open(out_gff, 'w') as o:
             with open(in_gff, 'r') as gff:
                 for line in gff:
@@ -195,11 +276,10 @@ class FindNovelRegionsW(luigi.Task):
     fastq_dic = luigi.DictParameter()
     ref_file = luigi.Parameter()
     indexfile = luigi.Parameter()
-    bindir = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
     gff_file = luigi.Parameter()
-    workdir = luigi.Parameter()
+    kingdom = luigi.Parameter()
 
     def requires(self):
         """A wrapper task for running mapping."""
@@ -222,11 +302,11 @@ class FindNovelRegionsW(luigi.Task):
                                    spliceFile=splice_file,
                                    outsam=map_dir + "/" + samp + ".sam",
                                    ref_file=self.ref_file,
-                                   bindir=self.bindir,
                                    map_dir=map_dir,
                                    sample=samp,
                                    workdir=self.workdir,
-                                   gff=self.gff_file)
+                                   gff_file=self.gff_file,
+                                   kingdom=self.kingdom)
 
 
 @inherits(FindNovelRegionsW)
@@ -234,27 +314,61 @@ class CompileGFF(luigi.Task):
     """Compile novel regions and create a gff."""
 
     def output(self):
-        bw_novel = self.workdir + "/" + "updated.gff"
+        if self.kingdom in ["prokarya", "eukarya"]:
+            bw_novel = self.workdir + "/" + "updated.gff"
+        elif self.kingdom == "both":
+            bw_novel = self.workdir + "/" + "prok_updated.gff"
         return luigi.LocalTarget(bw_novel)
 
-
     def run(self):
+        if self.kingdom in ["prokarya", "eukarya"]:
+            fw_novel = os.path.join(self.workdir, "fw_all_novel.txt")
+            bw_novel = os.path.join(self.workdir, "bw_all_novel.txt")
+            fw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
+                                    "_fw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            bw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
+                                    "_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            fw_gff = os.path.join(self.workdir, "fw_all_novel.gff")
+            bw_gff = os.path.join(self.workdir, "bw_all_novel.gff")
+            final_gff = os.path.join(self.workdir, "updated.gff")
 
-        fw_novel = os.path.join(self.workdir, "fw_all_novel.txt")
-        bw_novel = os.path.join(self.workdir, "bw_all_novel.txt")
-        fw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
-                                "_fw_novel.bedfile") for samp in self.fastq_dic.keys()]
-        bw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
-                                "_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
-        fw_gff = os.path.join(self.workdir, "fw_all_novel.gff")
-        bw_gff = os.path.join(self.workdir, "bw_all_novel.gff")
-        final_gff = os.path.join(self.workdir, "updated.gff")
+            self.compile_novel_regions(fw_beds, fw_novel)
+            self.compile_novel_regions(bw_beds, bw_novel)
+            self.make_gff(fw_novel, "+", fw_gff)
+            self.make_gff(bw_novel, "-", bw_gff)
+            self.concat_gff(self.gff_file, fw_gff, bw_gff, final_gff)
+        elif self.kingdom == "both":
+            euk_fw_novel = os.path.join(self.workdir, "euk_fw_all_novel.txt")
+            prok_fw_novel = os.path.join(self.workdir, "prok_fw_all_novel.txt")
+            euk_bw_novel = os.path.join(self.workdir, "euk_bw_all_novel.txt")
+            prok_bw_novel = os.path.join(self.workdir, "prok_bw_all_novel.txt")
+            euk_fw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
+                                    "_euk_fw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            prok_fw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
+                                    "_prok_fw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            euk_bw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
+                                    "_euk_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            prok_bw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
+                                    "_prok_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            euk_fw_gff = os.path.join(self.workdir, "euk_fw_all_novel.gff")
+            prok_fw_gff = os.path.join(self.workdir, "prok_fw_all_novel.gff")
+            euk_bw_gff = os.path.join(self.workdir, "euk_bw_all_novel.gff")
+            prok_bw_gff = os.path.join(self.workdir, "prok_bw_all_novel.gff")
+            euk_final_gff = os.path.join(self.workdir, "euk_updated.gff")
+            prok_final_gff = os.path.join(self.workdir, "prok_updated.gff")
 
-        self.compile_novel_regions(fw_beds, fw_novel)
-        self.compile_novel_regions(bw_beds, bw_novel)
-        self.make_gff(fw_novel, "+", fw_gff)
-        self.make_gff(bw_novel, "-", bw_gff)
-        self.concat_gff(self.gff_file, fw_gff, bw_gff, final_gff)
+            self.compile_novel_regions(euk_fw_beds, euk_fw_novel)
+            self.compile_novel_regions(prok_fw_beds, prok_fw_novel)
+            self.compile_novel_regions(euk_bw_beds, euk_bw_novel)
+            self.compile_novel_regions(prok_bw_beds, prok_bw_novel)
+            self.make_gff(euk_fw_novel, "+", euk_fw_gff)
+            self.make_gff(prok_fw_novel, "+", prok_fw_gff)
+            self.make_gff(euk_bw_novel, "-", euk_bw_gff)
+            self.make_gff(prok_bw_novel, "-", prok_bw_gff)
+            self.concat_gff(self.gff_file.split(",")[1], euk_fw_gff, euk_bw_gff, euk_final_gff)
+            self.concat_gff(self.gff_file.split(",")[0], prok_fw_gff, prok_bw_gff, prok_final_gff)
+
+
 
 
     def compile_novel_regions(self, bedfiles, all_novel):

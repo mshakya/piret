@@ -31,7 +31,6 @@ class PairedRunQC(luigi.Task):
     sample = Parameter()
     num_cpus = IntParameter()
     qc_outdir = Parameter()
-    bindir = Parameter()
     faqc_min_L = IntParameter()
     n_cutoff = IntParameter()
 
@@ -62,9 +61,6 @@ class PairedRunQC(luigi.Task):
         faqc_cmd = FaQCs[faqc_options]
         faqc_cmd()
 
-    def program_environment(self):
-        """Environmental variables for this program."""
-        return {'PATH': os.environ["PATH"] + ":" + self.bindir}
 
 
 class RunAllQC(luigi.WrapperTask):
@@ -73,7 +69,6 @@ class RunAllQC(luigi.WrapperTask):
     fastq_dic = DictParameter()
     workdir = Parameter()
     num_cpus = IntParameter()
-    bindir = Parameter()
     faqc_min_L = IntParameter()
     n_cutoff = IntParameter()
 
@@ -98,7 +93,6 @@ class RunAllQC(luigi.WrapperTask):
                                   sample=samp,
                                   num_cpus=self.num_cpus,
                                   qc_outdir=trim_dir,
-                                  bindir=self.bindir,
                                   faqc_min_L=self.faqc_min_L,
                                   n_cutoff=self.n_cutoff)
 
@@ -110,7 +104,6 @@ class RunAllQC(luigi.WrapperTask):
                                   sample=samp,
                                   num_cpus=self.num_cpus,
                                   qc_outdir=trim_dir,
-                                  bindir=self.bindir,
                                   faqc_min_L=self.faqc_min_L,
                                   n_cutoff=self.n_cutoff)
 
