@@ -10,7 +10,7 @@ printf "liver\nspleen\nspleen\nliver\nliver\nspleen\n" > test_gr.txt
 paste test_id.txt testR1.txt testR2.txt test_gr.txt > test_ed.txt
 rm test_id.txt testR1.txt testR2.txt test_gr.txt
 sed "s/:$(printf '\t')/:/g" test_ed.txt > test_edII.txt
-printf "ID\tFiles\tGroup\n" | cat - test_edII.txt > test_prok.txt
+printf "#SampleID\tFiles\tGroup\n" | cat - test_edII.txt > test_prok.txt
 rm test_ed.txt test_edII.txt
 
 #==============================================================================#
@@ -37,7 +37,7 @@ printf "HBR\nHBR\nHBR\nUBR\nUBR\nUBR\n" > test_gr.txt
 paste test_id.txt testR1.txt testR2.txt test_gr.txt > test_ed.txt
 rm test_id.txt testR1.txt testR2.txt test_gr.txt
 sed "s/:$(printf '\t')/:/g" test_ed.txt > test_edII.txt
-printf "ID\tFiles\tGroup\n" | cat - test_edII.txt > test_euk.txt
+printf "#SampleID\tFiles\tGroup\n" | cat - test_edII.txt > test_euk.txt
 rm test_ed.txt test_edII.txt
 
 

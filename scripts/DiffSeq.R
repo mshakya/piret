@@ -54,8 +54,8 @@ get_samp_name <- function(col_name) {
 
 
 # read experimental design file
-group_table <- read.delim(group_file)
-group_table <- select(group_table, ID, Group)
+group_table <- read.delim(group_file, comment.char = "")
+group_table <- select(group_table, X.SampleID, Group)
 
 # max for column position of samples
 samp_cols <- as.numeric(nrow(group_table)) + 6
@@ -114,8 +114,8 @@ edgeR::plotMD.DGEList(dge_object)
 dev.off()
 
 print(group_table)
-rownames(group_table) <- group_table$ID
-group_table$ID <- NULL
+rownames(group_table) <- group_table$X.SampleID
+group_table$X.SampleID <- NULL
 print(group_table)
 heat_obj <- pheatmap::pheatmap(edge_rpm_mat, filename = "~/Desktop/test.pdf",
   annotation_col = group_table)

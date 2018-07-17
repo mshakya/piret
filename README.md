@@ -144,7 +144,7 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
 ```
 
 ### 2.1 Experimental design file
-An experimental design file consist of sample name (ID), full path to fastq files (Files), and different groups of your samples (Group). We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem. If possible, please avoid any special characters in sample names and group names.
+An experimental design file consist of sample name (SampleID), full path to fastq files (Files), and different groups of your samples (Group). We recommend that you use a text editor like BBedit or TextWrangler to generate the tab delimited experimental design file. Exporting a tab delimited file directly from Excel tend to cause formatting problem. If possible, please avoid any special characters in sample names and group names.
   
   For example:
   ```

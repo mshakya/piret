@@ -1,4 +1,4 @@
-ID	Files	Group
+#SampleID	Files	Group
 samp1	<full path>fastqs/BTT_test15_R1.fastq:fastqs/BTT_test15_R2.fastq	spleen
 samp2	<full path>fastqs/BTT_test25_R1.fastq:fastqs/BTT_test25_R2.fastq;fastqs/BTT_test22_R1.fastq:fastqs/BTT_test22_R2.fastq	spleen
 samp3	<full path>fastqs/BTT_test26-079_R1.fastq:fastqs/BTT_test26-079_R2.fastq	liver

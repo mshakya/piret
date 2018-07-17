@@ -53,7 +53,7 @@ subset.exp_des <- function(exp_df, pair_combs){
     # split the experimental design file to list of dataframe
     # with all possible combination
 
-    exp_tbl <- subset(exp_df, select = c("ID", "Group"))
+    exp_tbl <- subset(exp_df, select = c("X.SampleID", "Group"))
     colnames(exp_tbl) <- c("id", "group")
     i <- 1
     l <- list()

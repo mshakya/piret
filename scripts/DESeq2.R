@@ -36,7 +36,7 @@ ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
     # Create pairwise comparisons to find DGEs
 pair.comb <- function(exp_des){
         # get all pariwise combination from experimental design file
-        exp_desn <- read.table(exp_des, sep = "\t", header = TRUE)
+        exp_desn <- read.table(exp_des, sep = "\t", header = TRUE, comment.char = "")
         categories <- unique(exp_desn$Group)
         pairs <- combn(categories, 2, simplify = FALSE)
         return(pairs)

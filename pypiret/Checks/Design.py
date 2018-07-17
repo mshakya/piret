@@ -40,10 +40,10 @@ class CheckDesign():
         """Check if headers are present."""
         with open(self.design_file, 'r') as dfile:
             header = dfile.readline().rstrip()
-            if header == "ID\tFiles\tGroup":
+            if header == "#SampleID\tFiles\tGroup":
                 return True
             else:
-                sys.exit('The header of experimental design file must be ID\tFiles\tGroup\n')
+                sys.exit('The header of experimental design file must be #SampleID\tFiles\tGroup\n')
 
     def sample_name(self):
         """Check if sample names are unique."""

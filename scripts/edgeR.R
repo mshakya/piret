@@ -36,7 +36,7 @@ out_dir <- opt$out_dir
 # Create pairwise comparisons to find DGEs
 pair.comb <- function(exp_des){
 # get all pariwise combination from experimental design file
-exp_desn <- read.table(exp_des, sep = "\t", header = TRUE)
+exp_desn <- read.table(exp_des, sep = "\t", header = TRUE, comment.char="")
 categories <- unique(exp_desn$Group)
 pairs <- combn(categories, 2, simplify = FALSE)
 return(pairs)}
@@ -191,11 +191,11 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "novel_region")){
             out_mds_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.pdf", sep=""))
             out_mds_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.png", sep=""))
             pdf(out_mds_hist_pdf)
-            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
+            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$X.SampleID,
                    main = "edgeR MDS Plot")
             dev.off()
             png(out_mds_hist_png)
-            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$ID,
+            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$X.SampleID,
                    main = "edgeR MDS Plot")
             dev.off()
 
