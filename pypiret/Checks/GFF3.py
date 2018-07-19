@@ -3,7 +3,6 @@
 """Check design."""
 
 import sys
-import os
 import re
 import collections
 import pandas as pd
@@ -13,9 +12,9 @@ class CheckGFF():
 
     def __init__(self, gff_file):
         """Initialize."""
-        self.gff_col = pd.read_table(gff_file, sep='\t', comment = "#")
+        self.gff_col = pd.read_table(gff_file, sep='\t', comment="#")
         self.gff_col.columns = ["seqid", "source", "type", "start", "end",
-                           "score", "strand", "phase", "attributes"]
+                                "score", "strand", "phase", "attributes"]
     def size(self):
         """Check if gff file has 9 columns."""
         if len(self.gff_col.columns) != 9:

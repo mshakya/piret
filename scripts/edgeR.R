@@ -32,35 +32,40 @@ feature_name <- opt$name
 group_file <- opt$exp_desn
 out_dir <- opt$out_dir
 
+#==============================================================================#
+# create the output directory
+ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
+#==============================================================================#
 
-# Create pairwise comparisons to find DGEs
 pair.comb <- function(exp_des){
-# get all pariwise combination from experimental design file
-exp_desn <- read.table(exp_des, sep = "\t", header = TRUE, comment.char="")
-categories <- unique(exp_desn$Group)
-pairs <- combn(categories, 2, simplify = FALSE)
-return(pairs)}
+    # Create pairwise comparisons to find DGEs
+    # get all pariwise combination from experimental design file
+    exp_desn <- read.table(exp_des, sep = "\t", header = TRUE, comment.char="",
+                       )
+    categories <- unique(exp_desn$Group)
+    pairs <- combn(categories, 2, simplify = FALSE)
+    return(pairs)}
+#==============================================================================#
 
 # read the output of featureCounts
 read.counts <- read.table(reads_file, sep = "\t", header = TRUE, comment.char = "#")
-
+#==============================================================================#
 # rename the column headers
 names(read.counts) <- gsub(".*mapping_results.", "", names(read.counts),
                            perl = TRUE)
 names(read.counts) <- gsub("_srt.bam", "", names(read.counts), perl = TRUE)
-
-
+#==============================================================================#
 # convert first column to row names
 row.names(read.counts) <- read.counts[, 1]
-
+#==============================================================================#
 # get gene information
 gene.info <- read.counts[, c(1:6)]
-
+#==============================================================================#
 # read the experimental design file
-group_table <- read.delim(group_file, colClasses=c("character"))
+group_table <- read.delim(group_file, colClasses=c("character"), comment.char="")
 row.names(group_table) <- as.character(group_table[, 1])
 group_table <- select(group_table, Group)
-
+#==============================================================================#
 #TODO: move this piece of code to separate R code so that its done everytime
 #rearrange/clean the table and rewrite the column to display in EDGE
 outfile <- paste(strsplit(reads_file ,".tsv"), "_sorted.csv", sep="")
@@ -71,7 +76,7 @@ read.counts.sort <- dplyr::arrange(read.counts.sort, desc(sum))
 read.counts.sort$sum <- NULL
 read.counts.sort <- read.counts.sort[c(base::colnames(gene.info), base::row.names(group_table))]
 write.csv(read.counts.sort, file=outfile )
-
+#==============================================================================#
 # Reformat summary files for EDGE display
 summary_file <- paste(reads_file, ".summary", sep="")
 summary_outfile <- paste(strsplit(reads_file ,".summary"), "_summary.csv", sep="")
@@ -83,166 +88,170 @@ summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
 summary.counts.t <- as.data.frame(t(summary.counts))
 colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
 summary.counts.t = summary.counts.t[-1, ]
-write.csv(summary.counts.t, file=summary_outfile )
-
-
-# remove first six columns that have metadata
+write.csv(summary.counts.t, file = summary_outfile )
+#==============================================================================#
+# remove first six columns of featurecounts that have metadata
 read.counts <- read.counts[, -c(1:6)]
-read.counts.non0<- dplyr::filter_all(read.counts, any_vars(. != 0))
+read.counts.non0<- dplyr::filter_all(read.counts, all_vars(. != 0))
 
-# create the output directory
-ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
+#==============================================================================#
 
-if(dim(read.counts.non0)[[1]] > 2 ){
-out_hmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.pdf", sep=""))
-# A pdf and png image
-pdf(out_hmap_pdf)
-pheatmap(as.matrix(read.counts.non0), legend=TRUE)
-dev.off()
-out_hmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.png", sep=""))
-png(out_hmap_png)
-pheatmap(as.matrix(read.counts.non0), legend=TRUE)
-dev.off()
+if(dim(read.counts.non0)[[1]] < 2 ){
+    print("Nothing was mapped to the feature!")
+    } else {
+# if(dim(read.counts.non0)[[1]] > 2 ){
+
+    out_hmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.pdf", sep=""))
+    # A pdf and png image
+    pdf(out_hmap_pdf)
+    pheatmap(as.matrix(read.counts.non0), legend=TRUE)
+    dev.off()
+    out_hmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.png", sep=""))
+    png(out_hmap_png)
+    pheatmap(as.matrix(read.counts.non0), legend=TRUE)
+    dev.off()
 
 
-edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
+    edger_dge <- edgeR::DGEList(counts = read.counts, group = group_table$Group,
                             remove.zeros = TRUE, genes = gene.info)
 
-if (0 %in% colSums(edger_dge$counts)) {
-    print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
+
+    if (0 %in% colSums(edger_dge$counts)) {
+        print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
     } else {
-    ############### calculate RPKM and CPM #########################################
-    rpkm_results <- edgeR::rpkm(edger_dge)
-    cpm_results <- edgeR::cpm(edger_dge)
-    out_rpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_RPKM.csv", sep=""))
-    out_cpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_CPM.csv", sep=""))
-    write.csv(rpkm_results, file = out_rpkm)
-    write.csv(cpm_results, file = out_cpm)
-    ################################################################################
 
-    ################ histogram of count per million ################################
-    out_cpm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_histogram.pdf", sep=""))
-    out_cpm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_histogram.png", sep=""))
-    cpm_results <- dplyr::filter_all(as.data.frame(cpm_results), any_vars(. != 0))
-    cpm_data <- reshape2::melt(as.data.frame(cpm_results), variable.name="sample", value.name="CPM")
-    cpm_hist <- ggplot(data = cpm_data, mapping = aes(x = CPM)) +  theme_bw() +
+        ############### calculate RPKM and CPM #########################################
+        rpkm_results <- edgeR::rpkm(edger_dge)
+        cpm_results <- edgeR::cpm(edger_dge)
+        out_rpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_RPKM.csv", sep=""))
+        out_cpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_CPM.csv", sep=""))
+        write.csv(rpkm_results, file = out_rpkm)
+        write.csv(cpm_results, file = out_cpm)
+        ################################################################################
+
+        ################ histogram of count per million ################################
+        out_cpm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_histogram.pdf", sep=""))
+        out_cpm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_histogram.png", sep=""))
+        cpm_results <- dplyr::filter_all(as.data.frame(cpm_results), any_vars(. != 0))
+        cpm_data <- reshape2::melt(as.data.frame(cpm_results), variable.name="sample", value.name="CPM")
+        cpm_hist <- ggplot(data = cpm_data, mapping = aes(x = CPM)) +  theme_bw() +
             geom_histogram(bins=100) + xlab("CPM") + ylab(feature_name) + facet_wrap(~sample)
-    ggsave(out_cpm_hist_pdf, cpm_hist, device = "pdf")
-    ggsave(out_cpm_hist_png, cpm_hist, device = "png")
+        ggsave(out_cpm_hist_pdf, cpm_hist, device = "pdf")
+        ggsave(out_cpm_hist_png, cpm_hist, device = "png")
 
-    ################# boxplot of count per million ################################
-    group_table2 <- add_rownames(group_table, "sample")
-    cpm_data_boxplot <- merge(x=cpm_data, y=group_table2)
-    out_cpm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_violin.pdf", sep=""))
-    out_cpm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_violin.png", sep=""))
-    cpm_violin <- ggplot(data = cpm_data_boxplot, mapping = aes(x=sample, y=CPM)) +  theme_bw() +
+        ################# boxplot of count per million ################################
+        group_table2 <- add_rownames(group_table, "sample")
+        cpm_data_boxplot <- merge(x=cpm_data, y=group_table2)
+        out_cpm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_violin.pdf", sep=""))
+        out_cpm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_violin.png", sep=""))
+        cpm_violin <- ggplot(data = cpm_data_boxplot, mapping = aes(x=sample, y=CPM)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
-    cpm_violin_group <- ggplot(data = cpm_data_boxplot, mapping = aes(x=Group, y=CPM)) +  theme_bw() +
+        cpm_violin_group <- ggplot(data = cpm_data_boxplot, mapping = aes(x=Group, y=CPM)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
 
-    ggsave(out_cpm_violin_pdf, cpm_violin, device = "pdf")
-    ggsave(out_cpm_violin_png, cpm_violin, device = "png")
+        ggsave(out_cpm_violin_pdf, cpm_violin, device = "pdf")
+        ggsave(out_cpm_violin_png, cpm_violin, device = "png")
 
-    ##############################histogram of rpkm ################################
-    out_rpkm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.pdf", sep=""))
-    out_rpkm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.png", sep=""))
-    rpkm_results <- dplyr::filter_all(as.data.frame(rpkm_results), any_vars(. != 0))
-    rpkm_data <- reshape2::melt(as.data.frame(rpkm_results), variable.name="sample", value.name="rpkm")
-    rpkm_hist <- ggplot(data=rpkm_data, mapping=aes(x=rpkm)) +  theme_bw() +
+        ##############################histogram of rpkm ################################
+        out_rpkm_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.pdf", sep=""))
+        out_rpkm_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.png", sep=""))
+        rpkm_results <- dplyr::filter_all(as.data.frame(rpkm_results), any_vars(. != 0))
+        rpkm_data <- reshape2::melt(as.data.frame(rpkm_results), variable.name="sample", value.name="rpkm")
+        rpkm_hist <- ggplot(data=rpkm_data, mapping=aes(x=rpkm)) +  theme_bw() +
             geom_histogram(bins=100) + xlab("rpkm") + ylab(feature_name) + facet_wrap(~sample)
-    ggsave(out_rpkm_hist_pdf, rpkm_hist, device = "pdf")
-    ggsave(out_rpkm_hist_png, rpkm_hist, device = "png")
+        ggsave(out_rpkm_hist_pdf, rpkm_hist, device = "pdf")
+        ggsave(out_rpkm_hist_png, rpkm_hist, device = "png")
 
-    ##############################heatmap of rpkm ################################
-    out_rpkm_heatmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.pdf", sep=""))
-    out_rpkm_heatmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.png", sep=""))
-    pheatmap(as.matrix(rpkm_results), legend=TRUE, filename=out_rpkm_heatmap_pdf)
-    pheatmap(as.matrix(rpkm_results), legend=TRUE, filename=out_rpkm_heatmap_png)
-    ################# boxplot of RPKM #############################################
-    rpkm_data_boxplot <- merge(x=rpkm_data, y=group_table2)
-    out_rpkm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_violin.pdf", sep=""))
-    out_rpkm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_violin.png", sep=""))
-    rpkm_violin <- ggplot(data = rpkm_data_boxplot, mapping = aes(x=sample, y=rpkm)) +  theme_bw() +
+        ##############################heatmap of rpkm ################################
+        out_rpkm_heatmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.pdf", sep=""))
+        out_rpkm_heatmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.png", sep=""))
+        pheatmap(as.matrix(rpkm_results), legend=TRUE, filename=out_rpkm_heatmap_pdf)
+        pheatmap(as.matrix(rpkm_results), legend=TRUE, filename=out_rpkm_heatmap_png)
+        ################# boxplot of RPKM #############################################
+        rpkm_data_boxplot <- merge(x=rpkm_data, y=group_table2)
+        out_rpkm_violin_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_violin.pdf", sep=""))
+        out_rpkm_violin_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_violin.png", sep=""))
+        rpkm_violin <- ggplot(data = rpkm_data_boxplot, mapping = aes(x=sample, y=rpkm)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
-    rpkm_violin_group <- ggplot(data = rpkm_data_boxplot, mapping = aes(x=Group, y=rpkm)) +  theme_bw() +
+        rpkm_violin_group <- ggplot(data = rpkm_data_boxplot, mapping = aes(x=Group, y=rpkm)) +  theme_bw() +
             geom_violin(aes(fill = factor(Group)))
-    ggsave(out_rpkm_violin_pdf, rpkm_violin, device = "pdf")
-    ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
-}
-}
-if (feature_name %in% c("CDS", "gene", "transcript", "exon", "novel_region")){
-#     if (0 %in% colSums(edger_dge$counts)) {
-#         print("One of the sample does not have any reads mapped to it, so no further analysis will be done!")
-#     } else {
-        # only keep genes/features that have an average of 1 CPM
-        keep <- rowSums(edgeR::cpm(edger_dge)) >= nrow(group_table)
-        edger_dge <- edger_dge[keep, ]
-        if (nrow(edger_dge$counts) < 10 ) {
-            print("Not enough data to calculate dispersion factors!")
-        } else {
-            # recompute library size after filtering
-            edger_dge$samples$lib.size <- colSums(edger_dge$counts)
-            # calculate the normalization factors for the library size
-            edger_dge <- edgeR::calcNormFactors(edger_dge, method = "TMM")
-            # estimate the dispersion for all read counts across all samples
-            edger_dge <- edgeR::estimateDisp(edger_dge, design.robust = TRUE)
+        ggsave(out_rpkm_violin_pdf, rpkm_violin, device = "pdf")
+        ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
 
-            # plot MDS
-            out_mds_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.pdf", sep=""))
-            out_mds_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.png", sep=""))
-            pdf(out_mds_hist_pdf)
-            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$X.SampleID,
-                   main = "edgeR MDS Plot")
-            dev.off()
-            png(out_mds_hist_png)
-            limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$X.SampleID,
-                   main = "edgeR MDS Plot")
-            dev.off()
+        if (feature_name %in% c("CDS", "gene", "transcript", "exon", "novel_region")){
+                keep <- rowSums(edgeR::cpm(edger_dge)) >= nrow(group_table)
+                edger_dge <- edger_dge[keep, ]
+                if (nrow(edger_dge$counts) < 10 ) {
+                    print("Not enough data to calculate dispersion factors!")
+                } else {
+                    # recompute library size after filtering
+                    edger_dge$samples$lib.size <- colSums(edger_dge$counts)
+                    # calculate the normalization factors for the library size
+                    edger_dge <- edgeR::calcNormFactors(edger_dge, method = "TMM")
+                    # estimate the dispersion for all read counts across all samples
+                    edger_dge <- edgeR::estimateDisp(edger_dge, design.robust = TRUE)
 
-        # get all possible pairs
-        all_pairs <- pair.comb(group_file)
+                    # plot MDS
+                    out_mds_hist_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.pdf", sep=""))
+                    out_mds_hist_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_MDS.png", sep=""))
+                    pdf(out_mds_hist_pdf)
+                    limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$X.SampleID,
+                           main = "edgeR MDS Plot")
+                    dev.off()
+                    png(out_mds_hist_png)
+                    limma::plotMDS(edger_dge, top = 1000, labels = edger_dge$sample$X.SampleID,
+                           main = "edgeR MDS Plot")
+                    dev.off()
 
-    for (n in 1:length(all_pairs) ) {
-        # filename strings for each comparisons
-        r_fn <- strsplit(basename(reads_file), ".tsv")[[1]]
-        filename <- paste(r_fn,
-            all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
-        filename_sig <- paste(r_fn,
-            all_pairs[[n]][1], all_pairs[[n]][2], feature_name,"sig.csv", sep = "__")
+                # get all possible pairs
+                all_pairs <- pair.comb(group_file)
 
-        # sample matrix
-        pair1 <- as.character(all_pairs[[n]][1])
-        pair2 <- as.character(all_pairs[[n]][2])
-        pairs <- c(pair1, pair2)
+            for (n in 1:length(all_pairs) ) {
+                # filename strings for each comparisons
+                r_fn <- strsplit(basename(reads_file), ".tsv")[[1]]
+                filename <- paste(r_fn,
+                    all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
+                filename_sig <- paste(r_fn,
+                    all_pairs[[n]][1], all_pairs[[n]][2], feature_name,"sig.csv", sep = "__")
 
-              # exact test
-        edger_et <- edgeR::exactTest(edger_dge, pair = pairs)
-        edger_et_table <- edgeR::topTags(edger_et, n = nrow( edger_et$table ), sort.by = "PValue" )$table
-        edger_et_sigtable <-  subset(edger_et_table, FDR < pcutoff)
-               
-               # write summary table
-        out_file_summ <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
-        summ_table <- summary(decideTests(edger_et))
-        colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
-        write.csv(t(summ_table), out_file_summ)
-        # plot
-        out_md_pdf <- file.path(out_dir, paste(r_fn,
-            all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
-        out_md_png <- file.path(out_dir, paste(r_fn,
-            all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.png", sep = "__"))
-        pdf(out_md_pdf)
-        plotMD(edger_et)
-        dev.off()
-        png(out_md_png)
-        plotMD(edger_et)
-        dev.off()
-              # full path to output directory
-        out_table <- file.path(out_dir, filename)
-        out_table_sig <- file.path(out_dir, filename_sig)
+                # sample matrix
+                pair1 <- as.character(all_pairs[[n]][1])
+                pair2 <- as.character(all_pairs[[n]][2])
+                pairs <- c(pair1, pair2)
 
-              # write the file
-        write.csv(edger_et_table, out_table)
-        write.csv(edger_et_sigtable, out_table_sig)
+                      # exact test
+                edger_et <- edgeR::exactTest(edger_dge, pair = pairs)
+                edger_et_table <- edgeR::topTags(edger_et, n = nrow( edger_et$table ), sort.by = "PValue" )$table
+                edger_et_sigtable <-  subset(edger_et_table, FDR < pcutoff)
+                       
+                       # write summary table
+                out_file_summ <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
+                summ_table <- summary(decideTests(edger_et))
+                colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
+                write.csv(t(summ_table), out_file_summ)
+                # plot
+                out_md_pdf <- file.path(out_dir, paste(r_fn,
+                    all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
+                out_md_png <- file.path(out_dir, paste(r_fn,
+                    all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.png", sep = "__"))
+                pdf(out_md_pdf)
+                plotMD(edger_et)
+                dev.off()
+                png(out_md_png)
+                plotMD(edger_et)
+                dev.off()
+                      # full path to output directory
+                out_table <- file.path(out_dir, filename)
+                out_table_sig <- file.path(out_dir, filename_sig)
+
+                      # write the file
+                write.csv(edger_et_table, out_table)
+                write.csv(edger_et_sigtable, out_table_sig)
+                    }
+                }
             }
         }
     }
+# else {
+#         print "No reads were mapped to feature, so no other analysis will be done!"
+#             }

@@ -6,9 +6,10 @@ First step of pipeline.
 to check if files are correctly formatted
 """
 
+import sys
 import os
 from pypiret import logger
-import sys
+
 
 
 class Initialize(object):
@@ -18,11 +19,7 @@ class Initialize(object):
     check
     """
 
-    def __init__(self,
-                 workdir,
-                 kingdom,
-                 gff_prok,
-                 gff_euk,
+    def __init__(self, workdir, kingdom, gff_prok, gff_euk,
                  method):
         """
         Argument description.
@@ -59,16 +56,16 @@ class Initialize(object):
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                         'eukarya', 'edgeR']))
+                                          'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                         'prokaryote', 'DeSeq']))
+                                          'prokaryote', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'prokaryote', 'edgeR']))
                 elif self.method == 'DeSeq':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                         'prokaryote', 'DeSeq']))
+                                          'prokaryote', 'DeSeq']))
                 elif self.method == 'edgeR':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'edgeR']))
@@ -78,7 +75,7 @@ class Initialize(object):
                 os.makedirs('/'.join([self.workdir, 'differential_gene', 'prokaryote']))
                 if self.method == 'both':
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
-                                         'eukarya', 'DeSeq']))
+                                          'eukarya', 'DeSeq']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',
                                           'eukarya', 'edgeR']))
                     os.makedirs('/'.join([self.workdir, 'differential_gene',

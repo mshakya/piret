@@ -104,85 +104,6 @@ class FeatureCounts(luigi.Task):
                     fcount_cmd()
 
 
-# @requires(Map.HisatMapW)
-# class FeatureCountsBoth(luigi.Task):
-#     """Summarize mapped reads classificaion using FeatureCount."""
-
-#     kingdom = luigi.Parameter()
-#     gff_file = luigi.Parameter()
-#     workdir = luigi.Parameter()
-#     indexfile = luigi.Parameter()
-#     num_cpus = luigi.IntParameter()
-#     ref_file = luigi.Parameter()
-#     fid = luigi.Parameter()
-#     stranded = luigi.IntParameter()
-
-#     def output(self):
-#         """Index output."""
-#         counts_dir = self.workdir + "/featureCounts"
-#         prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
-#                                              sep="\t",
-#                                              header=None,
-#                                              comment="#")[2].tolist()))
-#         prok_target = [LocalTarget(counts_dir + "/prok_" +
-#                                    feat + ".count") for feat in prok_features]
-#         euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
-#                                             sep="\t",
-#                                             header=None,
-#                                             comment="#")[2].tolist()))
-#         euk_target = [LocalTarget(counts_dir + "/euk_" +
-#                                   feat + ".count") for feat in euk_features]
-#         loc_target = prok_target + euk_target
-#         return loc_target
-
-#     def run(self):
-#         """Running featureCounts on all."""
-#         counts_dir = self.workdir + "/featureCounts"
-#         samp_list = list(self.fastq_dic.keys())
-#         in_srtbam_list = [self.workdir + "/" + samp + "/" +
-#                           "mapping_results" + "/" + samp + "_srt.bam"
-#                           for samp in samp_list]
-#         if not os.path.exists(self.workdir + "/featureCounts"):
-#             os.makedirs(self.workdir + "/featureCounts")
-#         prok_features = list(set(pd.read_csv(self.gff_file.split(",")[0],
-#                                              sep="\t",
-#                                              header=None,
-#                                              comment="#")[2].tolist()))
-#         euk_features = list(set(pd.read_csv(self.gff_file.split(",")[1],
-#                                             sep="\t",
-#                                             header=None,
-#                                             comment="#")[2].tolist()))
-#         for feat in euk_features:
-#             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
-#                 fcount_euk_cmd_opt = ["-a", self.gff_file.split(",")[1],
-#                                       "-s", self.stranded,
-#                                       "-B",
-#                                       "-p", "-P", "-C",
-#                                       "-g", self.fid,
-#                                       "-t", feat,
-#                                       "-T", self.num_cpus,
-#                                       "-o",
-#                                       counts_dir + "/euk_" + feat +
-#                                       "_count.tsv"] + in_srtbam_list
-#                 fcount_euk_cmd = featureCounts[fcount_euk_cmd_opt]
-#                 fcount_euk_cmd()
-#         for feat in prok_features:
-#             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']:
-#                 fcount_prok_cmd_opt = ["-a", self.gff_file.split(",")[0],
-#                                        "-s", self.stranded,
-#                                        "-B",
-#                                        "-p", "-P", "-C",
-#                                        "-g", self.fid,
-#                                        "-t", feat,
-#                                        "-T", self.num_cpus,
-#                                        "-o",
-#                                        counts_dir + "/prok_" + feat +
-#                                        "_count.tsv"] + in_srtbam_list
-#                 fcount_prok_cmd = featureCounts[fcount_prok_cmd_opt]
-#                 fcount_prok_cmd()
-
-
-
 @requires(Map.StringTieScoresW)
 class MergeStringTies(luigi.Task):
     """Summarize mapped reads classification using StringTie."""
@@ -192,8 +113,8 @@ class MergeStringTies(luigi.Task):
         if self.kingdom in ['prokarya', 'eukarya']:
             return [Map.RefFile(self.workdir + "/" + "stringtie_merged_transcript.gtf")]
         elif self.kingdom == 'both':
-            return [Map.RefFile(self.workdir + "/" + "prok_stringtie_merged_transcript.gtf"),
-                    Map.RefFile(self.workdir + "/" + "euk_stringtie_merged_transcript.gtf")]
+            return [Map.RefFile(self.workdir + "/" + "prok_sTie_merged_transcript.gtf"),
+                    Map.RefFile(self.workdir + "/" + "euk_sTie_merged_transcript.gtf")]
 
     def run(self):
         """Running stringtie merge."""
@@ -205,9 +126,8 @@ class MergeStringTies(luigi.Task):
                 append_name = '_euk'
             gtf = self.workdir + "/" + \
                 self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
-            gff_name = gtf.split(".gtf")[0].split("/")[-1]
             out_gtf_list = [self.workdir + "/" + samp + "/" + "stie_results" +
-                            "/" + samp + "_" + gff_name + append_name +
+                            "/" + samp + append_name +
                             "_sTie.gtf" for samp in samp_list]
             stie_cmd_opt = ["--merge", "-G", self.gff_file,
                             "-o", self.workdir +
@@ -215,33 +135,30 @@ class MergeStringTies(luigi.Task):
             stie_cmd = stringtie[stie_cmd_opt]
             stie_cmd()
         elif self.kingdom == 'both':
-            prok_gtf = self.workdir + "/" + \
-                self.gff_file.split(";")[0].split(
-                    "/")[-1].split(".gff")[0] + ".gtf"
-            euk_gtf = self.workdir + "/" + \
-                self.gff_file.split(";")[1].split(
-                    "/")[-1].split(".gff")[0] + ".gtf"
+            prok_gff = self.gff_file.split(",")[0]
+            euk_gff = self.gff_file.split(",")[1]
 
-            prokout_gtf_list = [self.workdir + "/" + samp + "/" +
-                                "mapping_results" + "/" + samp + "_prok_sTie.gtf"
+            prokout_gtf_list = [os.path.join(self.workdir, samp, 
+                                             "stie_results",
+                                             samp + "_prok_sTie.gtf")
                                 for samp in samp_list]
-            eukout_gtf_list = [self.workdir + "/" + samp + "/" +
-                               "mapping_results" + "/" + samp + "_euk_sTie.gtf"
+            eukout_gtf_list = [os.path.join(self.workdir, samp, 
+                                             "stie_results",
+                                             samp + "_euk_sTie.gtf")
                                for samp in samp_list]
-            stie_cmd_euk_opt = ["--merge", "-G", euk_gtf,
+            stie_cmd_euk_opt = ["--merge", "-G", euk_gff,
                                 "-o", self.workdir +
-                                "/" + "/euk_stringtie_merged_transcript.gtf"] + eukout_gtf_list
+                                "/" + "/euk_sTie_merged_transcript.gtf"] + eukout_gtf_list
             stie_cmd_euk = stringtie[stie_cmd_euk_opt]
             stie_cmd_euk()
 
-            stie_cmd_prok_opt = ["--merge", "-G", prok_gtf,
+            stie_cmd_prok_opt = ["--merge", "-G", prok_gff,
                                  "-o", self.workdir +
-                                 "/" + "/prok_stringtie_merged_transcript.gtf"] + prokout_gtf_list
+                                 "/" + "/prok_sTie_merged_transcript.gtf"] + prokout_gtf_list
             stie_cmd_prok = stringtie[stie_cmd_prok_opt]
             stie_cmd_prok()
 
 
-@inherits(Map.StringTieScores)
 class ReStringTieScores(ExternalProgramTask):
     """Calculate scores using string tie."""
 
@@ -250,19 +167,21 @@ class ReStringTieScores(ExternalProgramTask):
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
     in_bam_file = luigi.Parameter()
+    num_cpus = luigi.Parameter()
 
     def requires(self):
-        """Require reference fasta format file."""
+        """Requires gff file and bam file."""
         return [RefFile(self.gtf), RefFile(self.in_bam_file)]
 
     def output(self):
-        """Index output."""
+        """Output gtf."""
         return LocalTarget(self.out_gtf)
 
     def program_args(self):
         """Run stringtie."""
         return ["stringtie",
                 "-o", self.out_gtf,
+                "-p", self.num_cpus,
                 "-G", self.gtf,
                 "-C", self.out_cover,
                 "-A", self.out_abun,
@@ -270,7 +189,7 @@ class ReStringTieScores(ExternalProgramTask):
                 self.in_bam_file]
 
 
-@inherits(Map.HisatMapW)
+@inherits(MergeStringTies)
 class ReStringTieScoresW(luigi.WrapperTask):
     """Recount to only have common transcripts."""
 
@@ -278,91 +197,40 @@ class ReStringTieScoresW(luigi.WrapperTask):
     kingdom = luigi.Parameter()
     workdir = luigi.Parameter()
     fastq_dic = luigi.DictParameter()
+    num_cpus = luigi.Parameter()
+    indexfile = luigi.Parameter()
+    ref_file = luigi.Parameter()
 
     def requires(self):
         """A wrapper for running the QC."""
-        splist = [self.workdir + "/" +
-                  f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splist) > 1:
-            splice_file = ','.join(splist)
-        elif len(splist) == 1:
-            splice_file = splist[0]
-        else:
-            splice_file = ''
-
         for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
             if self.kingdom in ['prokarya', 'eukarya']:
-                bg_dir = self.workdir + "/ballgown/" + samp
+                bg_dir = os.path.join(self.workdir, "ballgown", self.kingdom, samp)
                 if os.path.isdir(bg_dir) is False:
                     os.makedirs(bg_dir)
-                yield ReStringTieScores(fastqs=[trim_dir + "/" + samp +
-                                                ".1.trimmed.fastq",
-                                                trim_dir + "/" + samp +
-                                                ".2.trimmed.fastq"],
-                                        num_cpus=self.num_cpus,
-                                        indexfile=self.indexfile,
-                                        spliceFile=splice_file,
-                                        outsam=map_dir + "/" + samp + ".sam",
-                                        ref_file=self.ref_file,
-                                        gff_file=self.gff_file,
+                yield ReStringTieScores(num_cpus=self.num_cpus,
                                         gtf=self.workdir + "/" + "stringtie_merged_transcript.gtf",
                                         out_gtf=bg_dir + "/" + samp + "_merged_sTie.gtf",
                                         out_cover=bg_dir + "/" + samp + "_merged_covered_sTie.gtf",
                                         out_abun=bg_dir + "/" + samp + "_merged_sTie.tab",
-                                        in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                        workdir=self.workdir,
-                                        sample=samp,
-                                        qc_outdir=trim_dir,
-                                        map_dir=map_dir)
+                                        in_bam_file=map_dir + "/" + samp + "_srt.bam")
             elif self.kingdom == 'both':
-                bg_dir_prok = self.workdir + "/ballgown/prok/" + samp
-                if os.path.isdir(bg_dir_prok) is False:
-                    os.makedirs(bg_dir_prok)
-                bg_dir_euk = self.workdir + "/ballgown/euk/" + samp
-                if os.path.isdir(bg_dir_euk) is False:
-                    os.makedirs(bg_dir_euk)
-                prok_gtf = self.workdir + "/" + \
-                    self.gff_file.split(";")[0].split(
-                        "/")[-1].split(".gff")[0] + ".gtf"
-                euk_gtf = self.workdir + "/" + \
-                    self.gff_file.split(";")[1].split(
-                        "/")[-1].split(".gff")[0] + ".gtf"
-
-                yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                        fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-                                        num_cpus=self.num_cpus,
-                                        indexfile=self.indexfile,
-                                        spliceFile=splice_file,
-                                        outsam=self.map_dir + "/" + samp + ".sam",
-                                        ref_file=self.ref_file,
-                                        gff_file=self.gff_file,
+                euk_bg_dir = os.path.join(self.workdir, "ballgown", "eukarya", samp)
+                prok_bg_dir = os.path.join(self.workdir, "ballgown", "prokarya", samp)
+                if os.path.isdir(euk_bg_dir) is False:
+                    os.makedirs(euk_bg_dir)
+                    os.makedirs(prok_bg_dir)
+                prok_gtf = os.path.join(self.workdir, "prok_sTie_merged_transcript.gtf")
+                euk_gtf = os.path.join(self.workdir, "euk_sTie_merged_transcript.gtf")
+                yield ReStringTieScores(num_cpus=self.num_cpus,
                                         gtf=prok_gtf,
-                                        out_gtf=bg_dir_prok + "/" + samp + "_prok_sTie.gtf",
-                                        out_cover=bg_dir_prok + "/" + samp + "_prok_covered_sTie.gtf",
-                                        out_abun=bg_dir_prok + "/" + samp + "_prok_sTie.tab",
-                                        in_bam_file=self.map_dir + "/prokarya.bam",
-                                        workdir=self.workdir)
-                yield ReStringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                        fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-                                        num_cpus=self.num_cpus,
-                                        indexfile=self.indexfile,
-                                        spliceFile=splice_file,
-                                        outsam=self.map_dir + "/" + samp + ".sam",
-                                        ref_file=self.ref_file,
-                                        gff_file=self.gff_file,
-                                        gtf=euk_gtf,
-                                        out_gtf=bg_dir_euk + "/" + samp + "_euk_sTie.gtf",
-                                        out_cover=bg_dir_euk + "/" + samp + "_euk_covered_sTie.gtf",
-                                        out_abun=bg_dir_euk + "/" + samp + "_euk_sTie.tab",
-                                        in_bam_file=self.map_dir + "/eukarya.bam",
-                                        workdir=self.workdir)
-
-# class SampleInfo(luigi.task):
-#     luigi.Parameter() = workdir
-
-#     def run(self):
-#         for root, dirs, files in os.walk(workdir):
-
-            # if file.endswith
+                                        out_gtf=prok_bg_dir + "/" + samp + "_prok_sTie.gtf",
+                                        out_cover=prok_bg_dir + "/" + samp + "_prok_covered_sTie.gtf",
+                                        out_abun=prok_bg_dir + "/" + samp + "_prok_sTie.tab",
+                                        in_bam_file=os.path.join(map_dir, samp + "_srt_prok.bam"))
+                yield ReStringTieScores(num_cpus=self.num_cpus,
+                                        gtf=euk_gtf, out_gtf=euk_bg_dir + "/" + samp + "_euk_sTie.gtf",
+                                        out_cover=euk_bg_dir + "/" + samp + "_euk_covered_sTie.gtf",
+                                        out_abun=euk_bg_dir + "/" + samp + "_euk_sTie.tab",
+                                        in_bam_file=os.path.join(map_dir, samp + "_srt_euk.bam"))

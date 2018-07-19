@@ -56,16 +56,17 @@ class edgeR(luigi.Task):
         """Summarize the summary table to be displayed in edge"""
         edger_dir = self.workdir + "/edgeR/" + self.kingdom
         all_files = os.listdir(edger_dir)
-        out_file = os.path.join(edger_dir, "summary_updown.csv")
-        summ_files = [pd.read_csv(os.path.join(edger_dir, file),
+        if all_files:
+            out_file = os.path.join(edger_dir, "summary_updown.csv")
+            summ_files = [pd.read_csv(os.path.join(edger_dir, file),
                                   index_col=0) for file in all_files if "summary.csv" in file ]
-        summ_df = pd.concat(summ_files)
-        summ_df.to_csv(out_file)
+            summ_df = pd.concat(summ_files)
+            summ_df.to_csv(out_file)
 
 
 @requires(Summ.FeatureCounts)
 class DESeq2(luigi.Task):
-    """Find DGE using edgeR."""
+    """Find DGE using DESeq2."""
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
@@ -112,6 +113,53 @@ class DESeq2(luigi.Task):
                                   index_col=0) for file in all_files if "summary.csv" in file ]
         summ_df = pd.concat(summ_files)
         summ_df.to_csv(out_file)
+
+    def program_environment(self):
+        """Environmental variables for this program."""
+        scriptdir = os.path.join(self.bindir, "/../scripts/")
+        return {'PATH': scriptdir + ":" + os.environ["PATH"]}
+
+
+@inherits(Summ.ReStringTieScoresW)
+class ballgown(luigi.Task):
+    """Find DGE using ballgown."""
+
+    exp_design = luigi.Parameter()
+    p_value = luigi.FloatParameter()
+    bindir = luigi.Parameter()
+
+    def output(self):
+        """Expected output of DGE using edgeR."""
+        bg_rdir = os.path.join(self.workdir, "bg_results", self.kingdom)
+        return LocalTarget(bg_rdir)
+
+    def run(self):
+        """Run ballgown."""
+        # Rscript scripts/ballgown.R -i tests/test_euk/ballgown/ -e test_euk.txt -o test_ballgown -n exon
+        bg_dir = os.path.join(self.workdir, "ballgown", self.kingdom)
+        bg_results = os.path.join(self.workdir, "bg_results", self.kingdom)
+        if os.path.isdir(bg_results) is False:
+            os.makedirs(bg_results)
+        bg_loc = os.path.join(self.bindir, "../scripts/ballgown.R")
+
+        for name in ["gene", "transcript"]:
+            bg_list = [bg_loc, "-i", bg_dir, "-e", self.exp_design,
+                       "-n", name, "-p", self.p_value,
+                       "-o", bg_results]
+            bg_cmd = Rscript[bg_list]
+            bg_cmd()
+
+        # self.summ_summ()
+
+    # def summ_summ(self):
+    #     """Summarize the summary table to be displayed in edge"""
+    #     deseq2_dir = self.workdir + "/DESeq2/" + self.kingdom
+    #     all_files = os.listdir(deseq2_dir)
+    #     out_file = os.path.join(deseq2_dir, "summary_updown.csv")
+    #     summ_files = [pd.read_csv(os.path.join(deseq2_dir, file),
+    #                               index_col=0) for file in all_files if "summary.csv" in file ]
+    #     summ_df = pd.concat(summ_files)
+    #     summ_df.to_csv(out_file)
 
     def program_environment(self):
         """Environmental variables for this program."""

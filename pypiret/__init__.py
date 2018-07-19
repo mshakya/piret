@@ -11,5 +11,6 @@ from Runs import srna
 from Runs import Map
 from Runs import Summ
 from Runs import DGE
+from Workflows import SingleSeq
 from Checks.Dependencies import CheckDependencies
 from initialize import Initialize

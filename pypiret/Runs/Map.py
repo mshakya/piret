@@ -505,6 +505,7 @@ class StringTieScores(luigi.Task):
     def run(self):
         """Run stringtie."""
         stringtie_opt = ["-o", self.out_gtf,
+                         "-p", self.num_cpus,
                          "-G", self.gff_file,
                          "-C", self.out_cover,
                          "-A", self.out_abun,
@@ -513,10 +514,9 @@ class StringTieScores(luigi.Task):
         stringtie_cmd()
 
 
-# @inherits(GFF2GTF)
 @inherits(HisatMapW)
 class StringTieScoresW(luigi.WrapperTask):
-    """From Mapping to Counting step for Eukaryotic reference."""
+    """Wrapper function for stringtie in all samples"""
 
     gff_file = Parameter()
     kingdom = Parameter()
@@ -542,7 +542,6 @@ class StringTieScoresW(luigi.WrapperTask):
                     apd = '_prok'
                 elif self.kingdom == 'eukarya':
                     apd = '_euk'
-                gff_name = self.gff_file.split(".gff")[0].split("/")[-1]
 
                 yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                               trim_dir + "/" + samp + ".2.trimmed.fastq"],
@@ -552,17 +551,17 @@ class StringTieScoresW(luigi.WrapperTask):
                                       outsam=map_dir + "/" + samp + ".sam",
                                       ref_file=self.ref_file,
                                       gff_file=self.gff_file,
-                                      out_gtf=stng_dir + "/" + samp + "_" + gff_name + apd + "_sTie.gtf",
-                                      out_cover=stng_dir + "/" + samp + "_" + gff_name + apd + "_covered_sTie.gtf",
-                                      out_abun=stng_dir + "/" + samp + "_" + gff_name + apd + "_sTie.tab",
+                                      out_gtf=stng_dir + "/" + samp +  apd + "_sTie.gtf",
+                                      out_cover=stng_dir + "/" + samp +  apd + "_covered_sTie.gtf",
+                                      out_abun=stng_dir + "/" + samp +  apd + "_sTie.tab",
                                       in_bam_file=map_dir + "/" + samp + "_srt.bam",
                                       workdir=self.workdir,
                                       sample=samp,
                                       qc_outdir=trim_dir,
                                       map_dir=map_dir)
             elif self.kingdom == 'both':
-                prok_gff = os.path.basename(self.gff_file.split(",")[0]).split(".gff")[0]
-                euk_gff = os.path.basename(self.gff_file.split(",")[1]).split(".gff")[0]
+                prok_gff = self.gff_file.split(",")[0]
+                euk_gff = self.gff_file.split(",")[1]
                 yield StringTieScores(fastqs=[trim_dir + "/" + samp +
                                               ".1.trimmed.fastq",
                                               trim_dir + "/" + samp +
@@ -572,12 +571,12 @@ class StringTieScoresW(luigi.WrapperTask):
                                       spliceFile=splice_file,
                                       outsam=map_dir + "/" + samp + ".sam",
                                       ref_file=self.ref_file,
-                                      out_gtf=stng_dir + "/" + samp + "_" + prok_gff + "_prok" + "_sTie.gtf",
-                                      out_cover=stng_dir + "/" + samp + "_" + prok_gff + "_prok" + "_covered_sTie.gtf",
-                                      out_abun=stng_dir + "/" + samp + "_" + prok_gff + "_prok" + "_sTie.tab",
+                                      out_gtf=stng_dir + "/" + samp + "_prok" + "_sTie.gtf",
+                                      out_cover=stng_dir + "/" + samp + "_prok" + "_covered_sTie.gtf",
+                                      out_abun=stng_dir + "/" + samp + "_prok" + "_sTie.tab",
                                       in_bam_file=map_dir + "/" + samp + "_srt_prok.bam",
                                       workdir=self.workdir,
-                                      gff_file=self.gff_file.split(",")[0],
+                                      gff_file=prok_gff,
                                       sample=samp,
                                       qc_outdir=trim_dir,
                                       map_dir=map_dir)
@@ -588,12 +587,12 @@ class StringTieScoresW(luigi.WrapperTask):
                                       spliceFile=splice_file,
                                       outsam=map_dir + "/" + samp + ".sam",
                                       ref_file=self.ref_file,
-                                      out_gtf=stng_dir + "/" + samp + "_" + euk_gff + "_euk" + "_sTie.gtf",
-                                      out_cover=stng_dir + "/" + samp + "_" + euk_gff + "_euk" + "_covered_sTie.gtf",
-                                      out_abun=stng_dir + "/" + samp + "_" + euk_gff + "_euk" + "_sTie.tab",
+                                      out_gtf=os.path.join(stng_dir, samp + "_euk_sTie.gtf"),
+                                      out_cover=os.path.join(stng_dir, samp + "_euk_covered_sTie.gtf"),
+                                      out_abun=os.path.join(stng_dir, samp + "_euk_sTie.tab"),
                                       in_bam_file=map_dir + "/" + samp + "_srt_prok.bam",
                                       workdir=self.workdir,
-                                      gff_file=self.gff_file.split(",")[1],
+                                      gff_file=euk_gff,
                                       sample=samp,
                                       qc_outdir=trim_dir,
                                       map_dir=map_dir)
