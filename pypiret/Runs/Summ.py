@@ -42,18 +42,17 @@ class FeatureCounts(luigi.Task):
         if ',' in self.gff:
             gff_list = self.gff.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
-            gtfs = [self.workdir + "/" + gff.split("/")[-1].split(".gff")[0] + ".gtf" for gff in gff_full_path]
             all_target = []
             for gffs in gff_full_path:
                 feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
-                loc_target = [LocalTarget(counts_dir +  os.path.basename(gffs) + "_" + feat + "_count.tsv") for feat in feature]
+                loc_target = [LocalTarget(counts_dir + feat + "_count.tsv") for feat in feature]
                 all_target = loc_target + all_target
                 return all_target
         else:
             gff_fp = os.path.abspath(self.gff)
             features = list(set(pd.read_csv(gff_fp, sep="\t", header=None, comment='#')[2].tolist()))
             features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']]
-            loc_target = LocalTarget(counts_dir + "/" + os.path.basename(self.gff).split(".gff")[0] + "_" + features[-1] + "_count.tsv")
+            loc_target = LocalTarget(counts_dir + "/" + features[-1] + "_count.tsv")
             return loc_target
 
     def run(self):
@@ -83,12 +82,12 @@ class FeatureCounts(luigi.Task):
                                           "-g", self.fid,
                                           "-t", feat,
                                           "-T", self.num_cpus,
-                                          "-o", counts_dir + "/" + gffs.split("/")[-1].split("gff")[0] + "_" + feat + "_count.tsv"] + in_srtbam_list
+                                          "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
                         fcount_cmd = featureCounts[fcount_cmd_opt]
                         fcount_cmd()
         else:
             feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
-                                            comment='#')[2].tolist()))
+                                           comment='#')[2].tolist()))
             for feat in feature:
                 if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript',
                             'novel_region']:
@@ -99,7 +98,7 @@ class FeatureCounts(luigi.Task):
                                       "-g", self.fid,
                                       "-t", feat,
                                       "-T", self.num_cpus,
-                                      "-o", counts_dir + "/" + self.gff.split("/")[-1].split(".gff")[0] + "_" + feat + "_count.tsv"] + in_srtbam_list
+                                      "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
 

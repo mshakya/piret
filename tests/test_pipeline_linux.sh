@@ -18,12 +18,12 @@ printf "${blue}testing pipeline with prokarya only\n${normal}"
 
 printf "bin/runPiReT -d tests/test_prok -e test_prok.txt \
 -gp tests/data/test_prok.gff \
--i tests/test_prok/prok_index -k prokarya -m all \
+-i tests/test_prok/prok_index -k prokarya -m DEedge \
 -fp tests/data/test_prok.fa --config luigi.cfg"
 
 bin/runPiReT -d tests/test_prok -e test_prok.txt \
 -gp tests/data/test_prok.gff \
--i tests/test_prok/prok_index -k prokarya -m all \
+-i tests/test_prok/prok_index -k prokarya -m DEedge \
 -fp tests/data/test_prok.fa --config luigi.cfg
 
 printf "${blue}fininshed testing pipeline for prokarya only\n${normal}"
