@@ -16,12 +16,12 @@ rm test_ed.txt test_edII.txt
 #==============================================================================#
 printf "${blue}testing pipeline with prokarya only\n${normal}"
 
-printf "bin/runPiReT -d tests/test_prok -e test_prok.txt \
+printf "bin/piret -d tests/test_prok -e test_prok.txt \
 -gp tests/data/test_prok.gff \
 -i tests/test_prok/prok_index -k prokarya -m DEedge \
 -fp tests/data/test_prok.fa --config luigi.cfg"
 
-bin/runPiReT -d tests/test_prok -e test_prok.txt \
+bin/piret -d tests/test_prok -e test_prok.txt \
 -gp tests/data/test_prok.gff \
 -i tests/test_prok/prok_index -k prokarya -m DEedge \
 -fp tests/data/test_prok.fa --config luigi.cfg
@@ -41,12 +41,12 @@ printf "#SampleID\tFiles\tGroup\n" | cat - test_edII.txt > test_euk.txt
 rm test_ed.txt test_edII.txt
 
 
-printf "bin/runPiReT -d tests/test_euk -e test_euk.txt \
+printf "bin/piret -d tests/test_euk -e test_euk.txt \
 -ge tests/data2/chr22_ERCC92.gff3 \
 -i tests/test_euk/euk_index -k eukarya -m all \
 -fe tests/data2/chr22_ERCC92.fa --config luigi.cfg -p 0.05"
 
-bin/runPiReT -d tests/test_euk -e test_euk.txt \
+bin/piret -d tests/test_euk -e test_euk.txt \
 -ge tests/data2/chr22_ERCC92.gff3 \
 -i tests/test_euk/euk_index -k eukarya -m all \
 -fe tests/data2/chr22_ERCC92.fa --config luigi.cfg -p 0.05
@@ -56,7 +56,7 @@ printf "${blue}fininshed testing pipeline for eukarya\n${normal}"
 # #==============================================================================#
 # printf "${blue}testing pipeline with prok and euk now \n${normal}"
 
-printf "bin/runPiReT -d tests/test_both -e test_prok.txt \
+printf "bin/piret -d tests/test_both -e test_prok.txt \
 -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
 -i tests/test_both/prok_euk_index -k both -m all \
 -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa"
@@ -75,7 +75,7 @@ printf "bin/runPiReT -d tests/test_both -e test_prok.txt \
 # cp tests/test_both/samp5/trimming_results/*.* tests/test_euk/samp5/trimming_results/ 
 # cp tests/test_both/samp6/trimming_results/*.* tests/test_euk/samp6/trimming_results/ 
 
-bin/runPiReT -d tests/test_both -e test_prok.txt \
+bin/piret -d tests/test_both -e test_prok.txt \
 -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
 -i tests/test_both/prok_euk_index -k both -m all \
 -fp tests/data/test_prok.fa -fe tests/data/eukarya_test.fa

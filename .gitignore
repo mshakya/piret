@@ -25,3 +25,6 @@ test_prok/
 *.gtf
 *.pyc
 *.json
+test_euk.txt
+test_prok.txt
+test_summ.txt
