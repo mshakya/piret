@@ -1,1 +1,16 @@
 pypiret/.DS_Store
+.DS_Store
+Rplots.pdf
+.cache/v/cache/lastfailed
+*.png
+*.pdf
+*.ctab
+*.bedfile
+*.tab
+*.log
+*.bam
+*.ht2l
+*.tsv
+*.sam
+*.csv
+*.gtf
