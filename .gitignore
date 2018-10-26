@@ -2,6 +2,15 @@ pypiret/.DS_Store
 .DS_Store
 Rplots.pdf
 .cache/v/cache/lastfailed
+tests/test_prok/
+tests/test_euk/
+tests/test_both/
+*.sublime-project
+*.sublime-workspace
+.pytest_cache/
+test_both/
+test_euk/
+test_prok/
 *.png
 *.pdf
 *.ctab
@@ -14,3 +23,5 @@ Rplots.pdf
 *.sam
 *.csv
 *.gtf
+*.pyc
+*.json
