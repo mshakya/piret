@@ -1,12 +1,1 @@
-runPipeline_rRNA_noqsub_commandline.sublime-workspace
-.DS_Store
-*.pyc
-pypiret/__init__.pyc
-bin/JBrowse
-bin/bowtie2
-bin/htseq-count
-PyPiReT.sublime-workspace
-.cache/
-thirdParty/JBrowse-1.11.6/*.*
-sftp-config.json
-.coverage
+pypiret/.DS_Store
