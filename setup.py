@@ -8,9 +8,10 @@ setup(
     description="RNAseq pipeline",
     author="Migun Shakya",
     author_email="migun@lanl.gov",
-    url="https://github.com/mshakya/pypiret",
+    url="https://github.com/mshakya/piret",
     install_requires=open("requirements.txt").read().splitlines(),
     packages=find_packages(),
+    scripts=['bin/piret'],
     license="Apache License 2.0",
     platforms="Posix; MacOS X",
     classifiers=[

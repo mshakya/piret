@@ -8,6 +8,8 @@ option_list <- list(
               help = "directory containing results of EdgeR or DESeq2"),
   make_option(c("-m", "--method"), action = "store",
               help = "output of which results to conduct gage analysis on"),
+  make_option(c("-c", "--org_code"), action = "store",
+              help = "kegg orgainsm code to download pathway information"),
   make_option(c("-o", "--out_dir"), action = "store",
               help = "output directory")
 )
@@ -17,6 +19,7 @@ opt <- parse_args(OptionParser(option_list = option_list))
 #
 dir <- opt$dir
 method <- opt$method
+code <- opt$org_code
 
 #==============================================================================#
 # create the output directory
@@ -25,12 +28,22 @@ method <- opt$method
 
 # grab fold change files
 if ( method == "edgeR"){
-    temp = list.files(path=dir, pattern="gene_*_et.csv")
+    fcs = list.files(path = dir, pattern = "gene_*_et.csv", full.names = TRUE)
 
 } else if (method == "DESeq2")
 {   
-    temp = list.files(pattern="gene_*_et.csv")
-    print(temp)
+    fcs = list.files(path = dir, pattern = "gene_*_et.csv", full.names = TRUE)
+    
+}
+
+
+# perform gage analysis, one fc at a time
+
+for (fc in fcs){
+    fc_df <- read.csv(fc, row.names = 1)
+    print(head(fc_df))
 
 }
-# read in all the 
+
+
+gene_sets <- kegg.gsets(species = code)
