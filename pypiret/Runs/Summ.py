@@ -73,8 +73,8 @@ class FeatureCounts(luigi.Task):
                                                sep="\t", header=None,
                                                comment='#')[2].tolist()))
                 for feat in feature:
-                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene',
-                                'novel_region', 'transcript', 'mRNA', ]:
+                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon',
+                                'novel_region', 'transcript', 'mRNA']:
                         fcount_cmd_opt = ["-a", self.gff,
                                           "-s", self.stranded,
                                           "-B",
@@ -83,24 +83,44 @@ class FeatureCounts(luigi.Task):
                                           "-t", feat,
                                           "-T", self.num_cpus,
                                           "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
-                        fcount_cmd = featureCounts[fcount_cmd_opt]
-                        fcount_cmd()
-        else:
-            feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
-                                           comment='#')[2].tolist()))
-            for feat in feature:
-                if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript',
-                            'novel_region']:
-                    fcount_cmd_opt = ["-a", self.gff,
+                    elif feat in ['gene']:
+                        fcount_cmd_opt = ["-a", self.gff,
                                       "-s", self.stranded,
                                       "-B",
                                       "-p", "-P", "-C",
-                                      "-g", self.fid,
+                                      "-g", "locus_tag",
                                       "-t", feat,
                                       "-T", self.num_cpus,
                                       "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
+        else:
+            feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
+                                        comment='#')[2].tolist()))
+        for feat in feature:
+            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
+                        'novel_region']:
+                fcount_cmd_opt = ["-a", self.gff,
+                                    "-s", self.stranded,
+                                    "-B",
+                                    "-p", "-P", "-C",
+                                    "-g", self.fid,
+                                    "-t", feat,
+                                    "-T", self.num_cpus,
+                                    "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                fcount_cmd = featureCounts[fcount_cmd_opt]
+                fcount_cmd()
+            if feat in ['gene']:
+                fcount_cmd_opt = ["-a", self.gff,
+                                    "-s", self.stranded,
+                                    "-B",
+                                    "-p", "-P", "-C",
+                                    "-g", "locus_tag",
+                                    "-t", feat,
+                                    "-T", self.num_cpus,
+                                    "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                fcount_cmd = featureCounts[fcount_cmd_opt]
+                fcount_cmd()
 
 
 @requires(Map.StringTieScoresW)
