@@ -19,16 +19,18 @@ class edgeR(luigi.Task):
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
     bindir = luigi.Parameter()
+    org_code = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
-        for root, dirs, files in os.walk(fcount_dir):
+        for root, dirs, files in os.walk(edger_dir):
             for file in files:
-                if file.endswith("csv"):
-                    out_filename = file.split(".tsv")[0] + "_RPKM.csv"
-                    out_filepath = os.path.join(edger_dir, out_filename)
+                if file.endswith("__sig.csv"):
+                    out_folder = file.split(".csv")[0]
+                    out_filepath = os.path.join(edger_dir, out_folder, "greater.csv")
+                    print(out_filepath)
                     return LocalTarget(out_filepath)
 
     def run(self):
@@ -36,6 +38,8 @@ class edgeR(luigi.Task):
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
         edger_location = os.path.join(self.bindir, "../scripts/edgeR.R")
+        gage_location = os.path.join(self.bindir, "../scripts/gage_analysis.R")
+        path_location = os.path.join(self.bindir, "../scripts/plot_pathway.R")
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
         for root, dirs, files in os.walk(fcount_dir):
@@ -50,6 +54,15 @@ class edgeR(luigi.Task):
                                   "-o", edger_dir]
                     edger_cmd = Rscript[edger_list]
                     edger_cmd()
+                    if file == "gene_count.tsv":
+                        path_list = [path_location, "-d", edger_dir,
+                            "-m", "edgeR", "-c", self.org_code] # get pathway information
+                        path_cmd = Rscript[path_list]
+                        path_cmd()
+                        gage_list = [gage_location, "-d", edger_dir,
+                            "edgeR", "-c", self.org_code]
+                        gage_cmd = Rscript[gage_list]
+                        gage_cmd()
         self.summ_summ()
 
     def summ_summ(self):
@@ -71,16 +84,18 @@ class DESeq2(luigi.Task):
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
     bindir = luigi.Parameter()
+    org_code = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
         for root, dirs, files in os.walk(fcount_dir):
-            for file in files:
-                if file.endswith("csv"):
-                    out_filename = file.split(".tsv")[0] + "_FPKM.csv"
-                    out_filepath = os.path.join(DESeq2_dir, out_filename)
+             for file in files:
+                if file.endswith("__sig.csv"):
+                    out_folder = file.split(".csv")[0]
+                    out_filepath = os.path.join(DESeq2_dir, out_folder, "greater.csv")
+                    
                     return LocalTarget(out_filepath)
 
     def run(self):
@@ -88,6 +103,9 @@ class DESeq2(luigi.Task):
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
         deseq2_location = os.path.join(self.bindir, "../scripts/DESeq2.R")
+        gage_location = os.path.join(self.bindir, "../scripts/gage_analysis.R")
+        path_location = os.path.join(self.bindir, "../scripts/plot_pathway.R")
+
         if not os.path.exists(DESeq2_dir):
             os.makedirs(DESeq2_dir)
         for root, dirs, files in os.walk(fcount_dir):
@@ -102,6 +120,16 @@ class DESeq2(luigi.Task):
                                    "-o", DESeq2_dir]
                     deseq2_cmd = Rscript[deseq2_list]
                     deseq2_cmd()
+                if file == "gene_count.tsv":
+                    path_list = [path_location, "-d", DESeq2_dir,
+                         "-m", "DESeq2", "-c",
+                         self.org_code] # get pathway information
+                    path_cmd = Rscript[path_list]
+                    path_cmd()
+                    gage_list = [gage_location, "-d", DESeq2_dir,
+                         "DESeq2", "-c", self.org_code]
+                    gage_cmd = Rscript[gage_list]
+
         self.summ_summ()
 
     def summ_summ(self):

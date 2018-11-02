@@ -69,7 +69,7 @@ class GetChromName(luigi.Task):
 
 
 class HisatIndex(ExternalProgramTask):
-    """Create Hisat Indeices from given fasta file."""
+    """Create Hisat Indices from given fasta file."""
 
     fasta = Parameter()
     hi_index = Parameter()

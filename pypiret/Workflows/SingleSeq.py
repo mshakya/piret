@@ -19,7 +19,7 @@ class SingleSeq:
     def __init__(self, fastq_dic, ref_fasta, ref_gff, num_cpus,
                  local_scheduler, hisat_index, workdir, kingdom,
                  no_of_jobs, bindir, exp_desn_file,
-                 p_value ):
+                 p_value, org_code ):
         self.ref_fasta = ref_fasta
         self.ref_gff = ref_gff
         self.fastq_dic = fastq_dic
@@ -32,6 +32,7 @@ class SingleSeq:
         self.bindir = bindir
         self.exp_desn_file = exp_desn_file
         self.p_value = p_value
+        self.org_code = org_code
 
 
     def create_hisat_index(self):
@@ -102,7 +103,8 @@ class SingleSeq:
                          kingdom=self.kingdom,
                          gff=os.path.join(self.workdir, "updated.gff"),
                          exp_design=self.exp_desn_file,
-                         p_value=self.p_value)],
+                         p_value=self.p_value,
+                         org_code=self.org_code)],
         local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
 
     def run_deseq2(self):
@@ -115,7 +117,8 @@ class SingleSeq:
                           kingdom=self.kingdom,
                           gff=os.path.join(self.workdir, "updated.gff"),
                           exp_design=self.exp_desn_file,
-                          p_value=self.p_value)],
+                          p_value=self.p_value,
+                          org_code=self.org_code)],
         local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
 
     def merge_stringtie(self):

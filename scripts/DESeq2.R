@@ -6,7 +6,7 @@ library(dplyr)
 library(ggplot2)
 library(pheatmap)
 library(GenomicRanges)
-library(RPiReT)
+library(rpiret)
 
 option_list <- list(
   make_option(c("-r", "--reads_table"), action = "store",
@@ -44,22 +44,22 @@ pair.comb <- function(exp_des){
     }
 
 if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
-    deseq_ds <- RPiReT::feat2deseq2(feat_count = reads_file, exp_desn = group_file)
-    fpkm_table <- RPiReT::DESeq2FPKM(deseq_ds, reads_file, out_dir )
-    fpm_table <- RPiReT::DESeq2FPM(deseq_ds, reads_file, out_dir )
+    deseq_ds <- rpiret::feat2deseq2(feat_count = reads_file, exp_desn = group_file)
+    fpkm_table <- rpiret::DESeq2FPKM(deseq_ds, reads_file, out_dir )
+    fpm_table <- rpiret::DESeq2FPM(deseq_ds, reads_file, out_dir )
     out_fpkm <- file.path(out_dir, paste(strsplit(basename(reads_file),
                                               ".tsv")[[1]],
                                     "_FPKM.csv", sep=""))
     out_fpm <- file.path(out_dir, paste(strsplit(basename(reads_file),
                                               ".tsv")[[1]],
                                     "_FPM.csv", sep=""))
-    RPiReT::FPKM_heatmap(out_fpkm, group_table, out_dir)
-    RPiReT::FPM_heatmap(out_fpm, group_table, out_dir)
-    RPiReT::DESeq2_histogram(out_fpm, group_file, out_dir, "FPM", feature_name)
-    RPiReT::DESeq2_histogram(out_fpkm, group_file, out_dir, "FPKM", feature_name)
-    RPiReT::DESeq2_violin(out_fpm, group_file, out_dir, "FPM", feature_name)
-    RPiReT::DESeq2_violin(out_fpkm, group_file, out_dir, "FPKM", feature_name)
-    RPiReT::DESeq2_CAplot(feat_count = reads_file, DESeq2_object = deseq_ds,
+    rpiret::FPKM_heatmap(out_fpkm, group_table, out_dir)
+    rpiret::FPM_heatmap(out_fpm, group_table, out_dir)
+    rpiret::DESeq2_histogram(out_fpm, group_file, out_dir, "FPM", feature_name)
+    rpiret::DESeq2_histogram(out_fpkm, group_file, out_dir, "FPKM", feature_name)
+    rpiret::DESeq2_violin(out_fpm, group_file, out_dir, "FPM", feature_name)
+    rpiret::DESeq2_violin(out_fpkm, group_file, out_dir, "FPKM", feature_name)
+    rpiret::DESeq2_CAplot(feat_count = reads_file, DESeq2_object = deseq_ds,
                           outdir = out_dir, feature_name = feature_name)
     # calculate size factors
     dds <- DESeq2::DESeq(deseq_ds)
@@ -91,7 +91,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         plotMA(deseq_diff)
         dev.off()
 
-        RPiReT::DESeq2_summary(object = deseq_diff, alpha = as.numeric(pcutoff),
+        rpiret::DESeq2_summary(object = deseq_diff, alpha = as.numeric(pcutoff),
                     pair1 = pair1, pair2 = pair2, feature_name = feature_name,
                     outdir = out_dir)
 

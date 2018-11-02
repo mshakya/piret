@@ -31,7 +31,7 @@ if ( method == "edgeR"){
     for (fc in fcs) {
         out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]
         ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
-        rpiret::gage_analysis(fc, "edgeR", org, out_dir) 
+        rpiret::map_pathway(fc, "edgeR", org, out_dir) 
     }
 } else if (method == "DESeq2")
 {   
@@ -39,6 +39,6 @@ if ( method == "edgeR"){
     for (fc in fcs) {
         out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]
         ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
-        rpiret::gage_analysis(fc, "DESeq2", org, out_dir) 
+        rpiret::map_pathway(fc, "DESeq2", org, out_dir) 
     }
 }
