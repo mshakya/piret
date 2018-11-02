@@ -28,3 +28,6 @@ test_prok/
 test_euk.txt
 test_prok.txt
 test_summ.txt
+build/*
+pypiret.egg-info/*
+dist/pypiret-0.1.0-py3.6.egg

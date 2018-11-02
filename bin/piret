@@ -98,6 +98,10 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         when eukarya or both is chosen, it expects alternative splicing""",
                         required=False, default='prokarya',
                         choices=['prokarya', 'eukarya', 'both'])
+    
+    parser.add_argument("--org", dest="ORG_CODE", help="""organism code,
+        obtained from KEGG, required for pathway and GAGE analysis.""",
+                        required=False)
 
     parser.add_argument("-m", dest="METHOD", help="""Method to use for detecting
         differentially expressed genes, DESeq2 requires 3 biological replicates
@@ -177,7 +181,8 @@ def main():
                                          no_of_jobs=no_of_jobs,
                                          p_value=args.P_VALUE,
                                          exp_desn_file=args.EXPDSN,
-                                         bindir=bindir)
+                                         bindir=bindir,
+                                         org_code=args.ORG_CODE)
         single_seq.create_hisat_index()
         single_seq.map_summarize()
         single_seq.find_novel_regions()
