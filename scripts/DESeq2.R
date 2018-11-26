@@ -39,7 +39,8 @@ pair.comb <- function(exp_des){
         exp_desn <- read.table(exp_des, sep = "\t", header = TRUE,
                                comment.char = "", colClasses=c("character"))
         categories <- unique(exp_desn$Group)
-        pairs <- combn(categories, 2, simplify = FALSE)
+        # pairs <- combn(categories, 2, simplify = FALSE)
+        pairs <- subset(expand.grid(rep(list(categories),2), stringsAsFactors = F), Var1 != Var2)
         return(pairs)
     }
 
@@ -65,14 +66,23 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
     dds <- DESeq2::DESeq(deseq_ds)
     # get all possible pairs
     all_pairs <- pair.comb(group_file)
+    print(all_pairs)
 
-    for (n in 1:length(all_pairs) ) {
+    for (n in 1:nrow(all_pairs) ) {
         # filename strings for each comparisons
-        filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
-        filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "sig.csv", sep = "__")
+        f1 <- all_pairs[n, 1]
+        print(f1)
+        f2 <- all_pairs[n, 2]
+        print(f2)
+        # filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
+        filename <- paste(f1, f2, feature_name, "et.csv", sep = "__")
+        # filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "sig.csv", sep = "__")
+        filename_sig <- paste(f1, f2, feature_name, "sig.csv", sep = "__")        
         # sample matrix
-        pair1 <- as.character(all_pairs[[n]][1])
-        pair2 <- as.character(all_pairs[[n]][2])
+        # pair1 <- as.character(all_pairs[[n]][1])
+        pair1 <- as.character(f1)
+        # pair2 <- as.character(all_pairs[[n]][2])
+        pair2 <- as.character(all_pairs[n, 2])
         pairs <- c(pair1, pair2)
         # exact test
         deseq_diff <- DESeq2::results(dds, contrast = c("Group", pair1, pair2))
@@ -82,11 +92,13 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon")){
         deseq_sig <- subset(deseq_diff, padj < as.numeric(pcutoff))
 
         #plot
-        out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
+        # out_ma_pdf <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
+        out_ma_pdf <- file.path(out_dir, paste(f1, f2, feature_name, "MA.pdf", sep = "__"))
         pdf(out_ma_pdf)
         plotMA(deseq_diff)
         dev.off()
-        out_ma_png <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.png", sep = "__"))
+        # out_ma_png <- file.path(out_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.png", sep = "__"))
+        out_ma_png <- file.path(out_dir, paste(f1, f2, feature_name, "MA.png", sep = "__"))
         png(out_ma_png)
         plotMA(deseq_diff)
         dev.off()
