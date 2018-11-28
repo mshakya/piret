@@ -38,7 +38,7 @@ class TestGFF2GTF(unittest.TestCase):
         self.assertTrue(os.path.exists("tests/test_gff2gtf/eukarya_test.gtf"))
         with open("tests/test_gff2gtf/test_prok.gtf") as pg:
             lines=pg.readlines()
-        self.assertEqual(lines[5].split("\t")[4], "410")
+        self.assertEqual(lines[5].split("\t")[4], "1747")
         with open("tests/test_gff2gtf/eukarya_test.gtf") as pg:
             lines=pg.readlines()
         self.assertEqual(lines[5].split("\t")[4], "3007")
@@ -99,7 +99,7 @@ class TestHisatMapping(unittest.TestCase):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
         luigi.interface.build([
-            Map.HisatIndex(fasta="tests/data/test_prok.fa",
+            Map.HisatIndex(fasta="tests/data/test_prok.fna",
                            hi_index="tests/test_hisatmapping/prok_index",
                            num_cpus=1),
             Map.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
