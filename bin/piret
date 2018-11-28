@@ -15,12 +15,16 @@ import luigi
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
+script_path = os.path.join(lib_path, 'scripts')
 sys.path.append(lib_path)
+sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
+os.environ["PATH"] += os.pathsep + script_path
 from pypiret import CheckDesign, FaQC, Map, Summ, DGE, srna
-from pypiret import Workflows
+from pypiret import Workflows, CheckDependencies
 from pypiret.Checks.GFF3 import CheckGFF
 from luigi.interface import build
+
 
 
 
@@ -37,22 +41,22 @@ def cmdline_parser():
         pass
 
     parser = argparse.ArgumentParser(formatter_class=CustomFormatter,
-                                     prog='runPiReT',
+                                     prog='piret',
                                      description="""RNASeq workflow""",
                                      epilog="""
-When selecting both kingodm runs, options that are required for both eukaryotes
+When selecting both kingdom runs, options that are required for both eukaryotes
 and prokaryotes run are required.
 
 Example run for Prokaryotes RNA seq:\n
-        runPiReT -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
+        piret -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
         -k prokarya -m <edgeR/DESeq2> -fp <FASTA>
 
 Example run for Eukaryotes RNA seq:\n
-        runPiReT -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
+        piret -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
         -k eukarya -m <edgeR/DESeq2> -fe <FASTA>
 
 Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
-        runPiReT -d <workdir> -e <design file>  -gp <gff> -ge <gff>
+        piret -d <workdir> -e <design file>  -gp <gff> -ge <gff>
         -i <hisat2 index> -k both -m <edgeR/DESeq2> -fe <FASTA> -fp <FASTA>
         """)
 
@@ -79,14 +83,14 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
 
     required_prok_args.add_argument("-gp", dest="GFF_PROK", help="""path to gff
         files for prokaryotic organism, must be a .gff file""", required=False,
-                                    default="")
+                                    default=None)
 
     required_euk_args = parser.add_argument_group('required arguments (for eukaryotes)')
 
     required_euk_args.add_argument("-fe", dest="FASTA_EUK", help="""fasta for Eukaryotic Refe
         rence""", required=False, default=None)
     required_euk_args.add_argument("-ge", dest="GFF_EUK", help="""path to gff files for eukar
-        yotic organism, must be a .gff file""", required=False, default="")
+        yotic organism, must be a .gff file""", required=False, default=None)
 
     parser.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
         creates index if it does not exist""", required=False, default=None)
@@ -99,16 +103,20 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
                         required=False, default='prokarya',
                         choices=['prokarya', 'eukarya', 'both'])
     
-    parser.add_argument("--org", dest="ORG_CODE", help="""organism code,
-        obtained from KEGG, required for pathway and GAGE analysis.""",
-                        required=False)
-
     parser.add_argument("-m", dest="METHOD", help="""Method to use for detecting
         differentially expressed genes, DESeq2 requires 3 biological replicates
         and ballgown only processes eukaryotes""", required=False,
                         default='balledgeR',
                         choices=['edgeR', 'DESeq2', 'ballgown', 'DEedge',
                                  'DEgown', 'balledgeR', 'all'])
+    
+    parser.add_argument("--comp", dest="COMPAR", help="""A tsv file containing information regarding the
+        groups that are to be compared.""", required=False)
+
+    
+    parser.add_argument("--star_db", dest="STARDB", help="""A folder to keep star formatted DB.""",
+                        required=False)
+
 
     parser.add_argument("-p", dest="P_VALUE", help="""P-Value to consider ifs
         genes are significantly different, default is 0.001""",
@@ -123,8 +131,30 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     parser.add_argument("--qsub", help="""run the SGE version of the code, it
         currently is set to SGE with smp""", required=False,
                         action='store_true', default=False)
+    
+    parser.add_argument("--aligner", dest="ALIGNER", help="""Pick a aligner to be used for the analysis.""",
+                        required=False, default='STAR',
+                        choices=['STAR', 'HISAT2'])
+    
+    required_path_args = parser.add_argument_group('required arguments (for pathway and GAGE analysis)')
+    parser.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
+                        required=False, default=False, action="store_true")
+    
+    required_path_args.add_argument("--org", dest="ORG_CODE", help="""organism code,
+        obtained from KEGG, required for pathway and GAGE analysis.""",
+                        required=False, default=None)
+    
+    parser.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
+                        required=False, default=False, action="store_true")
+
+    parser.add_argument("--qc_off", dest="QC_OFF", help="""A flag indicating not to perform QC.""",
+                        required=False, default=False, action="store_true")
+    
+    parser.add_argument("--novel", dest="NOVEL", help="""A flag indicating to find novel regions.""",
+                        required=False, default=False, action="store_true")
 
     parser.add_argument('--version', action='version', version='%(prog)s 0.3')
+
 
     return parser
 
@@ -138,25 +168,23 @@ def main():
     parser = cmdline_parser()
     args = parser.parse_args()
 
-    # Getting absolute path of some directories
-    workdir = os.path.abspath(args.WORKDIR)
-    bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
-    os.environ['PATH'] = os.environ['PATH'] + ":" + bindir
-    if check_exp_design(args.EXPDSN) is False:
+    check_input(args=args, parser=parser, workdir=args.WORKDIR) # check if correct options are selected
+    check_depen(["samtools", "STAR"]) # check if third party tools are in path
+    workdir = os.path.abspath(args.WORKDIR) # Getting absolute path of workdir
+    if check_exp_design(args.EXPDSN) is False: #check if experimental design file is OK
         sys.exit("Your experimental design file has formatting problems!")
-    else:
-        pass
-
-    if check_ballgown_method(args.METHOD, args.TEST_KINGDOM) is True:
+    
+    if args.COMPAR != None: # check if comparison file is correctly formatted
+        check_comp(args.COMPAR, args.EXPDSN)
+    
+    if check_ballgown_method(args.METHOD, args.TEST_KINGDOM) is True: # checking ballgown method
         pass
 
     no_of_jobs = 1
     samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
 
-    if args.INDEX_HISAT is None:
-        hisat_index_name = os.path.join(workdir, "hisat_index")
-    else:
-        hisat_index_name = args.INDEX_HISAT
+    db = check_aligner(aligner=args.ALIGNER, hisat_index=args.INDEX_HISAT,
+                 workdir=workdir, star_db=args.STARDB)
 
     if args.TEST_KINGDOM in ['prokarya', 'eukarya'] and args.qsub is False:
         if args.TEST_KINGDOM == "prokarya":
@@ -168,54 +196,59 @@ def main():
             fasta = args.FASTA_EUK
             gff = args.GFF_EUK
         if check_method(args.METHOD, args.EXPDSN) is True:
-            run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
-                     local_scheduler=args.scheduler)
-        single_seq = Workflows.SingleSeq(fastq_dic=samp_dic,
+            single_seq = Workflows.SingleSeq(fastq_dic=samp_dic,
+                                         aligner=args.ALIGNER,
                                          ref_fasta=fasta,
                                          num_cpus=args.CPU,
                                          local_scheduler=args.scheduler,
                                          ref_gff=gff,
-                                         hisat_index=hisat_index_name,
+                                         hisat_index=db,
                                          workdir=workdir,
                                          kingdom=args.TEST_KINGDOM,
                                          no_of_jobs=no_of_jobs,
                                          p_value=args.P_VALUE,
-                                         exp_desn_file=args.EXPDSN,
-                                         bindir=bindir,
-                                         org_code=args.ORG_CODE)
-        single_seq.create_hisat_index()
-        single_seq.map_summarize()
-        single_seq.find_novel_regions()
-        single_seq.create_new_gff()
-        single_seq.feature_count()
-        single_seq.run_stringtie()
-        if args.METHOD == "edgeR":
-            single_seq.run_edger()
-        elif args.METHOD == "DESeq2":
-            single_seq.run_deseq2()
-        elif args.METHOD == "ballgown":
-            single_seq.merge_stringtie()
-            single_seq.restringtie()
-            single_seq.run_ballgown()
-        elif args.METHOD == "DEedge":
-            single_seq.run_edger()
-            single_seq.run_deseq2()
-        elif args.METHOD == "DEgown":
-            single_seq.run_deseq2()
-            single_seq.merge_stringtie()
-            single_seq.restringtie()
-            single_seq.run_ballgown()
-        elif args.METHOD == "balledgeR":
-            single_seq.run_edger()
-            single_seq.merge_stringtie()
-            single_seq.restringtie()
-            single_seq.run_ballgown()
-        elif args.METHOD == "all":
-            single_seq.run_edger()
-            single_seq.run_deseq2()
-            single_seq.merge_stringtie()
-            single_seq.restringtie()
-            single_seq.run_ballgown()
+                                         exp_desn_file=args.EXPDSN, 
+                                         org_code=args.ORG_CODE,
+                                         stardb_dir=db)
+            if args.QC_OFF is False:
+                run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
+                        local_scheduler=args.scheduler)
+                single_seq.create_db() # create database, hisat2 or stardb
+                single_seq.map_reads() # map reads, hisat2 or stardb
+                single_seq.map_summarize() # summarize the reads               
+                if args.NOVEL is True: # if novel regions are to be reported
+                    single_seq.extract_pp() # extract properly paired reads
+                    single_seq.novel_regions() # find novel regions
+                    single_seq.create_new_gff() # create a new GFF file that has novel region info
+                    single_seq.feature_count_updated() # run feature count with updated.gff
+                else:
+                    single_seq.feature_count() # if no novel region required
+                if args.METHOD == "edgeR": 
+                    single_seq.run_edger() # find diff expressed gene using edgeR
+                elif args.METHOD == "DESeq2":
+                    single_seq.run_deseq2()   # use DESeq2
+                elif args.METHOD == "DEedge": # use both
+                    single_seq.run_edger() 
+                    single_seq.run_deseq2() 
+                elif args.METHOD == "DEgown": # use deseq and ballgown
+                    single_seq.run_deseq2()
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
+                elif args.METHOD == "balledgeR": # use ball and edgeR
+                    single_seq.run_edger()
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
+                elif args.METHOD == "all": # use all
+                    single_seq.run_edger()
+                    single_seq.run_deseq2()
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
+            elif args.QC_OFF is True:
+                pass
+
     elif args.TEST_KINGDOM == 'both' and args.qsub is False:
         check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
         check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
@@ -233,7 +266,9 @@ def main():
                                      local_scheduler=args.scheduler,
                                      num_cpus=args.CPU,
                                      exp_desn_file=args.EXPDSN, p_value=args.P_VALUE,
-                                     bindir=bindir)
+                                    #  bindir=bindir
+                                     )
+
         dual_seq.create_hisat_index()
         dual_seq.map_hisat()
         dual_seq.split_prokeuk()
@@ -267,6 +302,86 @@ def main():
             dual_seq.run_ballgown()
 
 
+def check_input(args, parser, workdir):
+    """ A function to check if complimentary options are selected. """
+    
+    # for prokarya
+    if args.TEST_KINGDOM == "prokarya" and args.FASTA_PROK is None:
+        parser.error("-k prokarya requires fasta file to be specified using -fp")
+    elif args.TEST_KINGDOM == "prokarya" and args.GFF_PROK is None:
+        parser.error("-k prokarya requires gff file to be specified using -gp")
+    if args.TEST_KINGDOM == "prokarya" and args.FASTA_EUK != None:
+        parser.error("-k prokarya does not need eukarya fasta -fe to be specified")
+    if args.TEST_KINGDOM == "prokarya" and args.GFF_EUK != None:
+        parser.error("-k prokarya does not need eukarya gff -ge to be specified")
+    # for eukarya
+    if args.TEST_KINGDOM == "eukarya" and args.FASTA_EUK is None:
+        parser.error("-k eukarya requires fasta file to be specified using -fe")
+    elif args.TEST_KINGDOM == "eukarya" and args.GFF_EUK is None:
+        parser.error("-k eukarya requires gff file to be specified using -ge")
+    if args.TEST_KINGDOM == "eukarya" and args.FASTA_PROK != None:
+        parser.error("-k eukarya does not need eukarya fasta -fe to be specified")
+    if args.TEST_KINGDOM == "eukarya" and args.GFF_PROK != None:
+        parser.error("-k eukarya does not need prokarya gff -gp to be specified")
+    # for both
+    if args.TEST_KINGDOM == "both":
+        if args.GFF_PROK is None or args.GFF_EUK is None or args.FASTA_EUK is None or args.FASTA_PROK is None:
+            parser.error("-k both needs fasta and gff file specified for both prokarya and eukarya")
+    # for pathway
+    if args.PATHWAY is True or args.GAGE is True:
+        if args.ORG_CODE is None:
+            parser.error("need to specify an organism code")
+
+
+def check_aligner(aligner, hisat_index, workdir, star_db):
+    if aligner == "HISAT2":
+        if hisat_index is None:
+            hisat_index_name = os.path.join(workdir, "hisat_index")
+        else:
+            hisat_index_name = hisat_index
+        return hisat_index_name
+    elif aligner == "STAR":
+        if star_db is None:
+            new_stardb = os.path.join(workdir, "stardb")
+            if os.path.exists(new_stardb) is False:
+                os.makedirs(new_stardb)
+            return new_stardb
+        else:
+            os.makedirs(star_db)
+            return star_db
+            
+
+def check_comp(comp_file, exp_design):
+    """Check if comparison file is tsv and the groups in it actually
+    corresponds to one mentioned in experimental design file."""
+    
+    group = []
+    with open(exp_design, 'r') as e:
+        elines = e.readlines()
+        for line in elines:
+            group.append(line.split("\t")[2].rstrip())
+    grp = list(set(group))
+    with open(comp_file, 'r') as c:
+        clines = c.readlines()
+        for line in clines:
+            if len(line.split("\t")) == 2:
+                for l in line.split("\t"):
+                    if l in grp:
+                        pass
+                    else:
+                        print(*grp, sep="\t")
+                        sys.exit("'%s' not found design file!" %l)
+            else:
+                sys.exit("Comparison file is not correct. Its a two column tab delimited file.")
+            
+
+def check_depen(tool_list):
+    """A function that checks the list of tool are in path or not."""
+    for tool in tool_list:
+        check = CheckDependencies(package=tool)
+        check.check_thirdparty()
+
+    
 def run_faqc(fastq_dic, num_cpus, workdir, local_scheduler):
     """A function that calls the FaQC function.
 
