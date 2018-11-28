@@ -8,17 +8,15 @@ from luigi import LocalTarget
 from pypiret import Summ
 from luigi.util import inherits, requires
 import pandas as pd
-from plumbum.cmd import Rscript
-
+from plumbum.cmd import EdgeR, Rscript, plot_pathway, gage_analysis
+import logging
 
 
 @requires(Summ.FeatureCounts)
 class edgeR(luigi.Task):
     """Find DGE using edgeR."""
-
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    bindir = luigi.Parameter()
     org_code = luigi.Parameter()
 
     def output(self):
@@ -30,38 +28,37 @@ class edgeR(luigi.Task):
                 if file.endswith("__sig.csv"):
                     out_folder = file.split(".csv")[0]
                     out_filepath = os.path.join(edger_dir, out_folder, "greater.csv")
-                    print(out_filepath)
                     return LocalTarget(out_filepath)
 
     def run(self):
         """Run edgeR."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
-        edger_location = os.path.join(self.bindir, "../scripts/edgeR.R")
-        gage_location = os.path.join(self.bindir, "../scripts/gage_analysis.R")
-        path_location = os.path.join(self.bindir, "../scripts/plot_pathway.R")
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
         for root, dirs, files in os.walk(fcount_dir):
             for file in files:
                 if file.endswith("tsv"):
                     name = file.split("_")[-2]
-                    edger_list = [edger_location,
-                                  "-r", os.path.join(root, file),
+                    edger_list = ["-r", os.path.join(root, file),
                                   "-e", self.exp_design,
                                   "-p", self.p_value,
                                   "-n", name,
                                   "-o", edger_dir]
-                    edger_cmd = Rscript[edger_list]
+                    edger_cmd = EdgeR[edger_list]
+                    logger = logging.getLogger('luigi-interface')
+                    logger.info(edger_cmd)
                     edger_cmd()
                     if file == "gene_count.tsv":
-                        path_list = [path_location, "-d", edger_dir,
+                        path_list = ["-d", edger_dir,
                             "-m", "edgeR", "-c", self.org_code] # get pathway information
-                        path_cmd = Rscript[path_list]
+                        path_cmd = plot_pathway[path_list]
+                        logger.info(path_cmd)
                         path_cmd()
-                        gage_list = [gage_location, "-d", edger_dir,
+                        gage_list = ["-d", edger_dir,
                             "edgeR", "-c", self.org_code]
-                        gage_cmd = Rscript[gage_list]
+                        gage_cmd = gage_analysis[gage_list]
+                        logger.info(gage_cmd)
                         gage_cmd()
         self.summ_summ()
 
@@ -83,7 +80,7 @@ class DESeq2(luigi.Task):
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    bindir = luigi.Parameter()
+    # bindir = luigi.Parameter()
     org_code = luigi.Parameter()
 
     def output(self):
@@ -102,9 +99,6 @@ class DESeq2(luigi.Task):
         """Run edgeR."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
-        deseq2_location = os.path.join(self.bindir, "../scripts/DESeq2.R")
-        gage_location = os.path.join(self.bindir, "../scripts/gage_analysis.R")
-        path_location = os.path.join(self.bindir, "../scripts/plot_pathway.R")
 
         if not os.path.exists(DESeq2_dir):
             os.makedirs(DESeq2_dir)
@@ -112,7 +106,7 @@ class DESeq2(luigi.Task):
             for file in files:
                 if file.endswith("tsv"):
                     name = file.split("_")[-2]
-                    deseq2_list = [deseq2_location,
+                    deseq2_list = ["DESeq2.R",
                                    "-r", os.path.join(root, file),
                                    "-e", self.exp_design,
                                    "-p", self.p_value,
@@ -121,12 +115,12 @@ class DESeq2(luigi.Task):
                     deseq2_cmd = Rscript[deseq2_list]
                     deseq2_cmd()
                 if file == "gene_count.tsv":
-                    path_list = [path_location, "-d", DESeq2_dir,
+                    path_list = ["plot_pathway.R", "-d", DESeq2_dir,
                          "-m", "DESeq2", "-c",
                          self.org_code] # get pathway information
                     path_cmd = Rscript[path_list]
                     path_cmd()
-                    gage_list = [gage_location, "-d", DESeq2_dir,
+                    gage_list = ["gage_analysis.R", "-d", DESeq2_dir,
                          "DESeq2", "-c", self.org_code]
                     gage_cmd = Rscript[gage_list]
 
@@ -142,10 +136,6 @@ class DESeq2(luigi.Task):
         summ_df = pd.concat(summ_files)
         summ_df.to_csv(out_file)
 
-    def program_environment(self):
-        """Environmental variables for this program."""
-        scriptdir = os.path.join(self.bindir, "/../scripts/")
-        return {'PATH': scriptdir + ":" + os.environ["PATH"]}
 
 
 @inherits(Summ.ReStringTieScoresW)
@@ -154,7 +144,7 @@ class ballgown(luigi.Task):
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    bindir = luigi.Parameter()
+    # bindir = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
@@ -168,10 +158,10 @@ class ballgown(luigi.Task):
         bg_results = os.path.join(self.workdir, "bg_results", self.kingdom)
         if os.path.isdir(bg_results) is False:
             os.makedirs(bg_results)
-        bg_loc = os.path.join(self.bindir, "../scripts/ballgown.R")
+        # bg_loc = os.path.join(self.bindir, "../scripts/ballgown.R")
 
         for name in ["gene", "transcript"]:
-            bg_list = [bg_loc, "-i", bg_dir, "-e", self.exp_design,
+            bg_list = ["ballgown.R", "-i", bg_dir, "-e", self.exp_design,
                        "-n", name, "-p", self.p_value,
                        "-o", bg_results]
             bg_cmd = Rscript[bg_list]
@@ -189,7 +179,7 @@ class ballgown(luigi.Task):
     #     summ_df = pd.concat(summ_files)
     #     summ_df.to_csv(out_file)
 
-    def program_environment(self):
-        """Environmental variables for this program."""
-        scriptdir = os.path.join(self.bindir, "/../scripts/")
-        return {'PATH': scriptdir + ":" + os.environ["PATH"]}
+    # def program_environment(self):
+    #     """Environmental variables for this program."""
+    #     scriptdir = os.path.join(self.bindir, "/../scripts/")
+    #     return {'PATH': scriptdir + ":" + os.environ["PATH"]}

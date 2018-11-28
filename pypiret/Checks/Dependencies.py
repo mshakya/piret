@@ -9,9 +9,9 @@ from plumbum import local
 class CheckDependencies():
     """Check if third party dependencies are in the path."""
 
-    def __init__(self, packages):
+    def __init__(self, package):
         """Initialize."""
-        self.packages = packages
+        self.package = package
 
     def check_thirdparty(self):
         """Check if thirdparty tool is in the path."""
