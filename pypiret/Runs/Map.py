@@ -19,13 +19,14 @@ from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
 import subprocess
 from pypiret import FaQC
-from plumbum.cmd import gffread, hisat2, python
+from plumbum.cmd import gffread, hisat2
 from plumbum.cmd import samtools, stringtie, mv, awk
+from plumbum.cmd import STAR
 import pandas as pd
 from sys import stderr, exit
+import logging
 from collections import defaultdict as dd, Counter
 # from Bio import SeqIO
-
 
 class RefFile(ExternalTask):
     """An ExternalTask like this."""
@@ -66,7 +67,6 @@ class GetChromName(luigi.Task):
         euk_cmd = "grep '>' %s | sed 's/>//g' | sed 's/ .*$//g' > %s" % (self.euk_ref,
                                                                          euk_chrom_file)
         subprocess.Popen(euk_cmd, shell=True)
-
 
 class HisatIndex(ExternalProgramTask):
     """Create Hisat Indices from given fasta file."""
@@ -328,7 +328,7 @@ class CreateSplice(ExternalProgramTask):
             self.extract_splice_sites(gtf_file, out_file)
 
 
-@requires(FaQC.PairedRunQC)
+# @requires(FaQC.PairedRunQC)
 class Hisat(luigi.Task):
     """Mapping the QCed sequences to reference."""
 
@@ -336,9 +336,10 @@ class Hisat(luigi.Task):
     indexfile = Parameter()
     spliceFile = Parameter()
     outsam = Parameter()
-    ref_file = Parameter()
     map_dir = Parameter()
     workdir = Parameter()
+    num_cpus = Parameter()
+    sample=Parameter()
 
     def output(self):
         """SAM file output of the mapping."""
@@ -398,12 +399,10 @@ class Hisat(luigi.Task):
         samtools_cmd = samtools[options]
         samtools_cmd()
 
-
 class HisatMapW(luigi.WrapperTask):
     """A wrapper task for mapping."""
 
     fastq_dic = DictParameter()
-    ref_file = luigi.Parameter()
     indexfile = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
@@ -425,16 +424,159 @@ class HisatMapW(luigi.WrapperTask):
                 os.makedirs(map_dir)
             yield Hisat(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                 trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                        qc_outdir=trim_dir,
                         num_cpus=self.num_cpus,
                         indexfile=self.indexfile,
                         spliceFile=splice_file,
                         outsam=map_dir + "/" + samp + ".sam",
-                        ref_file=self.ref_file,
                         map_dir=map_dir,
                         sample=samp,
                         workdir=self.workdir)
 
+
+@requires(HisatMapW)
+class SummarizeHisatMap(luigi.Task):
+    """Summarizes mapping results of all samples into a table"""
+
+    def output(self):
+        """Mapping Summary Output."""
+        out_file = self.workdir + "/" + "MapSummary.csv"
+        return luigi.LocalTarget(out_file)
+
+    def run(self):
+        """Parse the FaQC stats."""
+        summ_dic = {}
+        for samp, fastq in self.fastq_dic.items():
+            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            filename = map_dir + "/" + "mapping.log"
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+                total_reads = lines[0].split("reads")[0].strip()
+                con_unaligned = lines[2].split("(")[0].strip()
+                con_aligned = lines[3].split("(")[0].strip()
+                multi_aligned = lines[4].split("(")[0].strip()
+                summ_dic[samp] = [total_reads,
+                                  con_unaligned,
+                                  con_aligned,
+                                  multi_aligned]
+        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
+        summ_table.columns = ["Paired reads", "Concordantly unaligned",
+                              "Concordantly aligned", "Multi aligned"]
+        out_file = self.workdir + "/" + "MapSummary.csv"
+        summ_table.to_csv(out_file)
+
+class STARindex(luigi.Task):
+    """ Creates STAR index."""
+    fasta = Parameter()
+    num_cpus = IntParameter()
+    gff_file = Parameter()
+    stardb_dir= Parameter()
+
+    def requires(self):
+        return[RefFile(self.fasta)]
+    
+    def output(self):
+        """Expected index output"""
+        return LocalTarget(os.path.join(self.stardb_dir, "chrName.txt"))
+    
+    def run(self):
+        if os.path.exists(self.stardb_dir) is False:
+            os.makedirs(self.stardb_dir)
+        ind_opt = ["--runMode", "genomeGenerate",
+                   "--runThreadN", self.num_cpus,
+                   "--genomeDir", self.stardb_dir,
+                   "--genomeFastaFiles", self.fasta,
+                   "--sjdbGTFfile", self.gff_file]
+        star_cmd = STAR[ind_opt]
+        logger = logging.getLogger('luigi-interface')
+        logger.info(star_cmd)
+        star_cmd()
+
+
+class map_star(luigi.Task):
+    """Mapping the QCed sequences to reference using star aligner."""
+    fastqs = ListParameter()
+    stardb_dir = Parameter()
+    map_dir = Parameter()
+    sample = Parameter()
+    num_cpus = IntParameter()
+
+    # def requires(self):
+    #     """See if input file exist."""
+    #     return [luigi.LocalTarget(self.fastqs[0]),
+    #             luigi.LocalTarget(self.fastqs[1])]
+
+    def output(self):
+        """SAM file output of the mapping."""
+        bam_file = os.path.join(self.map_dir, self.sample) + "_srt.bam"
+        return luigi.LocalTarget(bam_file)
+
+    def run(self):
+        """Run star"""
+        if os.path.exists(self.map_dir) is False:
+            os.makedirs(self.map_dir)
+        star_option = ["--genomeDir", self.stardb_dir,
+                       "--runThreadN", self.num_cpus,
+                       "--outFileNamePrefix", os.path.join(self.map_dir, self.sample + "_"),
+                       "--outSAMtype", "BAM", "SortedByCoordinate",
+                       "--readFilesIn", self.fastqs[0], self.fastqs[1]]
+        star_cmd = STAR[star_option]
+        star_cmd()
+        bam_file = os.path.join(self.map_dir, self.sample) + "_Aligned.sortedByCoord.out.bam"
+        mv_list = [bam_file, os.path.join(self.map_dir, self.sample) + "_srt.bam"]
+        mv_cmd = mv[mv_list]
+        mv_cmd()
+
+
+class map_starW(luigi.WrapperTask):
+    """A wrapper task for mapping using star."""
+
+    fastq_dic = luigi.DictParameter()
+    stardb_dir = luigi.Parameter()
+    workdir = luigi.Parameter()
+    num_cpus = luigi.IntParameter()
+
+    def requires(self):
+        """A wrapper task for mapping using STAR."""
+        for samp, fastq in self.fastq_dic.items():
+            trim_dir = self.workdir + "/" + samp + "/trimming_results"
+            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            if os.path.isdir(map_dir) is False:
+                os.makedirs(map_dir)
+            yield map_star(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                   trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                                   stardb_dir=self.stardb_dir, map_dir=map_dir,
+                                   sample=samp, num_cpus=self.num_cpus)
+
+@requires(map_starW)
+class SummarizeStarMap(luigi.Task):
+    """Summarizes mapping results of all samples into a table"""
+
+    def output(self):
+        """Mapping Summary Output."""
+        out_file = self.workdir + "/" + "MapSummary.csv"
+        return luigi.LocalTarget(out_file)
+
+    def run(self):
+        """Parse the mapping stats."""
+        summ_dic = {}
+        for samp, fastq in self.fastq_dic.items():
+            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            filename = map_dir + "/" + samp + "_Log.final.out"
+            with open(filename, 'r') as file:
+                lines = file.readlines()
+                total_reads = lines[5].split("|")[1].strip()
+                unq_map_reads = lines[8].split("|")[1].strip()
+                multi_map_reads = lines[23].split("|")[1].strip()
+                multiX_map_reads = lines[25].split("|")[1].strip()
+                summ_dic[samp] = [total_reads,
+                                  unq_map_reads,
+                                  multi_map_reads,
+                                  multiX_map_reads]
+        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
+        summ_table.columns = ["Paired reads", "Uniquely mapped reads",
+                              "mapped to multiple loci", "mapped to too many loci"]
+        out_file = self.workdir + "/" + "MapSummary.csv"
+        summ_table.to_csv(out_file)
 
 @requires(Hisat)
 class RefNames(luigi.Task):
@@ -660,59 +802,3 @@ class Split2ProkEukW(luigi.WrapperTask):
                                 sample=samp,
                                 qc_outdir=trim_dir)
 
-
-# @inherits(HisatMapW)
-# class StringTieScoresBoth(luigi.WrapperTask):
-#     """From Mapping to Counting step for Eukaryotic and Prokaryotic."""
-
-#     euk_gff = Parameter()
-#     prok_gff = Parameter()
-
-#     def requires(self):
-#         """A pipeline that runs from mapping to count for euk and prok."""
-#         splice_list = [self.workdir + "/" +
-#                        f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-#         if len(splice_list) > 1:
-#             splice_file = ','.join(splice_list)
-#         else:
-#             splice_file = splice_list[0]
-
-#         euk_gtf = self.workdir + "/" + \
-#             self.euk_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-#         prok_gtf = self.workdir + "/" + \
-#             self.prok_gff.split("/")[-1].split(".gff")[0] + ".gtf"
-#         for samp, fastq in self.fastq_dic.items():
-#             map_dir = self.workdir + "/" + samp + "/mapping_results"
-#             trim_dir = self.workdir + "/" + samp + "/trimming_results"
-#             yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-#                                   fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                   num_cpus=self.num_cpus,
-#                                   indexfile=self.indexfile,
-#                                   spliceFile=splice_file,
-#                                   # mappingLogFile=map_dir + "/mapping.log",
-#                                   outsam=map_dir + "/" + samp + ".sam",
-#                                   bam_file=map_dir + "/" + samp + ".bam",
-#                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-#                                   ref_file=self.ref_file,
-#                                   gtf=euk_gtf,
-#                                   out_gtf=map_dir + "/" + samp + "_euk_sTie.gtf",
-#                                   out_cover=map_dir + "/" + samp + "_euk_covered_sTie.gtf",
-#                                   out_abun=map_dir + "/" + samp + "_euk_sTie.tab",
-#                                   in_bam_file=map_dir + "/" + "eukarya.bam",
-#                                   bindir=self.bindir)
-#             yield StringTieScores(fastq1=trim_dir + "/" + samp + ".1.trimmed.fastq",
-#                                   fastq2=trim_dir + "/" + samp + ".2.trimmed.fastq",
-#                                   num_cpus=self.num_cpus,
-#                                   indexfile=self.indexfile,
-#                                   spliceFile=splice_file,
-#                                   # mappingLogFile=map_dir + "/mapping.log",
-#                                   outsam=map_dir + "/" + samp + ".sam",
-#                                   bam_file=map_dir + "/" + samp + ".bam",
-#                                   sorted_bam_file=map_dir + "/" + samp + "_srt.bam",
-#                                   ref_file=self.ref_file,
-#                                   gtf=prok_gtf,
-#                                   out_gtf=map_dir + "/" + samp + "_prok_sTie.gtf",
-#                                   out_cover=map_dir + "/" + samp + "_prok_covered_sTie.gtf",
-#                                   out_abun=map_dir + "/" + samp + "_prok_sTie.tab",
-#                                   in_bam_file=map_dir + "/" + "prokarya.bam",
-#                                   bindir=self.bindir)
