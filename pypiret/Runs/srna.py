@@ -10,18 +10,22 @@ from plumbum.cmd import samtools, grep, sed, bedtools, cat, awk
 from pypiret.Runs import Map
 from luigi.util import requires, inherits
 import luigi
+import logging
 import pandas as pd
 
 
-@requires(Map.Hisat)
 class ExtractPP(luigi.Task):
     """Extract properly paried reads."""
     kingdom = luigi.Parameter()
+    workdir = luigi.Parameter()
+    map_dir = luigi.Parameter()
+    sample = luigi.Parameter()
+    num_cpus = luigi.IntParameter()
 
     def output(self):
         """SAM file output of the mapping."""
         if self.kingdom in ['prokarya', 'eukarya']:
-            bam_file = self.map_dir + "/" + self.sample + ".bam"
+            bam_file = self.map_dir + "/" + self.sample + "_srt.bam"
             fbam = bam_file.split(".bam")[0] + ".fw_srt.bam"
             return luigi.LocalTarget(fbam)
         elif self.kingdom in ['both']:
@@ -32,11 +36,11 @@ class ExtractPP(luigi.Task):
     def run(self):
         """Run split and merges."""
         if self.kingdom in ['prokarya', 'eukarya']:
-            bam_file = self.map_dir + "/" + self.sample + ".bam"
+            bam_file = self.map_dir + "/" + self.sample + "_srt.bam"
             fbam = bam_file.split(".bam")[0] + ".fw.bam"
             bbam = bam_file.split(".bam")[0] + ".bw.bam"
             self.prop_paired(bam_file)
-            self.merge_prop_paired(self.sample, fbam, bbam)
+            self.merge_prop_paired(bam_file, fbam, bbam)
             self.sort_bam(fbam.split(".bam")[0] + ".bam")
             self.sort_bam(bbam.split(".bam")[0] + ".bam")
         elif self.kingdom == "both":
@@ -64,7 +68,10 @@ class ExtractPP(luigi.Task):
                        "/tmp/" + basename(bam_file).split(".bam")[0] + "_" +
                        flag.split("-")[1] + ".bam"]
             samtools_cmd = samtools[options]
+            logger = logging.getLogger('luigi-interface')
+            logger.info(samtools_cmd)
             samtools_cmd()
+
 
     def merge_prop_paired(self, bam_file, fbam, bbam):
         """Merge properly paired files."""
@@ -74,7 +81,9 @@ class ExtractPP(luigi.Task):
                    "/tmp/" + basename(bam_file).split(".bam")[0] + 
                    "_" + "f147.bam", "-f"]
         merge_cmd = samtools[options]
-        merge_cmd()        
+        merge_cmd()
+        logger = logging.getLogger('luigi-interface')
+        logger.info(merge_cmd)
         options = ["merge", bbam,
                    "/tmp/" + basename(bam_file).split(".bam")[0] +
                    "_" + "f163.bam",
@@ -82,6 +91,7 @@ class ExtractPP(luigi.Task):
                    "_" + "f83.bam",
                    "-f"]
         merge_cmd = samtools[options]
+        logger.info(merge_cmd)
         merge_cmd()
 
     def sort_bam(self, bam_file):
@@ -90,6 +100,8 @@ class ExtractPP(luigi.Task):
         options = ["sort", bam_file,
                    "-o", sorted_bam_file]
         samtools_cmd = samtools[options]
+        logger = logging.getLogger('luigi-interface')
+        logger.info(samtools_cmd)
         samtools_cmd()
 
 
@@ -97,7 +109,7 @@ class ExtractPPW(luigi.WrapperTask):
     """A wrapper task for mapping."""
 
     fastq_dic = luigi.DictParameter()
-    ref_file = luigi.Parameter()
+    # ref_file = luigi.Parameter()
     indexfile = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
@@ -119,14 +131,12 @@ class ExtractPPW(luigi.WrapperTask):
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
-                yield ExtractPP(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                        trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                qc_outdir=trim_dir,
+                yield ExtractPP(
                                 num_cpus=self.num_cpus,
-                                indexfile=self.indexfile,
-                                spliceFile=splice_file,
-                                outsam=map_dir + "/" + samp + ".sam",
-                                ref_file=self.ref_file,
+                                # indexfile=self.indexfile,
+                                # spliceFile=splice_file,
+                                # outsam=map_dir + "/" + samp + ".sam",
+                                # ref_file=self.ref_file,
                                 map_dir=map_dir,
                                 sample=samp,
                                 kingdom=self.kingdom,
@@ -134,58 +144,30 @@ class ExtractPPW(luigi.WrapperTask):
             elif self.kingdom == 'both':
                 # prok_gff = os.path.basename(self.gff_file.split(";")[0]).split(".gff")[0]
                 # euk_gff = os.path.basename(self.gff_file.split(";")[1]).split(".gff")[0]
-                yield ExtractPP(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                        trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                qc_outdir=trim_dir,
+                yield ExtractPP(
                                 num_cpus=self.num_cpus,
-                                indexfile=self.indexfile,
-                                spliceFile=splice_file,
-                                outsam=map_dir + "/" + samp + ".sam",
-                                ref_file=self.ref_file,
+                                # indexfile=self.indexfile,
+                                # spliceFile=splice_file,
+                                # outsam=map_dir + "/" + samp + ".sam",
+                                # ref_file=self.ref_file,
                                 map_dir=map_dir,
                                 sample=samp,
                                 kingdom=self.kingdom,
                                 workdir=self.workdir)
 
 
-@requires(ExtractPPW)
-class SummarizeMap(luigi.Task):
-    """Summarizes FaQC results of all samples into a table"""
-
-    def output(self):
-        """Mapping Summary Output."""
-        out_file = self.workdir + "/" + "MapSummary.csv"
-        return luigi.LocalTarget(out_file)
-
-    def run(self):
-        """Parse the FaQC stats."""
-        summ_dic = {}
-        for samp, fastq in self.fastq_dic.items():
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
-            filename = map_dir + "/" + "mapping.log"
-            with open(filename, 'r') as file:
-                lines = file.readlines()
-                total_reads = lines[0].split("reads")[0].strip()
-                con_unaligned = lines[2].split("(")[0].strip()
-                con_aligned = lines[3].split("(")[0].strip()
-                multi_aligned = lines[4].split("(")[0].strip()
-                summ_dic[samp] = [total_reads,
-                                  con_unaligned,
-                                  con_aligned,
-                                  multi_aligned]
-        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
-        summ_table.columns = ["Paired reads", "Concordantly unaligned",
-                              "Concordantly aligned", "Multi aligned"]
-        out_file = self.workdir + "/" + "MapSummary.csv"
-        summ_table.to_csv(out_file)
 
 
-@requires(ExtractPP)
+
+# @requires(ExtractPP)
 class FindNovelRegions(luigi.Task):
     """create a new gff file based on coverage of intergenic regions"""
 
     kingdom = luigi.Parameter()
     gff_file = luigi.Parameter()
+    map_dir = luigi.Parameter()
+    sample = luigi.Parameter()
+    workdir = luigi.Parameter()
 
     def output(self):
         """Check for presence of bedfile."""
@@ -201,8 +183,8 @@ class FindNovelRegions(luigi.Task):
         if self.kingdom in ['prokarya', 'eukarya']:
             srt_bam_file = self.map_dir + "/" + self.sample + "_srt.bam"
             chrom_sizes = self.map_dir + "/" + self.sample + "_size.txt"
-            fw_srt_bam_file = self.map_dir + "/" + self.sample + ".fw_srt.bam"
-            bw_srt_bam_file = self.map_dir + "/" + self.sample + ".bw_srt.bam"
+            fw_srt_bam_file = self.map_dir + "/" + self.sample + "_srt.fw_srt.bam"
+            bw_srt_bam_file = self.map_dir + "/" + self.sample + "_srt.bw_srt.bam"
             fw_gcov = self.map_dir + "/" + self.sample + "_fw_gcov.bedfile"
             bw_gcov = self.map_dir + "/" + self.sample + "_bw_gcov.bedfile"
             fw_novels = self.map_dir + "/" + self.sample + "_fw_novel.bedfile"
@@ -272,12 +254,9 @@ class FindNovelRegions(luigi.Task):
          novels)()
 
 
-class FindNovelRegionsW(luigi.Task):
+class FindNovelRegionsW(luigi.WrapperTask):
     fastq_dic = luigi.DictParameter()
-    ref_file = luigi.Parameter()
-    indexfile = luigi.Parameter()
     workdir = luigi.Parameter()
-    num_cpus = luigi.IntParameter()
     gff_file = luigi.Parameter()
     kingdom = luigi.Parameter()
 
@@ -294,24 +273,20 @@ class FindNovelRegionsW(luigi.Task):
         for samp, fastq in self.fastq_dic.items():
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
-            yield FindNovelRegions(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                           trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                   qc_outdir=trim_dir,
-                                   num_cpus=self.num_cpus,
-                                   indexfile=self.indexfile,
-                                   spliceFile=splice_file,
-                                   outsam=map_dir + "/" + samp + ".sam",
-                                   ref_file=self.ref_file,
-                                   map_dir=map_dir,
+            yield FindNovelRegions(map_dir=map_dir,
                                    sample=samp,
                                    workdir=self.workdir,
                                    gff_file=self.gff_file,
                                    kingdom=self.kingdom)
 
 
-@inherits(FindNovelRegionsW)
+# @inherits(FindNovelRegionsW)
 class CompileGFF(luigi.Task):
     """Compile novel regions and create a gff."""
+    fastq_dic = luigi.DictParameter()
+    kingdom = luigi.Parameter()
+    workdir = luigi.Parameter()
+    gff_file = luigi.Parameter()
 
     def output(self):
         if self.kingdom in ["prokarya", "eukarya"]:

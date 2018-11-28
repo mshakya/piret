@@ -9,7 +9,7 @@ from pypiret import Map
 import pandas as pd
 from luigi.util import inherits, requires
 from luigi.contrib.external_program import ExternalProgramTask
-from luigi import LocalTarget
+from luigi import LocalTarget, Parameter, IntParameter
 import luigi
 
 class RefFile(luigi.ExternalTask):
@@ -22,10 +22,11 @@ class RefFile(luigi.ExternalTask):
         return LocalTarget(os.path.abspath(self.path))
 
 
-@requires(Map.HisatMapW)
+#@requires(Map.HisatMapW)
 class FeatureCounts(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
+    fastq_dic = luigi.DictParameter()
     kingdom = luigi.Parameter()
     gff = luigi.Parameter()
     workdir = luigi.Parameter()
@@ -88,7 +89,7 @@ class FeatureCounts(luigi.Task):
                                       "-s", self.stranded,
                                       "-B",
                                       "-p", "-P", "-C",
-                                      "-g", "locus_tag",
+                                      "-g", self.fid,
                                       "-t", feat,
                                       "-T", self.num_cpus,
                                       "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
@@ -115,10 +116,65 @@ class FeatureCounts(luigi.Task):
                                     "-s", self.stranded,
                                     "-B",
                                     "-p", "-P", "-C",
-                                    "-g", "locus_tag",
+                                    "-g", self.fid,
                                     "-t", feat,
                                     "-T", self.num_cpus,
                                     "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                fcount_cmd = featureCounts[fcount_cmd_opt]
+                fcount_cmd()
+
+
+class FeatureCountsII(luigi.Task):
+    """Summarize mapped reads classificaion using FeatureCount."""
+
+    gff = Parameter()
+    num_cpus = IntParameter()
+    stranded = IntParameter()
+    bam_list = Parameter()
+    out_dir = Parameter()
+
+    def requires(self):
+        """Check if gff and bam file exist"""
+        all_list = self.bam_list + tuple(self.gff)
+        for bam in all_list:
+            return RefFile(bam)
+
+    def output(self):
+        """Expected output of featureCounts."""
+        gff_fp = os.path.abspath(self.gff)
+        features = list(set(pd.read_csv(gff_fp, sep="\t", header=None, comment='#')[2].tolist()))
+        features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']]
+        loc_target = LocalTarget(self.out_dir + "/" + features[-1] + "_count.tsv")
+        return loc_target
+
+    def run(self):
+        """Running featureCounts on all."""
+        if os.path.exists(self.out_dir) is False:
+            os.makedirs(self.out_dir)
+        feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
+                                        comment='#')[2].tolist()))
+        for feat in feature:
+            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
+                        'novel_region']:
+                fcount_cmd_opt = ["-a", self.gff,
+                                    "-s", self.stranded,
+                                    "-B",
+                                    "-p", "-P", "-C",
+                                    "-g", "ID",
+                                    "-t", feat,
+                                    "-T", self.num_cpus,
+                                    "-o", os.path.join(self.out_dir, feat + "_count.tsv"), self.bam_list]
+                fcount_cmd = featureCounts[fcount_cmd_opt]
+                fcount_cmd()
+            elif feat in ['gene']:
+                fcount_cmd_opt = ["-a", self.gff,
+                                    "-s", self.stranded,
+                                    "-B",
+                                    "-p", "-P", "-C",
+                                    "-g", "locus_tag",
+                                    "-t", feat,
+                                    "-T", self.num_cpus,
+                                    "-o", os.path.join(self.out_dir, feat + "_count.tsv"), self.bam_list]
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
 

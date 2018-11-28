@@ -5,12 +5,15 @@ Rplots.pdf
 tests/test_prok/
 tests/test_euk/
 tests/test_both/
+tests/test_prokold
 *.sublime-project
 *.sublime-workspace
 .pytest_cache/
 test_both/
 test_euk/
 test_prok/
+migun/
+*.out
 *.png
 *.pdf
 *.ctab
@@ -25,6 +28,7 @@ test_prok/
 *.gtf
 *.pyc
 *.json
+*.xml
 test_euk.txt
 test_prok.txt
 test_summ.txt
