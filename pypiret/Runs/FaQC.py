@@ -12,6 +12,7 @@ from luigi.util import inherits, requires
 from itertools import chain
 from plumbum.cmd import FaQCs, cat
 import pandas as pd
+import logging
 
 
 class RefFile(ExternalTask):
@@ -59,6 +60,8 @@ class PairedRunQC(luigi.Task):
                         "-1", self.fastqs[0],
                         "-2", self.fastqs[1]]
         faqc_cmd = FaQCs[faqc_options]
+        logger = logging.getLogger('luigi-interface')
+        logger.info(faqc_cmd)
         faqc_cmd()
 
 
