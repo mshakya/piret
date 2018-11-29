@@ -389,7 +389,8 @@ def run_faqc(fastq_dic, num_cpus, workdir, local_scheduler):
     """
     build([FaQC.SummarizeQC(fastq_dic=fastq_dic,
                             num_cpus=num_cpus,
-                            workdir=workdir)],
+                            workdir=workdir,
+                            faqc_min_L=50)],
           local_scheduler=local_scheduler,
           workers=1)
 
