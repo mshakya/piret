@@ -110,7 +110,7 @@ class RunAllQC(luigi.WrapperTask):
                                   faqc_min_L=self.faqc_min_L,
                                   n_cutoff=self.n_cutoff)
 
-@requires(RunAllQC)
+@inherits(RunAllQC)
 class SummarizeQC(luigi.Task):
     """Summarizes FaQC results of all samples into a table"""
 
