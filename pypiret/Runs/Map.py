@@ -68,8 +68,15 @@ class GetChromName(luigi.Task):
                                                                          euk_chrom_file)
         subprocess.Popen(euk_cmd, shell=True)
 
+
 class HisatIndex(ExternalProgramTask):
-    """Create Hisat Indices from given fasta file."""
+    """Create Hisat Indices from given fasta file.
+    
+    Note: Still using ExternalProgramtask as importing commands with - 
+    creates error in plumbum
+    
+    And, it automatically prints command in log file under INFO
+    """
 
     fasta = Parameter()
     hi_index = Parameter()
@@ -90,10 +97,8 @@ class HisatIndex(ExternalProgramTask):
 
     def program_args(self):
         """Run hisat2-build command."""
-        return ["hisat2-build",
-                "--large-index",
-                "-q", "-p", self.num_cpus,
-                self.fasta, self.hi_index]
+        return ["hisat2-build", "-q", "-p", self.num_cpus, self.fasta,
+                self.hi_index]
 
 
 class SAMindex(luigi.Task):
@@ -630,15 +635,22 @@ class GetRefNames(luigi.WrapperTask):
                            map_dir=map_dir)
 
 
-@inherits(GFF2GTF)
-@requires(Hisat)
 class StringTieScores(luigi.Task):
     """Calculate scores using string tie."""
-
+    gff_file=luigi.Parameter()
     out_gtf = luigi.Parameter()
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
     in_bam_file = luigi.Parameter()
+    num_cpus = Parameter()
+
+    def requires(self):
+        """."""
+        if ',' in self.gff_file:
+            gffs = self.gff_file.split(",")
+            return [RefFile(os.path.abspath(gff)) for gff in gffs]
+        else:
+            return [RefFile(os.path.abspath(self.gff_file))]
 
     def output(self):
         """Index output."""
@@ -653,6 +665,8 @@ class StringTieScores(luigi.Task):
                          "-A", self.out_abun,
                          self.in_bam_file]
         stringtie_cmd = stringtie[stringtie_opt]
+        logger = logging.getLogger('luigi-interface')
+        logger.info(stringtie_cmd)
         stringtie_cmd()
 
 
@@ -665,14 +679,6 @@ class StringTieScoresW(luigi.WrapperTask):
 
     def requires(self):
         """A wrapper for running Stringtie scores on all samples."""
-        splst = [self.workdir + "/" +
-                 f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splst) > 1:
-            splice_file = ','.join(splst)
-        elif len(splst) == 1:
-            splice_file = splst[0]
-        else:
-            splice_file = ""
         for samp, fastq in self.fastq_dic.items():
             map_dir = self.workdir + "/" + samp + "/mapping_results"
             trim_dir = self.workdir + "/" + samp + "/trimming_results"
@@ -685,22 +691,12 @@ class StringTieScoresW(luigi.WrapperTask):
                 elif self.kingdom == 'eukarya':
                     apd = '_euk'
 
-                yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                              trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                      num_cpus=self.num_cpus,
-                                      indexfile=self.indexfile,
-                                      spliceFile=splice_file,
-                                      outsam=map_dir + "/" + samp + ".sam",
-                                      ref_file=self.ref_file,
+                yield StringTieScores(num_cpus=self.num_cpus,
                                       gff_file=self.gff_file,
                                       out_gtf=stng_dir + "/" + samp +  apd + "_sTie.gtf",
                                       out_cover=stng_dir + "/" + samp +  apd + "_covered_sTie.gtf",
                                       out_abun=stng_dir + "/" + samp +  apd + "_sTie.tab",
-                                      in_bam_file=map_dir + "/" + samp + "_srt.bam",
-                                      workdir=self.workdir,
-                                      sample=samp,
-                                      qc_outdir=trim_dir,
-                                      map_dir=map_dir)
+                                      in_bam_file=map_dir + "/" + samp + "_srt.bam")
             elif self.kingdom == 'both':
                 prok_gff = self.gff_file.split(",")[0]
                 euk_gff = self.gff_file.split(",")[1]

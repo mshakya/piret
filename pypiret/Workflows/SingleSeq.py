@@ -189,7 +189,7 @@ class SingleSeq:
                                     num_cpus=self.num_cpus,
                                     indexfile=self.hisat_index,
                                     workdir=self.workdir,
-                                    ref_file=self.ref_fasta,
+                                    # ref_file=self.ref_fasta,
                                     gff_file=os.path.join(self.workdir, "updated.gff"),
                                     kingdom=self.kingdom)],
                 local_scheduler=self.local_scheduler, workers=1)

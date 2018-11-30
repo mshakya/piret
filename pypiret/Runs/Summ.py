@@ -11,6 +11,7 @@ from luigi.util import inherits, requires
 from luigi.contrib.external_program import ExternalProgramTask
 from luigi import LocalTarget, Parameter, IntParameter
 import luigi
+import logging
 
 class RefFile(luigi.ExternalTask):
     """An ExternalTask like this."""
@@ -234,7 +235,7 @@ class MergeStringTies(luigi.Task):
             stie_cmd_prok()
 
 
-class ReStringTieScores(ExternalProgramTask):
+class ReStringTieScores(luigi.Task):
     """Calculate scores using string tie."""
 
     gtf = luigi.Parameter()
@@ -254,7 +255,8 @@ class ReStringTieScores(ExternalProgramTask):
 
     def program_args(self):
         """Run stringtie."""
-        return ["stringtie",
+
+        stie_opt = ["stringtie",
                 "-o", self.out_gtf,
                 "-p", self.num_cpus,
                 "-G", self.gtf,
@@ -262,6 +264,10 @@ class ReStringTieScores(ExternalProgramTask):
                 "-A", self.out_abun,
                 "-B",
                 self.in_bam_file]
+        logger = logging.getLogger('luigi-interface')
+        logger.info(stie_cmd)
+        stie_cmd = stringtie(stie_opt)
+        stie_cmd()
 
 
 @inherits(MergeStringTies)

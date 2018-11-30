@@ -8,7 +8,7 @@ from luigi import LocalTarget
 from pypiret import Summ
 from luigi.util import inherits, requires
 import pandas as pd
-from plumbum.cmd import EdgeR, Rscript, plot_pathway, gage_analysis
+from plumbum.cmd import EdgeR, Rscript, plot_pathway, gage_analysis, ballgown_analysis
 import logging
 
 
@@ -144,7 +144,6 @@ class ballgown(luigi.Task):
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    # bindir = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
@@ -153,18 +152,18 @@ class ballgown(luigi.Task):
 
     def run(self):
         """Run ballgown."""
-        # Rscript scripts/ballgown.R -i tests/test_euk/ballgown/ -e test_euk.txt -o test_ballgown -n exon
         bg_dir = os.path.join(self.workdir, "ballgown", self.kingdom)
         bg_results = os.path.join(self.workdir, "bg_results", self.kingdom)
         if os.path.isdir(bg_results) is False:
             os.makedirs(bg_results)
-        # bg_loc = os.path.join(self.bindir, "../scripts/ballgown.R")
 
         for name in ["gene", "transcript"]:
-            bg_list = ["ballgown.R", "-i", bg_dir, "-e", self.exp_design,
+            bg_list = ["-i", bg_dir, "-e", self.exp_design,
                        "-n", name, "-p", self.p_value,
                        "-o", bg_results]
-            bg_cmd = Rscript[bg_list]
+            bg_cmd = ballgown_analysis[bg_list]
+            logger = logging.getLogger('luigi-interface')
+            logger.info(bg_cmd)
             bg_cmd()
 
         # self.summ_summ()

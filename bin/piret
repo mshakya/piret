@@ -227,6 +227,10 @@ def main():
                     single_seq.run_edger() # find diff expressed gene using edgeR
                 elif args.METHOD == "DESeq2":
                     single_seq.run_deseq2()   # use DESeq2
+                elif args.METHOD == "ballgown":
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
                 elif args.METHOD == "DEedge": # use both
                     single_seq.run_edger() 
                     single_seq.run_deseq2() 
@@ -389,9 +393,7 @@ def run_faqc(fastq_dic, num_cpus, workdir, local_scheduler):
     """
     build([FaQC.SummarizeQC(fastq_dic=fastq_dic,
                             num_cpus=num_cpus,
-                            workdir=workdir,
-                            faqc_min_L=50,
-                            n_cutoff=2)],
+                            workdir=workdir)],
           local_scheduler=local_scheduler,
           workers=1)
 
