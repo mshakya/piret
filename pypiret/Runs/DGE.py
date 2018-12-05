@@ -8,7 +8,8 @@ from luigi import LocalTarget
 from pypiret import Summ
 from luigi.util import inherits, requires
 import pandas as pd
-from plumbum.cmd import EdgeR, Rscript, plot_pathway, gage_analysis, ballgown_analysis
+from plumbum.cmd import EdgeR, Rscript, plot_pathway
+from plumbum.cmd import DESeq2, gage_analysis, ballgown_analysis
 import logging
 
 
@@ -36,30 +37,29 @@ class edgeR(luigi.Task):
         edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
-        for root, dirs, files in os.walk(fcount_dir):
-            for file in files:
-                if file.endswith("tsv"):
-                    name = file.split("_")[-2]
-                    edger_list = ["-r", os.path.join(root, file),
-                                  "-e", self.exp_design,
-                                  "-p", self.p_value,
-                                  "-n", name,
+        for file in os.listdir(fcount_dir):
+            if file.endswith("tsv"):
+                name = file.split("_")[-2]
+                edger_list = ["-r", os.path.join(fcount_dir, file),
+                          "-e", self.exp_design,
+                          "-p", self.p_value,
+                              "-n", name,
                                   "-o", edger_dir]
-                    edger_cmd = EdgeR[edger_list]
-                    logger = logging.getLogger('luigi-interface')
-                    logger.info(edger_cmd)
-                    edger_cmd()
-                    if file == "gene_count.tsv":
-                        path_list = ["-d", edger_dir,
+                edger_cmd = EdgeR[edger_list]
+                logger = logging.getLogger('luigi-interface')
+                logger.info(edger_cmd)
+                edger_cmd()
+                if file == "gene_count.tsv":
+                    path_list = ["-d", edger_dir,
                             "-m", "edgeR", "-c", self.org_code] # get pathway information
-                        path_cmd = plot_pathway[path_list]
-                        logger.info(path_cmd)
-                        path_cmd()
-                        gage_list = ["-d", edger_dir,
+                    path_cmd = plot_pathway[path_list]
+                    logger.info(path_cmd)
+                    path_cmd()
+                    gage_list = ["-d", edger_dir,
                             "edgeR", "-c", self.org_code]
-                        gage_cmd = gage_analysis[gage_list]
-                        logger.info(gage_cmd)
-                        gage_cmd()
+                    gage_cmd = gage_analysis[gage_list]
+                    logger.info(gage_cmd)
+                    gage_cmd()
         self.summ_summ()
 
     def summ_summ(self):
@@ -77,44 +77,42 @@ class edgeR(luigi.Task):
 @requires(Summ.FeatureCounts)
 class DESeq2(luigi.Task):
     """Find DGE using DESeq2."""
-
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    # bindir = luigi.Parameter()
     org_code = luigi.Parameter()
 
     def output(self):
-        """Expected output of DGE using edgeR."""
+        """Expected output of DGE using DESeq2."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
-        for root, dirs, files in os.walk(fcount_dir):
-             for file in files:
-                if file.endswith("__sig.csv"):
-                    out_folder = file.split(".csv")[0]
-                    out_filepath = os.path.join(DESeq2_dir, out_folder, "greater.csv")
-                    
-                    return LocalTarget(out_filepath)
+        for file in os.listdir(fcount_dir):
+            if file.endswith("__sig.csv"):
+                out_folder = file.split(".csv")[0]
+                out_filepath = os.path.join(DESeq2_dir, out_folder, "greater.csv")    
+                return LocalTarget(out_filepath)
 
     def run(self):
-        """Run edgeR."""
+        """Run DESeq2."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
-
+        print("urshula")
+        print(fcount_dir)
+        print(DESeq2_dir)
         if not os.path.exists(DESeq2_dir):
             os.makedirs(DESeq2_dir)
-        for root, dirs, files in os.walk(fcount_dir):
-            for file in files:
-                if file.endswith("tsv"):
-                    name = file.split("_")[-2]
-                    deseq2_list = ["DESeq2.R",
-                                   "-r", os.path.join(root, file),
-                                   "-e", self.exp_design,
-                                   "-p", self.p_value,
-                                   "-n", name,
-                                   "-o", DESeq2_dir]
-                    deseq2_cmd = Rscript[deseq2_list]
-                    deseq2_cmd()
-                if file == "gene_count.tsv":
+        for file in os.listdir(fcount_dir):
+            if file.endswith("tsv"):
+                feat_name = file.split("_")[-2]
+                deseq2_list = ["-r", os.path.join(fcount_dir, file),
+                               "-e", self.exp_design, "-p", self.p_value,
+                               "-n", feat_name,
+                               "-o", DESeq2_dir]
+                print(deseq2_list)
+                deseq2_cmd = DESeq2[deseq2_list]
+                logger = logging.getLogger('luigi-interface')
+                logger.info(deseq2_cmd)
+                deseq2_cmd()
+            if file == "gene_count.tsv":
                     path_list = ["plot_pathway.R", "-d", DESeq2_dir,
                          "-m", "DESeq2", "-c",
                          self.org_code] # get pathway information
