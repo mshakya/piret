@@ -179,6 +179,9 @@ def main():
     
     if check_ballgown_method(args.METHOD, args.TEST_KINGDOM) is True: # checking ballgown method
         pass
+    
+    if check_star_aligner(args.ALIGNER, args.TEST_KINGDOM) is True: # check if STAR is only used with euks
+        pass
 
     no_of_jobs = 1
     samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
@@ -441,6 +444,14 @@ def check_ballgown_method(method, kingdom):
     """Only allow ballgown to be picked for both or eukarya."""
     if method in ('ballgown', 'balledgeR', 'DEgown', 'all') and kingdom == "prokarya":
         sys.exit("Ballgown does not work for prokaryotic genomes, pick method that does not have ballgown!")
+    else:
+        return True
+
+
+def check_star_aligner(method, kingdom):
+    """Only allow STAR aligner to work for eukarya only."""
+    if method in ('STAR') and kingdom == "prokarya":
+        sys.exit("STAR does not work well for prokaryotic genomes, pick HISAT2!")
     else:
         return True
 
