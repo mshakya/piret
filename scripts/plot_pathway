@@ -29,16 +29,26 @@ org <- opt$org_code
 if ( method == "edgeR"){
     fcs = list.files(path = dir, pattern = "gene_*_sig.csv", full.names = TRUE)
     for (fc in fcs) {
-        out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]
-        ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
-        rpiret::map_pathway(fc, "edgeR", org, out_dir) 
+        if (nrow(read.csv(fc)) > 0) { # if significant gene list is more than 0
+            out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]
+            ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
+            rpiret::map_pathway(fc, "edgeR", org, out_dir)
+        }
+        else {
+            print("There are no significant genes, no pathways will be drawn!")
+        }
     }
 } else if (method == "DESeq2")
 {   
     fcs = list.files(path = dir, pattern = "*gene__sig.csv", full.names = TRUE)
     for (fc in fcs) {
-        out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]
-        ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
-        rpiret::map_pathway(fc, "DESeq2", org, out_dir) 
+        if (nrow(read.csv(fc)) > 0) { # if significant gene list is more than 0
+            out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]
+            ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
+            rpiret::map_pathway(fc, "DESeq2", org, out_dir) 
+            }
+        else {
+            print("There are no significant genes, no pathways will be drawn!")
+        }
     }
 }

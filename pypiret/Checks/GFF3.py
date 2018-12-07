@@ -57,7 +57,6 @@ class CheckGFF():
         if gff_exon.empty is False:
             gff_exon['exon_ID'] = gff_exon.apply(lambda row: p_reg.search(row['attributes']).group(0), axis=1)
             exon_ids = gff_exon['exon_ID'].tolist()
-
         if gff_mrna.empty is False and gff_cds.empty is False:
             if len(list(set(mrna_ids).intersection(cds_ids))) > 0:
                 print(set(mrna_ids).intersection(cds_ids))

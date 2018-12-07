@@ -43,8 +43,8 @@ class edgeR(luigi.Task):
                 edger_list = ["-r", os.path.join(fcount_dir, file),
                           "-e", self.exp_design,
                           "-p", self.p_value,
-                              "-n", name,
-                                  "-o", edger_dir]
+                          "-n", name,
+                          "-o", edger_dir]
                 edger_cmd = EdgeR[edger_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(edger_cmd)
@@ -55,7 +55,7 @@ class edgeR(luigi.Task):
                     path_cmd = plot_pathway[path_list]
                     logger.info(path_cmd)
                     path_cmd()
-                    gage_list = ["-d", edger_dir,
+                    gage_list = ["-d", edger_dir, "-m",
                             "edgeR", "-c", self.org_code]
                     gage_cmd = gage_analysis[gage_list]
                     logger.info(gage_cmd)
@@ -75,7 +75,7 @@ class edgeR(luigi.Task):
 
 
 @requires(Summ.FeatureCounts)
-class DESeq2(luigi.Task):
+class deseq2(luigi.Task):
     """Find DGE using DESeq2."""
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
@@ -95,9 +95,6 @@ class DESeq2(luigi.Task):
         """Run DESeq2."""
         fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
         DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
-        print("urshula")
-        print(fcount_dir)
-        print(DESeq2_dir)
         if not os.path.exists(DESeq2_dir):
             os.makedirs(DESeq2_dir)
         for file in os.listdir(fcount_dir):
@@ -107,21 +104,22 @@ class DESeq2(luigi.Task):
                                "-e", self.exp_design, "-p", self.p_value,
                                "-n", feat_name,
                                "-o", DESeq2_dir]
-                print(deseq2_list)
                 deseq2_cmd = DESeq2[deseq2_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(deseq2_cmd)
                 deseq2_cmd()
             if file == "gene_count.tsv":
-                    path_list = ["plot_pathway.R", "-d", DESeq2_dir,
+                    path_list = ["-d", DESeq2_dir,
                          "-m", "DESeq2", "-c",
                          self.org_code] # get pathway information
-                    path_cmd = Rscript[path_list]
+                    path_cmd = plot_pathway[path_list]
+                    logger.info(path_cmd)
                     path_cmd()
-                    gage_list = ["gage_analysis.R", "-d", DESeq2_dir,
+                    gage_list = ["-d", DESeq2_dir, "-m",
                          "DESeq2", "-c", self.org_code]
-                    gage_cmd = Rscript[gage_list]
-
+                    gage_cmd = gage_analysis[gage_list]
+                    logger.info(gage_cmd)
+                    gage_cmd()
         self.summ_summ()
 
     def summ_summ(self):

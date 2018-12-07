@@ -164,7 +164,6 @@ class SingleSeq:
                          workdir=self.workdir,
                          ref_file=self.ref_fasta,
                          kingdom=self.kingdom,
-                         # gff=os.path.join(self.workdir, "updated.gff"),
                          gff=self.ref_gff,
                          exp_design=self.exp_desn_file,
                          p_value=self.p_value,
@@ -172,7 +171,7 @@ class SingleSeq:
         local_scheduler=self.local_scheduler, workers=1)
 
     def run_deseq2(self):
-        build([DGE.DESeq2(fastq_dic=self.fastq_dic,
+        build([DGE.deseq2(fastq_dic=self.fastq_dic,
                           num_cpus=self.num_cpus,
                           indexfile=self.hisat_index,
                           workdir=self.workdir,
