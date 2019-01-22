@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 RNA seq pipeline.
@@ -180,8 +180,8 @@ def main():
     if check_ballgown_method(args.METHOD, args.TEST_KINGDOM) is True: # checking ballgown method
         pass
     
-    if check_star_aligner(args.ALIGNER, args.TEST_KINGDOM) is True: # check if STAR is only used with euks
-        pass
+    # if check_star_aligner(args.ALIGNER, args.TEST_KINGDOM) is True: # check if STAR is only used with euks
+        # pass
 
     no_of_jobs = 1
     samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
@@ -190,6 +190,9 @@ def main():
                  workdir=workdir, star_db=args.STARDB)
 
     if args.TEST_KINGDOM in ['prokarya', 'eukarya'] and args.qsub is False:
+        #TODO: fix pathway and gage analysis, need to turn on corresponding parameters that turns on or off these analysis
+        #TODO: checks gff file amd see if it corresponds with the organism code.
+
         if args.TEST_KINGDOM == "prokarya":
             check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
             fasta = args.FASTA_PROK
@@ -204,7 +207,6 @@ def main():
                                          ref_fasta=fasta,
                                          num_cpus=args.CPU,
                                          local_scheduler=args.scheduler,
-                                         ref_gff=gff,
                                          hisat_index=db,
                                          workdir=workdir,
                                          kingdom=args.TEST_KINGDOM,
@@ -216,43 +218,51 @@ def main():
             if args.QC_OFF is False:
                 run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
                         local_scheduler=args.scheduler)
-                single_seq.create_db() # create database, hisat2 or stardb
+                single_seq.create_db(gff=gff) # create database, hisat2 or stardb
                 single_seq.map_reads() # map reads, hisat2 or stardb
                 single_seq.map_summarize() # summarize the reads               
                 if args.NOVEL is True: # if novel regions are to be reported
                     single_seq.extract_pp() # extract properly paired reads
-                    single_seq.novel_regions() # find novel regions
-                    single_seq.create_new_gff() # create a new GFF file that has novel region info
-                    single_seq.feature_count_updated() # run feature count with updated.gff
-                else:
-                    single_seq.feature_count() # if no novel region required
+                    single_seq.novel_regions(gff=gff) # find novel regions
+                    single_seq.create_new_gff(gff=gff) # create a new GFF file that has novel region info
+                    gff=os.path.join(workdir, "updated.gff") # update gff
+
+                single_seq.feature_count(gff=gff) # count
                 if args.METHOD == "edgeR": 
-                    single_seq.run_edger() # find diff expressed gene using edgeR
+                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE) # find diff expressed gene using edgeR
                 elif args.METHOD == "DESeq2":
-                    single_seq.run_deseq2()   # use DESeq2
+                    single_seq.run_deseq2(gff,pathway=args.PATHWAY,
+                                         GAGE=args.GAGE)   # use DESeq2
                 elif args.METHOD == "ballgown":
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
+                    single_seq.merge_stringtie(gff=gff)
+                    single_seq.restringtie(gff=gff)
+                    single_seq.run_ballgown(gff=gff)
                 elif args.METHOD == "DEedge": # use both
-                    single_seq.run_edger() 
-                    single_seq.run_deseq2() 
+                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE) 
+                    single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE) 
                 elif args.METHOD == "DEgown": # use deseq and ballgown
-                    single_seq.run_deseq2()
+                    single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE)
                     single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
+                    single_seq.restringtie(gff=gff)
+                    single_seq.run_ballgown(gff=gff)
                 elif args.METHOD == "balledgeR": # use ball and edgeR
-                    single_seq.run_edger()
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
+                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE)
+                    single_seq.merge_stringtie(gff=gff)
+                    single_seq.restringtie(gff=gff)
+                    single_seq.run_ballgown(gff=gff)
                 elif args.METHOD == "all": # use all
-                    single_seq.run_edger()
-                    single_seq.run_deseq2()
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
+                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE)
+                    single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
+                                         GAGE=args.GAGE)
+                    single_seq.merge_stringtie(gff=gff)
+                    single_seq.restringtie(gff=gff)
+                    single_seq.run_ballgown(gff=gff)
             elif args.QC_OFF is True:
                 pass
 
@@ -265,15 +275,13 @@ def main():
             run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
                      local_scheduler=args.scheduler)
         dual_seq = Workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
-                                     ref_gffs=gffs,
                                      hisat_index=hisat_index_name,
                                      workdir=workdir,
                                      kingdom=args.TEST_KINGDOM,
                                      no_of_jobs=1,
                                      local_scheduler=args.scheduler,
                                      num_cpus=args.CPU,
-                                     exp_desn_file=args.EXPDSN, p_value=args.P_VALUE,
-                                    #  bindir=bindir
+                                     exp_desn_file=args.EXPDSN, p_value=args.P_VALUE
                                      )
 
         dual_seq.create_hisat_index()
