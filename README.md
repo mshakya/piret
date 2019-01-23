@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/mshakya/piret.svg?branch=master)](https://travis-ci.org/mshakya/piret)
 [![codecov](https://codecov.io/gh/mshakya/PyPiReT/branch/master/graph/badge.svg)](https://codecov.io/gh/mshakya/PyPiReT)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/piret/README.html)
+
 <!-- [ ![Codeship Status for mshakya/PyPiReT](https://app.codeship.com/projects/56b51ac0-1899-0135-279d-22ebbf49dae4/status?branch=master)](https://app.codeship.com/projects/219002) -->
 [![Code Health](https://landscape.io/github/mshakya/PiReT/master/landscape.svg?style=flat&badge_auth_token=4d9548f2284e4b29b79e1bb813573a87)](https://landscape.io/github/mshakya/PiReT/master)
 
