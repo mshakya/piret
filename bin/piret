@@ -153,7 +153,7 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     parser.add_argument("--novel", dest="NOVEL", help="""A flag indicating to find novel regions.""",
                         required=False, default=False, action="store_true")
 
-    parser.add_argument('--version', action='version', version='%(prog)s 0.3')
+    parser.add_argument('--version', action='version', version='%(prog)s 0.3.4')
 
 
     return parser

@@ -16,12 +16,11 @@ from luigi.interface import build
 class SingleSeq:
     """Class that pieces luigi task for prokarya."""
 
-    def __init__(self, fastq_dic, ref_fasta, ref_gff, num_cpus,
+    def __init__(self, fastq_dic, ref_fasta, num_cpus,
                  local_scheduler, hisat_index, stardb_dir, workdir, kingdom,
                  no_of_jobs, exp_desn_file,
                  p_value, org_code, aligner ):
         self.ref_fasta = ref_fasta
-        self.ref_gff = ref_gff
         self.fastq_dic = fastq_dic
         self.num_cpus = num_cpus
         self.hisat_index = hisat_index
@@ -35,7 +34,7 @@ class SingleSeq:
         self.org_code = org_code
         self.aligner = aligner
 
-    def create_db(self):
+    def create_db(self, gff):
         """Function to create hisat index."""
         if self.aligner == "HISAT2":
             build([Map.HisatIndex(fasta=self.ref_fasta, hi_index=self.hisat_index,
@@ -44,8 +43,9 @@ class SingleSeq:
         elif self.aligner == "STAR":
             build([Map.STARindex(fasta=self.ref_fasta,
                              num_cpus=self.num_cpus,
-                             gff_file=self.ref_gff,
-                             stardb_dir = self.stardb_dir)],
+                             gff_file=gff,
+                             stardb_dir = self.stardb_dir,
+                             kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
 
     def map_reads(self):
@@ -81,23 +81,20 @@ class SingleSeq:
                                  kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
     
-    def novel_regions(self):
+    def novel_regions(self, gff):
         """Find novel regions."""
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                   workdir=self.workdir,
                                  kingdom=self.kingdom, 
-                                 gff_file=self.ref_gff)],
+                                 gff_file=gff)],
               local_scheduler=self.local_scheduler)
     
 
-    def create_new_gff(self):
+    def create_new_gff(self, gff):
         build([srna.CompileGFF(fastq_dic=self.fastq_dic,
-                            #    num_cpus=self.num_cpus,
-                            #    indexfile=self.hisat_index,
                                kingdom=self.kingdom,
                                workdir=self.workdir,
-                            #    ref_file=self.ref_fasta,
-                               gff_file=self.ref_gff)],
+                               gff_file=gff)],
           local_scheduler=self.local_scheduler, workers=1)
 
 
@@ -111,23 +108,21 @@ class SingleSeq:
                                   kingdom=self.kingdom)],
          local_scheduler=self.local_scheduler, workers=no_of_jobs)
 
-    def find_novel_regions(self):
+    def find_novel_regions(self, gff):
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                       num_cpus=self.num_cpus,
                                       indexfile=self.hisat_index,
                                       kingdom=self.kingdom,
                                       workdir=self.workdir,
                                       ref_file=self.ref_fasta,
-                                      gff_file=self.ref_gff)],
+                                      gff_file=gff)],
         local_scheduler = self.local_scheduler,
         workers=1)
 
- 
-
-    def feature_count(self):
+    def feature_count(self, gff):
         build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
-                                  gff=self.ref_gff,
+                                  gff=gff,
                                   indexfile=self.hisat_index,
                                   kingdom=self.kingdom,
                                   workdir=self.workdir,
@@ -157,63 +152,60 @@ class SingleSeq:
                           local_scheduler=self.local_scheduler,
                           workers=1)
 
-    def run_edger(self):
+    def run_edger(self, gff, pathway, GAGE):
         build([DGE.edgeR(fastq_dic=self.fastq_dic,
                          num_cpus=self.num_cpus,
                          indexfile=self.hisat_index,
                          workdir=self.workdir,
                          ref_file=self.ref_fasta,
                          kingdom=self.kingdom,
-                         gff=self.ref_gff,
+                         gff=gff,
+                         pathway=pathway,
+                         GAGE=GAGE,
                          exp_design=self.exp_desn_file,
                          p_value=self.p_value,
                          org_code=self.org_code)],
         local_scheduler=self.local_scheduler, workers=1)
 
-    def run_deseq2(self):
+    def run_deseq2(self, gff, pathway, GAGE):
         build([DGE.deseq2(fastq_dic=self.fastq_dic,
                           num_cpus=self.num_cpus,
                           indexfile=self.hisat_index,
                           workdir=self.workdir,
                           ref_file=self.ref_fasta,
                           kingdom=self.kingdom,
-                          gff=os.path.join(self.workdir, "updated.gff"),
+                          gff=gff,
+                          pathway=pathway,
+                          GAGE=GAGE,
                           exp_design=self.exp_desn_file,
                           p_value=self.p_value,
                           org_code=self.org_code)],
         local_scheduler=self.local_scheduler, workers=1)
 
-    def merge_stringtie(self):
+    def merge_stringtie(self, gff):
         build([Summ.MergeStringTies(fastq_dic=self.fastq_dic,
                                     num_cpus=self.num_cpus,
                                     indexfile=self.hisat_index,
                                     workdir=self.workdir,
-                                    # ref_file=self.ref_fasta,
-                                    gff_file=os.path.join(self.workdir, "updated.gff"),
+                                    gff_file=gff,
                                     kingdom=self.kingdom)],
                 local_scheduler=self.local_scheduler, workers=1)
 
-    def restringtie(self):
+    def restringtie(self, gff):
         build([Summ.ReStringTieScoresW(fastq_dic=self.fastq_dic,
                                        num_cpus=self.num_cpus,
-                                       indexfile=self.hisat_index,
                                        workdir=self.workdir,
-                                       ref_file=self.ref_fasta,
-                                       gff_file=os.path.join(self.workdir, "updated.gff"),
                                        kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler,
               workers=1)
 
 
-    def run_ballgown(self):
+    def run_ballgown(self, gff):
         build([DGE.ballgown(fastq_dic=self.fastq_dic,
                           num_cpus=self.num_cpus,
-                          indexfile=self.hisat_index,
                           workdir=self.workdir,
-                          ref_file=self.ref_fasta,
                           kingdom=self.kingdom,
                           exp_design=self.exp_desn_file,
-                          gff_file=os.path.join(self.workdir, "updated.gff"),
                           p_value=self.p_value)],
         local_scheduler=self.local_scheduler, workers=1)
 

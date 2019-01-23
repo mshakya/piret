@@ -19,6 +19,8 @@ class edgeR(luigi.Task):
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
     org_code = luigi.Parameter()
+    GAGE = luigi.BoolParameter()
+    pathway = luigi.BoolParameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
@@ -45,21 +47,24 @@ class edgeR(luigi.Task):
                           "-p", self.p_value,
                           "-n", name,
                           "-o", edger_dir]
+                #TODO: get the output that has locus tag
                 edger_cmd = EdgeR[edger_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(edger_cmd)
                 edger_cmd()
                 if file == "gene_count.tsv":
-                    path_list = ["-d", edger_dir,
-                            "-m", "edgeR", "-c", self.org_code] # get pathway information
-                    path_cmd = plot_pathway[path_list]
-                    logger.info(path_cmd)
-                    path_cmd()
-                    gage_list = ["-d", edger_dir, "-m",
-                            "edgeR", "-c", self.org_code]
-                    gage_cmd = gage_analysis[gage_list]
-                    logger.info(gage_cmd)
-                    gage_cmd()
+                    if self.pathway is True:
+                        path_list = ["-d", edger_dir,
+                                "-m", "edgeR", "-c", self.org_code] # get pathway information
+                        path_cmd = plot_pathway[path_list]
+                        logger.info(path_cmd)
+                        path_cmd()
+                    if self.GAGE is True:
+                        gage_list = ["-d", edger_dir, "-m",
+                                "edgeR", "-c", self.org_code]
+                        gage_cmd = gage_analysis[gage_list]
+                        logger.info(gage_cmd)
+                        gage_cmd()
         self.summ_summ()
 
     def summ_summ(self):
@@ -80,6 +85,8 @@ class deseq2(luigi.Task):
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
     org_code = luigi.Parameter()
+    GAGE = luigi.BoolParameter()
+    pathway = luigi.BoolParameter()
 
     def output(self):
         """Expected output of DGE using DESeq2."""
@@ -109,12 +116,14 @@ class deseq2(luigi.Task):
                 logger.info(deseq2_cmd)
                 deseq2_cmd()
             if file == "gene_count.tsv":
+                if self.pathway is True:
                     path_list = ["-d", DESeq2_dir,
                          "-m", "DESeq2", "-c",
                          self.org_code] # get pathway information
                     path_cmd = plot_pathway[path_list]
                     logger.info(path_cmd)
                     path_cmd()
+                if self.GAGE is True:
                     gage_list = ["-d", DESeq2_dir, "-m",
                          "DESeq2", "-c", self.org_code]
                     gage_cmd = gage_analysis[gage_list]
@@ -137,6 +146,7 @@ class deseq2(luigi.Task):
 @inherits(Summ.ReStringTieScoresW)
 class ballgown(luigi.Task):
     """Find DGE using ballgown."""
+    # gff_file=luigi.Parameter()
 
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()

@@ -475,6 +475,7 @@ class STARindex(luigi.Task):
     num_cpus = IntParameter()
     gff_file = Parameter()
     stardb_dir= Parameter()
+    kingdom = Parameter()
 
     def requires(self):
         return[RefFile(self.fasta)]
@@ -486,11 +487,18 @@ class STARindex(luigi.Task):
     def run(self):
         if os.path.exists(self.stardb_dir) is False:
             os.makedirs(self.stardb_dir)
-        ind_opt = ["--runMode", "genomeGenerate",
+        if self.kingdom == "eukarya":
+            ind_opt = ["--runMode", "genomeGenerate",
                    "--runThreadN", self.num_cpus,
                    "--genomeDir", self.stardb_dir,
                    "--genomeFastaFiles", self.fasta,
                    "--sjdbGTFfile", self.gff_file]
+        elif self.kingdom == "prokarya":
+            ind_opt = ["--runMode", "genomeGenerate",
+                   "--runThreadN", self.num_cpus,
+                   "--genomeDir", self.stardb_dir,
+                   "--genomeFastaFiles", self.fasta]
+            
         star_cmd = STAR[ind_opt]
         logger = logging.getLogger('luigi-interface')
         logger.info(star_cmd)
