@@ -92,7 +92,7 @@ class HisatIndex(ExternalProgramTask):
 
     def output(self):
         """Expected index output."""
-        hisat_index_ht8l = self.hi_index + ".8.ht2l"
+        hisat_index_ht8l = self.hi_index + ".8.ht"
         return LocalTarget(hisat_index_ht8l)
 
     def program_args(self):
@@ -803,6 +803,5 @@ class Split2ProkEukW(luigi.WrapperTask):
                                 ref_file=self.ref_file,
                                 
                                 workdir=self.workdir,
-                                sample=samp,
-                                qc_outdir=trim_dir)
+                                sample=samp)
 
