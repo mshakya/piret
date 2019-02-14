@@ -9,19 +9,20 @@ from plumbum import local
 class CheckDependencies():
     """Check if third party dependencies are in the path."""
 
-    def __init__(self, package):
+    def __init__(self, package, logger):
         """Initialize."""
         self.package = package
+        self.logger = logger
 
     def check_thirdparty(self):
         """Check if thirdparty tool is in the path."""
         try:
             local[self.package]
+            print('%s package exist' % self.package)
+            # self.logger.info('%s package exist' % self.package)
             return True
         except:
-            exit_msg = """%s is not installed! \n Please install
-            it and try again. Run INSTALL.sh or read README for instruction on
-            installations"""
+            exit_msg = """%s is not installed or not in your PATH! Please install. See README for instructions on how to install it."""
             sys.exit(exit_msg % self.package)
 
     def check_pypackage(self):
@@ -41,4 +42,4 @@ class CheckDependencies():
 
 thirdparty_tools = ["bamtools", "samtools", ]
 
-CheckDependencies("bamtools")
+# CheckDependencies("bamtools")

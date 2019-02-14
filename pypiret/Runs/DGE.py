@@ -9,7 +9,7 @@ from pypiret import Summ
 from luigi.util import inherits, requires
 import pandas as pd
 from plumbum.cmd import EdgeR, Rscript, plot_pathway
-from plumbum.cmd import DESeq2, gage_analysis, ballgown_analysis
+from plumbum.cmd import RDESeq2, gage_analysis, ballgown_analysis
 import logging
 
 
@@ -18,7 +18,8 @@ class edgeR(luigi.Task):
     """Find DGE using edgeR."""
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    org_code = luigi.Parameter()
+    prok_org_code = luigi.Parameter()
+    euk_org_code = luigi.Parameter()
     GAGE = luigi.BoolParameter()
     pathway = luigi.BoolParameter()
 
@@ -80,11 +81,12 @@ class edgeR(luigi.Task):
 
 
 @requires(Summ.FeatureCounts)
-class deseq2(luigi.Task):
+class DESeq2(luigi.Task):
     """Find DGE using DESeq2."""
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    org_code = luigi.Parameter()
+    prok_org_code = luigi.Parameter()
+    euk_org_code = luigi.Parameter()
     GAGE = luigi.BoolParameter()
     pathway = luigi.BoolParameter()
 
@@ -111,7 +113,7 @@ class deseq2(luigi.Task):
                                "-e", self.exp_design, "-p", self.p_value,
                                "-n", feat_name,
                                "-o", DESeq2_dir]
-                deseq2_cmd = DESeq2[deseq2_list]
+                deseq2_cmd = RDESeq2[deseq2_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(deseq2_cmd)
                 deseq2_cmd()
@@ -158,7 +160,7 @@ class ballgown(luigi.Task):
 
     def run(self):
         """Run ballgown."""
-        bg_dir = os.path.join(self.workdir, "ballgown", self.kingdom)
+        bg_dir = os.path.join(self.workdir, "bg_results", self.kingdom)
         bg_results = os.path.join(self.workdir, "bg_results", self.kingdom)
         if os.path.isdir(bg_results) is False:
             os.makedirs(bg_results)

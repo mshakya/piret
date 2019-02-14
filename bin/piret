@@ -12,6 +12,7 @@ import os
 import sys
 import argparse
 import luigi
+import logging
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
@@ -60,12 +61,8 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         -i <hisat2 index> -k both -m <edgeR/DESeq2> -fe <FASTA> -fp <FASTA>
         """)
 
-    parser.add_argument("-c", dest="CPU", help="""number of CPUs/threads to
-        run per task. Here, task refers to a processing step.For example,
-        number of CPUs specified here will be used for QC, HISAT index and
-        mapping steps. Since QC and mapping steps are run for every sample,
-        be aware that the total number of CPUs needed are your number of
-        samples times CPU specified here.""",
+    parser.add_argument("-c", dest="CPU", help="""number of threads. The parameter
+    is passed to threads parameter in QC, HISAT, STAR, etc.""",
                         required=False, default=1)
 
     required_args = parser.add_argument_group('required arguments')
@@ -75,6 +72,11 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
 
     required_args.add_argument("-e", dest="EXPDSN", help="""tab delimited experimental
         design file""", required=True, default=argparse.SUPPRESS)
+    
+    required_args.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
+        when eukarya or both is chosen, it expects alternative splicing""",
+                        required=False, default='prokarya',
+                        choices=['prokarya', 'eukarya', 'both'])
 
     required_prok_args = parser.add_argument_group('required arguments (for prokaryotes)')
 
@@ -91,22 +93,35 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         rence""", required=False, default=None)
     required_euk_args.add_argument("-ge", dest="GFF_EUK", help="""path to gff files for eukar
         yotic organism, must be a .gff file""", required=False, default=None)
+    
+    required_path_args = parser.add_argument_group('required arguments (for pathway and GAGE analysis)')
+
+    required_path_args.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
+                        required=False, default=False, action="store_true")
+    
+    required_path_args.add_argument("--p_org", dest="PROK_ORG", help="""organism code for prokaryote reference,
+        obtained from KEGG, required for pathway and GAGE analysis. For the list of available organims code, see
+        the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
+                        required=False, default=None)
+    
+    required_path_args.add_argument("--e_org", dest="EUK_ORG", help="""organism code for eukarya reference,
+        obtained from KEGG, required for pathway and GAGE analysis.For the list of available organims code, see
+        the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
+                        required=False, default=None)
+
+    required_path_args.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
+                        required=False, default=False, action="store_true")
 
     parser.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
         creates index if it does not exist""", required=False, default=None)
 
-    parser.add_argument("--config", help="""config file for setting
-        parameters that control each step""", required=False, default=None)
-
-    parser.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
-        when eukarya or both is chosen, it expects alternative splicing""",
-                        required=False, default='prokarya',
-                        choices=['prokarya', 'eukarya', 'both'])
+    parser.add_argument("--config", help="""luigi config file for setting
+        parameters that control each step, see github repo for an example""", required=False, default=None)
     
     parser.add_argument("-m", dest="METHOD", help="""Method to use for detecting
         differentially expressed genes, DESeq2 requires 3 biological replicates
         and ballgown only processes eukaryotes""", required=False,
-                        default='balledgeR',
+                        default='DESeq2',
                         choices=['edgeR', 'DESeq2', 'ballgown', 'DEedge',
                                  'DEgown', 'balledgeR', 'all'])
     
@@ -116,7 +131,6 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     
     parser.add_argument("--star_db", dest="STARDB", help="""A folder to keep star formatted DB.""",
                         required=False)
-
 
     parser.add_argument("-p", dest="P_VALUE", help="""P-Value to consider ifs
         genes are significantly different, default is 0.001""",
@@ -132,21 +146,11 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         currently is set to SGE with smp""", required=False,
                         action='store_true', default=False)
     
-    parser.add_argument("--aligner", dest="ALIGNER", help="""Pick a aligner to be used for the analysis.""",
-                        required=False, default='STAR',
+    parser.add_argument("--aligner", dest="ALIGNER", help="""Pick a aligner to be used for the analysis.
+                        HISAT2 is default. STAR only works for eukaryotes.""",
+                        required=False, default='HISAT2',
                         choices=['STAR', 'HISAT2'])
     
-    required_path_args = parser.add_argument_group('required arguments (for pathway and GAGE analysis)')
-    parser.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
-                        required=False, default=False, action="store_true")
-    
-    required_path_args.add_argument("--org", dest="ORG_CODE", help="""organism code,
-        obtained from KEGG, required for pathway and GAGE analysis.""",
-                        required=False, default=None)
-    
-    parser.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
-                        required=False, default=False, action="store_true")
-
     parser.add_argument("--qc_off", dest="QC_OFF", help="""A flag indicating not to perform QC.""",
                         required=False, default=False, action="store_true")
     
@@ -168,8 +172,21 @@ def main():
     parser = cmdline_parser()
     args = parser.parse_args()
 
+    # setting up logging files
+    log_file = os.path.join(args.WORKDIR, "piret.log")
+    if os.path.exists(args.WORKDIR) is False:
+        os.makedirs(args.WORKDIR)
+    open(log_file, 'a').close()
+    logger = logging.basicConfig(format='%(asctime)s %(message)s',
+                                 filename=log_file, level=logging.INFO)
+
+    
     check_input(args=args, parser=parser, workdir=args.WORKDIR) # check if correct options are selected
-    check_depen(["samtools", "STAR"]) # check if third party tools are in path
+    # check if third party tools are in path
+    if args.ALIGNER == "STAR": 
+        check_depen(["STAR", "samtools"], logger)
+    elif args.ALIGNER == "HISAT2":
+        check_depen(["HISAT2", "samtools"], logger)
     workdir = os.path.abspath(args.WORKDIR) # Getting absolute path of workdir
     if check_exp_design(args.EXPDSN) is False: #check if experimental design file is OK
         sys.exit("Your experimental design file has formatting problems!")
@@ -188,6 +205,9 @@ def main():
 
     db = check_aligner(aligner=args.ALIGNER, hisat_index=args.INDEX_HISAT,
                  workdir=workdir, star_db=args.STARDB)
+
+    #TODO move this to log file
+    summarize_run(aligner=args.ALIGNER) # print run information in screen
 
     if args.TEST_KINGDOM in ['prokarya', 'eukarya'] and args.qsub is False:
         #TODO: fix pathway and gage analysis, need to turn on corresponding parameters that turns on or off these analysis
@@ -275,28 +295,37 @@ def main():
             run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
                      local_scheduler=args.scheduler)
         dual_seq = Workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
-                                     hisat_index=hisat_index_name,
+                                     aligner=args.ALIGNER,
+                                     hisat_index=db,
                                      workdir=workdir,
                                      kingdom=args.TEST_KINGDOM,
                                      no_of_jobs=1,
                                      local_scheduler=args.scheduler,
                                      num_cpus=args.CPU,
-                                     exp_desn_file=args.EXPDSN, p_value=args.P_VALUE
+                                     exp_desn_file=args.EXPDSN,
+                                     p_value=args.P_VALUE,
+                                     ref_gffs=gffs, # gff of both,
+                                     prok_org_code=args.PROK_ORG,
+                                     euk_org_code=args.EUK_ORG,
+                                     stardb_dir=db
                                      )
 
-        dual_seq.create_hisat_index()
-        dual_seq.map_hisat()
+        dual_seq.create_db(gffs) # create database (star or hisat2 based on choice)
+        dual_seq.map_reads()
+        dual_seq.map_summarize()
         dual_seq.split_prokeuk()
-        dual_seq.summarize_map()
-        dual_seq.novel_regions()
-        dual_seq.compile_gff()
+        if args.NOVEL is True: # if novel regions are to be reported
+            dual_seq.extract_pp() # extract properly paired reads
+            dual_seq.novel_regions(gff=gffs) # find novel regions
+            dual_seq.create_new_gff(gff=gffs) # create a new GFF file that has novel region info
+            gffs = ",".join([os.path.join(workdir, "prok_updated.gff"), os.path.join(workdir, "euk_updated.gff")]) # update gff
         dual_seq.feature_counts()
-        dual_seq.merge_stringties()
         if args.METHOD == "edgeR":
             dual_seq.run_edger()
         elif args.METHOD == "DESeq2":
             dual_seq.run_deseq2()
         elif args.METHOD == "ballgown":
+            dual_seq.merge_stringties()
             dual_seq.restringtie()
             dual_seq.run_ballgown()
         elif args.METHOD == "DEedge":
@@ -329,6 +358,9 @@ def check_input(args, parser, workdir):
         parser.error("-k prokarya does not need eukarya fasta -fe to be specified")
     if args.TEST_KINGDOM == "prokarya" and args.GFF_EUK != None:
         parser.error("-k prokarya does not need eukarya gff -ge to be specified")
+    # pathway
+    if args.TEST_KINGDOM == "prokarya" and args.PATHWAY is TRUE and args.PROK_ORG is None:
+        parser.error("if pathway analysis is turned on, you need to specify organism code")
     # for eukarya
     if args.TEST_KINGDOM == "eukarya" and args.FASTA_EUK is None:
         parser.error("-k eukarya requires fasta file to be specified using -fe")
@@ -338,12 +370,18 @@ def check_input(args, parser, workdir):
         parser.error("-k eukarya does not need eukarya fasta -fe to be specified")
     if args.TEST_KINGDOM == "eukarya" and args.GFF_PROK != None:
         parser.error("-k eukarya does not need prokarya gff -gp to be specified")
+    if args.TEST_KINGDOM == "eukarya" and args.PATHWAY is True and args.EUK_ORG is None:
+        parser.error("if pathway analysis is turned on, you need to specify organism code")
     # for both
     if args.TEST_KINGDOM == "both":
         if args.GFF_PROK is None or args.GFF_EUK is None or args.FASTA_EUK is None or args.FASTA_PROK is None:
             parser.error("-k both needs fasta and gff file specified for both prokarya and eukarya")
+    if args.TEST_KINGDOM == "both" and args.PATHWAY is True and args.PROK_ORG is None:
+        parser.error("if pathway analysis is turned on, you need to specify organism code")
+    elif args.TEST_KINGDOM == "both" and args.PATHWAY is True and args.EUK_ORG is None:
+        parser.error("if pathway analysis is turned on, you need to specify organism code")
     # for pathway
-    if args.PATHWAY is True or args.GAGE is True:
+    if args.GAGE is True:
         if args.ORG_CODE is None:
             parser.error("need to specify an organism code")
 
@@ -390,10 +428,10 @@ def check_comp(comp_file, exp_design):
                 sys.exit("Comparison file is not correct. Its a two column tab delimited file.")
             
 
-def check_depen(tool_list):
+def check_depen(tool_list, logger):
     """A function that checks the list of tool are in path or not."""
     for tool in tool_list:
-        check = CheckDependencies(package=tool)
+        check = CheckDependencies(package=tool, logger=logger)
         check.check_thirdparty()
 
     
@@ -497,6 +535,9 @@ def check_ref(ref_fasta=None, ref_gff=None):
             elif os.path.exists(ref_gff) is False:
                 exit_message = ' '.join(("Reference GFF", ref_gff, "does not exist!"))
 
+def summarize_run(aligner):
+    """Prints summary information of runs."""
+    print("Alignment will be done using: %s" %aligner)
 
 
 if __name__ == '__main__':

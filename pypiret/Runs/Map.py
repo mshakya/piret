@@ -92,7 +92,7 @@ class HisatIndex(ExternalProgramTask):
 
     def output(self):
         """Expected index output."""
-        hisat_index_ht8l = self.hi_index + ".8.ht"
+        hisat_index_ht8l = self.hi_index + ".8.ht2"
         return LocalTarget(hisat_index_ht8l)
 
     def program_args(self):
@@ -478,7 +478,10 @@ class STARindex(luigi.Task):
     kingdom = Parameter()
 
     def requires(self):
-        return[RefFile(self.fasta)]
+        if self.kingdom == "both":
+            return[RefFile(self.fasta.split(",")[1])]
+        else:
+            return[RefFile(self.fasta)]
     
     def output(self):
         """Expected index output"""
@@ -498,6 +501,12 @@ class STARindex(luigi.Task):
                    "--runThreadN", self.num_cpus,
                    "--genomeDir", self.stardb_dir,
                    "--genomeFastaFiles", self.fasta]
+        elif self.kingdom == "both":
+            ind_opt = ["--runMode", "genomeGenerate",
+                   "--runThreadN", self.num_cpus,
+                   "--genomeDir", self.stardb_dir,
+                   "--genomeFastaFiles", self.fasta.split(",")[0],
+                   self.fasta.split(",")[1]]
             
         star_cmd = STAR[ind_opt]
         logger = logging.getLogger('luigi-interface')
@@ -708,47 +717,26 @@ class StringTieScoresW(luigi.WrapperTask):
             elif self.kingdom == 'both':
                 prok_gff = self.gff_file.split(",")[0]
                 euk_gff = self.gff_file.split(",")[1]
-                yield StringTieScores(fastqs=[trim_dir + "/" + samp +
-                                              ".1.trimmed.fastq",
-                                              trim_dir + "/" + samp +
-                                              ".2.trimmed.fastq"],
+                yield StringTieScores(gff_file=self.gff_file.split(",")[0],
                                       num_cpus=self.num_cpus,
-                                      indexfile=self.indexfile,
-                                      spliceFile=splice_file,
-                                      outsam=map_dir + "/" + samp + ".sam",
-                                      ref_file=self.ref_file,
                                       out_gtf=stng_dir + "/" + samp + "_prok" + "_sTie.gtf",
                                       out_cover=stng_dir + "/" + samp + "_prok" + "_covered_sTie.gtf",
                                       out_abun=stng_dir + "/" + samp + "_prok" + "_sTie.tab",
-                                      in_bam_file=map_dir + "/" + samp + "_srt_prok.bam",
-                                      workdir=self.workdir,
-                                      gff_file=prok_gff,
-                                      sample=samp,
-                                      qc_outdir=trim_dir,
-                                      map_dir=map_dir)
-                yield StringTieScores(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                      trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                                      in_bam_file=map_dir + "/" + samp + "_srt_prok.bam")
+                yield StringTieScores(gff_file=self.gff_file.split(",")[1],
                                       num_cpus=self.num_cpus,
-                                      indexfile=self.indexfile,
-                                      spliceFile=splice_file,
-                                      outsam=map_dir + "/" + samp + ".sam",
-                                      ref_file=self.ref_file,
                                       out_gtf=os.path.join(stng_dir, samp + "_euk_sTie.gtf"),
                                       out_cover=os.path.join(stng_dir, samp + "_euk_covered_sTie.gtf"),
                                       out_abun=os.path.join(stng_dir, samp + "_euk_sTie.tab"),
-                                      in_bam_file=map_dir + "/" + samp + "_srt_prok.bam",
-                                      workdir=self.workdir,
-                                      gff_file=euk_gff,
-                                      sample=samp,
-                                      qc_outdir=trim_dir,
-                                      map_dir=map_dir)
+                                      in_bam_file=map_dir + "/" + samp + "_srt_prok.bam")
 
-@requires(Hisat)
+#@requires(Hisat)
 class Split2ProkEuk(luigi.Task):
     """ Split BAM file to prok and euk"""
 
     ref_file = Parameter()
     workdir = Parameter()
+    outsam = Parameter()
 
     def output(self):
         """Split Files."""
@@ -774,9 +762,10 @@ class Split2ProkEuk(luigi.Task):
         self.split_aln_file(self.workdir, fastas[1], bam_file, euk_out)
 
 
-@inherits(HisatMapW)
+#@inherits(HisatMapW)
 class Split2ProkEukW(luigi.WrapperTask):
     """Group chromosomes to prokaryotic and eukaryotic."""
+    fastq_dic = DictParameter()
     ref_file = Parameter()
     workdir = Parameter()
 
@@ -789,19 +778,8 @@ class Split2ProkEukW(luigi.WrapperTask):
         else:
             splice_file = splst[0]
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
             map_dir = self.workdir + "/" + samp + "/mapping_results"
-            yield Split2ProkEuk(fastqs=[trim_dir + "/" + samp +
-                                        ".1.trimmed.fastq",
-                                        trim_dir + "/" + samp +
-                                        ".2.trimmed.fastq"],
-                                num_cpus=self.num_cpus,
-                                indexfile=self.indexfile,
-                                spliceFile=splice_file,
-                                outsam=map_dir + "/" + samp + ".sam",
-                                map_dir=map_dir,
+            yield Split2ProkEuk(outsam=map_dir + "/" + samp + ".sam",
                                 ref_file=self.ref_file,
-                                
-                                workdir=self.workdir,
-                                sample=samp)
+                                workdir=self.workdir)
 

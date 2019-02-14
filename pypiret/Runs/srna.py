@@ -109,7 +109,6 @@ class ExtractPPW(luigi.WrapperTask):
     """A wrapper task for mapping."""
 
     fastq_dic = luigi.DictParameter()
-    # ref_file = luigi.Parameter()
     indexfile = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
@@ -133,10 +132,6 @@ class ExtractPPW(luigi.WrapperTask):
             if self.kingdom in ['prokarya', 'eukarya']:
                 yield ExtractPP(
                                 num_cpus=self.num_cpus,
-                                # indexfile=self.indexfile,
-                                # spliceFile=splice_file,
-                                # outsam=map_dir + "/" + samp + ".sam",
-                                # ref_file=self.ref_file,
                                 map_dir=map_dir,
                                 sample=samp,
                                 kingdom=self.kingdom,
@@ -146,10 +141,6 @@ class ExtractPPW(luigi.WrapperTask):
                 # euk_gff = os.path.basename(self.gff_file.split(";")[1]).split(".gff")[0]
                 yield ExtractPP(
                                 num_cpus=self.num_cpus,
-                                # indexfile=self.indexfile,
-                                # spliceFile=splice_file,
-                                # outsam=map_dir + "/" + samp + ".sam",
-                                # ref_file=self.ref_file,
                                 map_dir=map_dir,
                                 sample=samp,
                                 kingdom=self.kingdom,
