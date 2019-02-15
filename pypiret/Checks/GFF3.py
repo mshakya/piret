@@ -12,7 +12,7 @@ class CheckGFF():
 
     def __init__(self, gff_file):
         """Initialize."""
-        self.gff_col = pd.read_table(gff_file, sep='\t', comment="#")
+        self.gff_col = pd.read_csv(gff_file, sep='\t', comment="#")
         self.gff_col.columns = ["seqid", "source", "type", "start", "end",
                                 "score", "strand", "phase", "attributes"]
     def size(self):
