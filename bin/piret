@@ -147,9 +147,9 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
                         action='store_true', default=False)
     
     parser.add_argument("--aligner", dest="ALIGNER", help="""Pick a aligner to be used for the analysis.
-                        HISAT2 is default. STAR only works for eukaryotes.""",
-                        required=False, default='HISAT2',
-                        choices=['STAR', 'HISAT2'])
+                        hisat2 is default. STAR only works for eukaryotes.""",
+                        required=False, default='hisat2',
+                        choices=['STAR', 'hisat2'])
     
     parser.add_argument("--qc_off", dest="QC_OFF", help="""A flag indicating not to perform QC.""",
                         required=False, default=False, action="store_true")
@@ -185,8 +185,8 @@ def main():
     # check if third party tools are in path
     if args.ALIGNER == "STAR": 
         check_depen(["STAR", "samtools"], logger)
-    elif args.ALIGNER == "HISAT2":
-        check_depen(["HISAT2", "samtools"], logger)
+    elif args.ALIGNER == "hisat2":
+        check_depen(["hisat2", "samtools"], logger)
     workdir = os.path.abspath(args.WORKDIR) # Getting absolute path of workdir
     if check_exp_design(args.EXPDSN) is False: #check if experimental design file is OK
         sys.exit("Your experimental design file has formatting problems!")

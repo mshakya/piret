@@ -118,10 +118,10 @@ fi
 # # cp tests/test_both/samp5/trimming_results/*.* tests/test_euk/samp5/trimming_results/ 
 # # cp tests/test_both/samp6/trimming_results/*.* tests/test_euk/samp6/trimming_results/ 
 
-# bin/piret -d tests/test_both -e test_prok.txt \
-# -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
-# -i tests/test_both/prok_euk_index -k both -m all \
-# -fp tests/data/test_prok.fna -fe tests/data/eukarya_test.fa
+bin/piret -d tests/test_both -e test_prok.txt \
+-gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+-i tests/test_both/prok_euk_index -k both -m all \
+-fp tests/data/test_prok.fna -fe tests/data/eukarya_test.fa
 
 # printf "${blue}fininshed testing pipeline for prok and euk\n${normal}"
 
@@ -129,3 +129,27 @@ fi
 # # printf "${blue}Cleanning up!!\n${normal}"
 # # # rm -rf test_experimental_design.txt
 # # # rm -rf tests/test_both tests/test_euk tests/test_prok
+
+printf "${green}piret with both euk and prok, and edgeR\n${normal}"
+bin/piret -d tests/test_both_hisat2_edger -e test_prok.txt \
+-gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+-i tests/test_both/prok_euk_index -k both -m edgeR \
+-fp tests/data/test_prok.fna -fe tests/data/eukarya_test.fa --novel
+printf "${blue}fininshed testing pipeline for prok and euk\n${normal}"
+
+
+bin/piret -d tests/test_both_hisat2_edger -e test_prok.txt \
+-gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+-i tests/test_both/prok_euk_index -k both -m edgeR \
+-fp tests/data/test_prok.fna -fe tests/data/eukarya_test.fa --novel \
+--aligner STAR
+
+bin/piret -d tests/test_both_hisat2_ballgown -e test_prok.txt \
+-gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+-i tests/test_both/prok_euk_index -k both -m ballgown \
+-fp tests/data/test_prok.fna -fe tests/data/eukarya_test.fa --novel
+
+ bin/piret -d tests/test_both_hisat2_deseq2 -e test_prok.txt \
+ -gp tests/data/test_prok.gff -ge tests/data/eukarya_test.gff3 \
+ -i tests/test_both/prok_euk_index -k both -m DESeq2 \
+ -fp tests/data/test_prok.fna -fe tests/data/eukarya_test.fa --novel
