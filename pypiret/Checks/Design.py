@@ -114,7 +114,10 @@ class CheckDesign():
             for line in dfile:
                 sample = line.split("\t")[0]
                 if ';' in line.split("\t")[1]:
-                    fastq_pairs = line.split("\t")[1].split(";")
+                    if ":" not in line.split("\t")[1]:
+                        fastq_pairs = line.split("\t")[1].split(";")
+                    elif ":" in line.split("\t")[1]:
+                        fastq_pairs =[i.replace(":", " ") for i in line.split("\t")[1].split(";")]
                 else:
                     fastq_pairs = line.split("\t")[1]
                 sample_fastqs[sample] = fastq_pairs
