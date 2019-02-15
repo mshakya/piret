@@ -3,6 +3,7 @@
 """Check design."""
 from __future__ import print_function
 import os
+import sys
 import luigi
 import glob
 from luigi import ExternalTask
@@ -83,13 +84,14 @@ class RunAllQC(luigi.WrapperTask):
                 os.makedirs(trim_dir)
             if isinstance(fastq, (list, tuple)):
                 fqs = [fq.replace(';', ',') for fq in fastq]
-                i = 1
-                for fq in fqs:
-                    fq_list = fq.split(",")
-                    cp_fq = trim_dir + "/" + samp + "_R" + str(i) + ".fastq"
-                    cat_cmd = (cat[fq_list] > cp_fq)
-                    cat_cmd()
-                    i = i + 1
+                r1_list = [f.split(":")[0] for f in fqs]
+                r2_list = [f.split(":")[1] for f in fqs]
+                r1_fq = trim_dir + "/" + samp + "_R1" + ".fastq"
+                r2_fq = trim_dir + "/" + samp + "_R2" + ".fastq"
+                cat_cmd_r1 = (cat[r1_list] > r1_fq)
+                cat_cmd_r2 = (cat[r2_list] > r2_fq)
+                cat_cmd_r1()
+                cat_cmd_r2()
                 yield PairedRunQC(fastqs=[trim_dir + "/" + samp +
                                           "_R1.fastq", trim_dir + "/" +
                                           samp + "_R2.fastq"],
