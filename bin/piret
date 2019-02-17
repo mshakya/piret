@@ -387,7 +387,7 @@ def check_input(args, parser, workdir):
 
 
 def check_aligner(aligner, hisat_index, workdir, star_db):
-    if aligner == "HISAT2":
+    if aligner == "hisat2":
         if hisat_index is None:
             hisat_index_name = os.path.join(workdir, "hisat_index")
         else:
@@ -497,7 +497,7 @@ def check_ballgown_method(method, kingdom):
 def check_star_aligner(method, kingdom):
     """Only allow STAR aligner to work for eukarya only."""
     if method in ('STAR') and kingdom == "prokarya":
-        sys.exit("STAR does not work well for prokaryotic genomes, pick HISAT2!")
+        sys.exit("STAR does not work well for prokaryotic genomes, pick hisat2!")
     else:
         return True
 

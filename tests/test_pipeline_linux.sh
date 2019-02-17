@@ -34,7 +34,7 @@ then
     -gp tests/data/test_prok.gff \
     -i tests/test_prok/prok_index -k prokarya -m DEedge \
     -fp tests/data/test_prok.fna --config luigi.cfg \
-    --aligner HISAT2
+    --aligner hisat2
 
 
     printf "${blue}fininshed testing pipeline for prokarya only\n${normal}"
@@ -58,10 +58,10 @@ bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k
 # euk star deseq
 
 # euk hisat2 edgeR novel
-bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner HISAT2 --config luigi.cfg --novel
+bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner hisat2 --config luigi.cfg --novel
 
 # euk hisat2 edgeR
-bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner HISAT2 --config luigi.cfg
+bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner hisat2 --config luigi.cfg
 
 # both hisat
 

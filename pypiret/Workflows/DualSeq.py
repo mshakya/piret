@@ -38,7 +38,7 @@ class DualSeq:
 
     def create_db(self, gff):
         """Function to create hisat index."""
-        if self.aligner == "HISAT2":
+        if self.aligner == "hisat2":
             build([Map.HisatIndex(fasta=self.ref_fastas,
                                   hi_index=self.hisat_index,
                                   num_cpus=self.num_cpus),
@@ -66,7 +66,7 @@ class DualSeq:
             
     def map_reads(self):
         """Function to map reads."""
-        if self.aligner == "HISAT2":
+        if self.aligner == "hisat2":
             build([Map.HisatMapW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                                  indexfile=self.hisat_index, workdir=self.workdir)],
               local_scheduler=self.local_scheduler)
@@ -77,7 +77,7 @@ class DualSeq:
 
     def map_summarize(self):
         """Summarize mapped reads into a table."""
-        if self.aligner == "HISAT2":
+        if self.aligner == "hisat2":
             build([Map.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,
@@ -99,7 +99,7 @@ class DualSeq:
 
     def summarize_map(self):
         """Summarize mapped reads into a table."""
-        if self.aligner == "HISAT2":
+        if self.aligner == "hisat2":
             build([Map.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,

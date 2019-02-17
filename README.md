@@ -174,10 +174,10 @@ All the outputs will be within the `working directory`.
 - `samp2`: The name of this directory corresponds to sample name. Within this folder there are two sub-folders:
 
   - `mapping_results`
-    This folder contains reads mapped using *HISAT2* in following formats. If `splice_sites_gff.txt` is present, **HISAT2** aligns based on known splice sites.
-    - `*.sam`: outputs of *HISAT2*
+    This folder contains reads mapped using *hisat2* in following formats. If `splice_sites_gff.txt` is present, **hisat2** aligns based on known splice sites.
+    - `*.sam`: outputs of *hisat2*
     - `*.bam`: generated from `.sam`
-    - [mapping.log](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/mapping.log): Alignment summary file from `HISAT2`.
+    - [mapping.log](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/mapping.log): Alignment summary file from `hisat2`.
     - [`*sTie.tab`](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.tab): Tab delimited file with Coverage, FPKM, TPM, for all the genes and novel transcripts. Generated using string tie.
     - [`*sTie.gtf`](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/samp3_prok_sTie.gtf): Primay GTF formatted output of stringtie.
   - `trimming_results`
@@ -227,7 +227,7 @@ If you use PiReT please cite following papers:
 - **DESeq2**: Love MI, Huber W and Anders S (2014). “Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.” Genome Biology, 15, pp. 550. [PMID: 25516281]
 - **edgeR**: McCarthy, J. D, Chen, Yunshun, Smyth and K. G (2012). Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation. Nucleic Acids Research, 40(10), pp. -9. [PMID: 22287627]
 - **HTSeq**: Anders, S., Pyl, P. T., & Huber, W. (2014). HTSeq–a Python framework to work with high-throughput sequencing data. Bioinformatics. [PMID: 25260700]
-- **HISAT2**: Kim, D., Langmead, B., & Salzberg, S. L. (2015). HISAT: a fast spliced aligner with low memory requirements. Nature methods, 12(4), 357-360. [PMID: 25751142]
+- **hisat2**: Kim, D., Langmead, B., & Salzberg, S. L. (2015). HISAT: a fast spliced aligner with low memory requirements. Nature methods, 12(4), 357-360. [PMID: 25751142]
 - **BEDTools**: Quinlan AR and Hall IM, 2010. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 26, 6, pp. 841–842. [PMID: 20110278]
 - **GAGE**: Luo, Weijun, Michael S. Friedman, Kerby Shedden, Kurt D. Hankenson, and Peter J. Woolf. 2009. “GAGE: Generally Applicable Gene Set Enrichment for Pathway Analysis.” BMC Bioinformatics 10 (May): 161.
 - **Pathview**: Luo, Weijun, and Cory Brouwer. 2013. “Pathview: An R/Bioconductor Package for Pathway-Based Data Integration and Visualization.” Bioinformatics  29 (14). Oxford University Press: 1830–31.
