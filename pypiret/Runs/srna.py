@@ -223,8 +223,8 @@ class FindNovelRegions(luigi.Task):
 
     def get_genome_ref(self, sorted_bam_file, chrom_sizes):
         """Calculate the size of each chromosome/contig."""
-        (samtools["view", "-H", sorted_bam_file] | grep["@SQ"] |
-         sed["s/@SQ.*SN://g"] | sed["s/LN://g"] > chrom_sizes)()
+        chain = samtools["view", "-H", sorted_bam_file] | grep["@SQ"] | sed["s/@SQ.*SN://g"] | sed["s/LN://g"] > chrom_sizes
+        chain()
 
     def genome_coverage(self, srt_bam, gcov):
         """Get the coverage info."""
