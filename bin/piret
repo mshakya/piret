@@ -233,7 +233,8 @@ def main():
                                          no_of_jobs=no_of_jobs,
                                          p_value=args.P_VALUE,
                                          exp_desn_file=args.EXPDSN, 
-                                         org_code=args.ORG_CODE,
+                                         prok_org_code=args.PROK_ORG,
+                                         euk_org_code=args.EUK_ORG,
                                          stardb_dir=db)
             if args.QC_OFF is False:
                 run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
@@ -359,7 +360,7 @@ def check_input(args, parser, workdir):
     if args.TEST_KINGDOM == "prokarya" and args.GFF_EUK != None:
         parser.error("-k prokarya does not need eukarya gff -ge to be specified")
     # pathway
-    if args.TEST_KINGDOM == "prokarya" and args.PATHWAY is TRUE and args.PROK_ORG is None:
+    if args.TEST_KINGDOM == "prokarya" and args.PATHWAY is True and args.PROK_ORG is None:
         parser.error("if pathway analysis is turned on, you need to specify organism code")
     # for eukarya
     if args.TEST_KINGDOM == "eukarya" and args.FASTA_EUK is None:

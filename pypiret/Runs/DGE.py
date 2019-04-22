@@ -109,14 +109,16 @@ class DESeq2(luigi.Task):
         for file in os.listdir(fcount_dir):
             if file.endswith("tsv"):
                 feat_name = file.split("_")[-2]
-                deseq2_list = ["-r", os.path.join(fcount_dir, file),
+                # only run deseq on gene and CDS
+                if any(feat == feat_name for feat in ["CDS", "gene"]) is True:
+                    deseq2_list = ["-r", os.path.join(fcount_dir, file),
                                "-e", self.exp_design, "-p", self.p_value,
                                "-n", feat_name,
                                "-o", DESeq2_dir]
-                deseq2_cmd = RDESeq2[deseq2_list]
-                logger = logging.getLogger('luigi-interface')
-                logger.info(deseq2_cmd)
-                deseq2_cmd()
+                    deseq2_cmd = RDESeq2[deseq2_list]
+                    logger = logging.getLogger('luigi-interface')
+                    logger.info(deseq2_cmd)
+                    deseq2_cmd()
             if file == "gene_count.tsv":
                 if self.pathway is True:
                     path_list = ["-d", DESeq2_dir,

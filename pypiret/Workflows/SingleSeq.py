@@ -12,14 +12,13 @@ from pypiret import CheckDesign, FaQC, Map, Summ, DGE, srna
 from luigi.interface import build
 
 
-
 class SingleSeq:
     """Class that pieces luigi task for prokarya."""
 
     def __init__(self, fastq_dic, ref_fasta, num_cpus,
                  local_scheduler, hisat_index, stardb_dir, workdir, kingdom,
                  no_of_jobs, exp_desn_file,
-                 p_value, org_code, aligner ):
+                 p_value, prok_org_code, euk_org_code, aligner ):
         self.ref_fasta = ref_fasta
         self.fastq_dic = fastq_dic
         self.num_cpus = num_cpus
@@ -31,7 +30,8 @@ class SingleSeq:
         self.no_of_jobs = no_of_jobs,
         self.exp_desn_file = exp_desn_file
         self.p_value = p_value
-        self.org_code = org_code
+        self.prok_org_code = prok_org_code
+        self.euk_org_code = euk_org_code
         self.aligner = aligner
 
     def create_db(self, gff):
@@ -164,11 +164,12 @@ class SingleSeq:
                          GAGE=GAGE,
                          exp_design=self.exp_desn_file,
                          p_value=self.p_value,
-                         org_code=self.org_code)],
+                         prok_org_code=self.prok_org_code,
+                         euk_org_code=self.euk_org_code)],
         local_scheduler=self.local_scheduler, workers=1)
 
     def run_deseq2(self, gff, pathway, GAGE):
-        build([DGE.deseq2(fastq_dic=self.fastq_dic,
+        build([DGE.DESeq2(fastq_dic=self.fastq_dic,
                           num_cpus=self.num_cpus,
                           indexfile=self.hisat_index,
                           workdir=self.workdir,
@@ -179,7 +180,8 @@ class SingleSeq:
                           GAGE=GAGE,
                           exp_design=self.exp_desn_file,
                           p_value=self.p_value,
-                          org_code=self.org_code)],
+                          prok_org_code=self.prok_org_code,
+                          euk_org_code=self.euk_org_code)],
         local_scheduler=self.local_scheduler, workers=1)
 
     def merge_stringtie(self, gff):
