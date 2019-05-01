@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-"""A suite to test file_exist."""
+
 import sys
 import os
 import unittest
@@ -9,7 +9,6 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 LIB = os.path.abspath(os.path.join(DIR, '..'))
 sys.path.append(LIB)
 from pypiret.Runs import FaQC
-
 
 
 class TestFaQC(unittest.TestCase):
@@ -48,7 +47,6 @@ class TestFaQC(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree('test_faqc')
-
 
 
 if __name__ == '__main__':
