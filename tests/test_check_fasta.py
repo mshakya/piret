@@ -6,7 +6,7 @@ import unittest
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
-from pypiret import CheckFasta  # noqa
+from pypiret.Checks import CheckFasta  # noqa
 
 
 class TestConfirmFasta(unittest.TestCase):
