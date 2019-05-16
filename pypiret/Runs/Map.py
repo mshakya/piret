@@ -2,7 +2,8 @@
 
 """Luigi Tasks to perform various RNA seq functions, from Mapping to Counting.
 
-Mapping is done using hisat2 and counting is done using featurecounts and stringtie
+Mapping is done using hisat2 and counting is done using featurecounts
+and stringtie
 """
 
 from __future__ import print_function
@@ -18,7 +19,7 @@ from luigi import LocalTarget
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
 import subprocess
-from pypiret import FaQC
+# from pypiret import FaQC
 from plumbum.cmd import gffread, hisat2
 from plumbum.cmd import samtools, stringtie, mv, awk
 from plumbum.cmd import STAR
@@ -482,7 +483,7 @@ class STARindex(luigi.Task):
             return[RefFile(self.fasta.split(",")[1])]
         else:
             return[RefFile(self.fasta)]
-    
+
     def output(self):
         """Expected index output"""
         return LocalTarget(os.path.join(self.stardb_dir, "chrName.txt"))

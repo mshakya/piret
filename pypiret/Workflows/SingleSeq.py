@@ -8,7 +8,8 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from pypiret import CheckDesign, FaQC, Map, Summ, DGE, srna
+from pypiret.Checks.Design import CheckDesign
+from pypiret.Runs import FaQC, Map, Summ, DGE, srna
 from luigi.interface import build
 
 

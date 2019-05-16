@@ -24,6 +24,7 @@ if [[ ( $1 -eq "prok" && $2 -eq "hisat" ) || ( -z $1 ) ]];
 then
     #==============================================================================#
     printf "${blue}testing pipeline with prokarya using DEedge\n${normal}"
+    printf "${blue}using HISAT2\n${normal}"
 
     printf "bin/piret -d tests/test_prok -e test_prok.txt \
     -gp tests/data/test_prok.gff \
@@ -36,6 +37,15 @@ then
     -fp tests/data/test_prok.fna --config luigi.cfg \
     --aligner hisat2
 
+    printf "${blue} using STAR\n${normal}"
+
+    bin/piret -d tests/test_prok -e test_prok.txt  \
+    -gp tests/data/test_prok.gff \
+    -i tests/test_prok/prok_index \
+    -k prokarya -m DEedge  \
+    -fp tests/data/test_prok.fna \
+    --config luigi.cfg \
+    --aligner STAR
 
     printf "${blue}fininshed testing pipeline for prokarya only\n${normal}"
     #==============================================================================#
@@ -44,18 +54,22 @@ fi
 
 
 # euk star ballgown
-bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m ballgown -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner STAR --config luigi.cfg 
-
+# This run takes 3m14.979s in my laptop
+bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m ballgown -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --e_org hsa --aligner STAR --config luigi.cfg 
 
 # euk star novel ballgown
-bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m ballgown -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner STAR --config luigi.cfg --novel
+# This run takes 4m54.541s in my laptop
+bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m ballgown -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --e_org hsa --aligner STAR --config luigi.cfg --novel
 
-# euk star edgeR
- bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner STAR --config luigi.cfg 
+# euk star novel edgeR
+# This run takes  4m59.662s in my laptop
+bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --e_org hsa --aligner STAR --config luigi.cfg --novel
 
 # euk star edger novel (fails at pathway step)
 
-# euk star deseq
+# euk star deseq novel
+# This run takes 4m53.541s in my laptop
+bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m DESeq2 -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --e_org hsa --aligner STAR --config luigi.cfg --novel
 
 # euk hisat2 edgeR novel
 bin/piret -d tests/test_euk -e test_euk.txt -ge tests/data2/chr22_ERCC92.gff3 -k eukarya -m edgeR -fe tests/data2/chr22_ERCC92.fa  -p 0.05 --org hsa --aligner hisat2 --config luigi.cfg --novel

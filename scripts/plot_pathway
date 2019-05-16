@@ -41,6 +41,7 @@ if ( method == "edgeR"){
 } else if (method == "DESeq2")
 {   
     fcs = list.files(path = dir, pattern = "*gene__sig.csv", full.names = TRUE)
+    print(fcs)
     for (fc in fcs) {
         if (nrow(read.csv(fc)) > 0) { # if significant gene list is more than 0
             out_dir = base::strsplit(fc, split = ".csv", fixed = TRUE)[[1]][1]

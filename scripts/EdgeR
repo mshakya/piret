@@ -240,7 +240,8 @@ if(nrow(read_counts.non0) < 2 ){
                 edger_et_table <- edgeR::topTags(edger_et, n = nrow( edger_et$table ), sort.by = "PValue" )$table
                 edger_et_sigtable <-  subset(edger_et_table, FDR < pcutoff)
                        
-                       # write summary table
+                # write summary table
+                print("Writing summary file")
                 out_file_summ <- file.path(DE_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
                 summ_table <- summary(decideTests(edger_et))
                 colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")

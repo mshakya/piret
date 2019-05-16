@@ -5,13 +5,14 @@ from __future__ import print_function
 import os
 from os.path import basename, splitext
 from plumbum.cmd import stringtie, featureCounts
-from pypiret import Map
+from pypiret.Runs import Map
 import pandas as pd
 from luigi.util import inherits, requires
 from luigi.contrib.external_program import ExternalProgramTask
 from luigi import LocalTarget, Parameter, IntParameter
 import luigi
 import logging
+
 
 class RefFile(luigi.ExternalTask):
     """An ExternalTask like this."""
@@ -23,7 +24,7 @@ class RefFile(luigi.ExternalTask):
         return LocalTarget(os.path.abspath(self.path))
 
 
-#@requires(Map.HisatMapW)
+# @requires(Map.HisatMapW)
 class FeatureCounts(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
@@ -46,15 +47,23 @@ class FeatureCounts(luigi.Task):
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
             all_target = []
             for gffs in gff_full_path:
-                feature = list(set(pd.read_csv(gffs, sep="\t", header=None, comment='#')[2].tolist()))
-                loc_target = [LocalTarget(counts_dir + feat + "_count.tsv") for feat in feature]
+                feature = list(set(pd.read_csv(gffs, sep="\t", header=None,
+                                               comment='#')[2].tolist()))
+                loc_target = [LocalTarget(counts_dir + feat +
+                                          "_count.tsv") for feat in feature]
                 all_target = loc_target + all_target
                 return all_target
         else:
             gff_fp = os.path.abspath(self.gff)
-            features = list(set(pd.read_csv(gff_fp, sep="\t", header=None, comment='#')[2].tolist()))
-            features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']]
-            loc_target = LocalTarget(counts_dir + "/" + features[-1] + "_count.tsv")
+            features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
+                                            comment='#')[2].tolist()))
+            features = [feat for feat in features if feat in ['CDS', 'rRNA',
+                                                              'tRNA', 'exon',
+                                                              'gene',
+                                                              'transcript']]
+            loc_target = LocalTarget(counts_dir + "/" +
+                                     features[-1] +
+                                     "_count.tsv")
             return loc_target
 
     def run(self):
@@ -84,43 +93,47 @@ class FeatureCounts(luigi.Task):
                                           "-g", self.fid,
                                           "-t", feat,
                                           "-T", self.num_cpus,
-                                          "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                                          "-o", counts_dir + "/" + feat +
+                                          "_count.tsv"] + in_srtbam_list
                     elif feat in ['gene']:
                         fcount_cmd_opt = ["-a", self.gff,
-                                      "-s", self.stranded,
-                                      "-B",
-                                      "-p", "-P", "-C",
-                                      "-g", self.fid,
-                                      "-t", feat,
-                                      "-T", self.num_cpus,
-                                      "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                                          "-s", self.stranded,
+                                          "-B",
+                                          "-p", "-P", "-C",
+                                          "-g", self.fid,
+                                          "-t", feat,
+                                          "-T", self.num_cpus,
+                                          "-o", counts_dir + "/" + feat +
+                                                "_count.tsv"] + in_srtbam_list
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
         else:
             feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
-                                        comment='#')[2].tolist()))
+                                           comment='#')[2].tolist()))
         for feat in feature:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
                         'novel_region']:
                 fcount_cmd_opt = ["-a", self.gff,
-                                    "-s", self.stranded,
-                                    "-B",
-                                    "-p", "-P", "-C",
-                                    "-g", self.fid,
-                                    "-t", feat,
-                                    "-T", self.num_cpus,
-                                    "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                                  "-s", self.stranded,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", self.fid,
+                                  "-t", feat,
+                                  "-T", self.num_cpus,
+                                  "-o", counts_dir + "/" + feat +
+                                        "_count.tsv"] + in_srtbam_list
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
             if feat in ['gene']:
                 fcount_cmd_opt = ["-a", self.gff,
-                                    "-s", self.stranded,
-                                    "-B",
-                                    "-p", "-P", "-C",
-                                    "-g", self.fid,
-                                    "-t", feat,
-                                    "-T", self.num_cpus,
-                                    "-o", counts_dir + "/" + feat + "_count.tsv"] + in_srtbam_list
+                                  "-s", self.stranded,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", self.fid,
+                                  "-t", feat,
+                                  "-T", self.num_cpus,
+                                  "-o", counts_dir + "/" + feat +
+                                  "_count.tsv"] + in_srtbam_list
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
 
@@ -143,9 +156,14 @@ class FeatureCountsII(luigi.Task):
     def output(self):
         """Expected output of featureCounts."""
         gff_fp = os.path.abspath(self.gff)
-        features = list(set(pd.read_csv(gff_fp, sep="\t", header=None, comment='#')[2].tolist()))
-        features = [feat for feat in features if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'gene', 'transcript']]
-        loc_target = LocalTarget(self.out_dir + "/" + features[-1] + "_count.tsv")
+        features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
+                                        comment='#')[2].tolist()))
+        features = [feat for feat in features if feat in ['CDS', 'rRNA',
+                                                          'tRNA', 'exon',
+                                                          'gene',
+                                                          'transcript']]
+        loc_target = LocalTarget(self.out_dir + "/" + features[-1] +
+                                 "_count.tsv")
         return loc_target
 
     def run(self):
@@ -153,29 +171,33 @@ class FeatureCountsII(luigi.Task):
         if os.path.exists(self.out_dir) is False:
             os.makedirs(self.out_dir)
         feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
-                                        comment='#')[2].tolist()))
+                                       comment='#')[2].tolist()))
         for feat in feature:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
                         'novel_region']:
                 fcount_cmd_opt = ["-a", self.gff,
-                                    "-s", self.stranded,
-                                    "-B",
-                                    "-p", "-P", "-C",
-                                    "-g", "ID",
-                                    "-t", feat,
-                                    "-T", self.num_cpus,
-                                    "-o", os.path.join(self.out_dir, feat + "_count.tsv"), self.bam_list]
+                                  "-s", self.stranded,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", "ID",
+                                  "-t", feat,
+                                  "-T", self.num_cpus,
+                                  "-o", os.path.join(self.out_dir, feat +
+                                                     "_count.tsv"),
+                                  self.bam_list]
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
             elif feat in ['gene']:
                 fcount_cmd_opt = ["-a", self.gff,
-                                    "-s", self.stranded,
-                                    "-B",
-                                    "-p", "-P", "-C",
-                                    "-g", "locus_tag",
-                                    "-t", feat,
-                                    "-T", self.num_cpus,
-                                    "-o", os.path.join(self.out_dir, feat + "_count.tsv"), self.bam_list]
+                                  "-s", self.stranded,
+                                  "-B",
+                                  "-p", "-P", "-C",
+                                  "-g", "locus_tag",
+                                  "-t", feat,
+                                  "-T", self.num_cpus,
+                                  "-o", os.path.join(self.out_dir, feat +
+                                                     "_count.tsv"),
+                                        self.bam_list]
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
 
@@ -187,10 +209,13 @@ class MergeStringTies(luigi.Task):
     def ouput(self):
         """Ouptut of string tie merge."""
         if self.kingdom in ['prokarya', 'eukarya']:
-            return [Map.RefFile(self.workdir + "/" + "stringtie_merged_transcript.gtf")]
+            return [Map.RefFile(self.workdir + "/" +
+                                "stringtie_merged_transcript.gtf")]
         elif self.kingdom == 'both':
-            return [Map.RefFile(self.workdir + "/" + "prok_sTie_merged_transcript.gtf"),
-                    Map.RefFile(self.workdir + "/" + "euk_sTie_merged_transcript.gtf")]
+            return [Map.RefFile(self.workdir + "/" +
+                                "prok_sTie_merged_transcript.gtf"),
+                    Map.RefFile(self.workdir + "/" +
+                                "euk_sTie_merged_transcript.gtf")]
 
     def run(self):
         """Running stringtie merge."""
@@ -207,20 +232,21 @@ class MergeStringTies(luigi.Task):
                             "_sTie.gtf" for samp in samp_list]
             stie_cmd_opt = ["--merge", "-G", self.gff_file,
                             "-o", self.workdir +
-                            "/" + "stringtie_merged_transcript.gtf"] + out_gtf_list
+                            "/" +
+                            "stringtie_merged_transcript.gtf"] + out_gtf_list
             stie_cmd = stringtie[stie_cmd_opt]
             stie_cmd()
         elif self.kingdom == 'both':
             prok_gff = self.gff_file.split(",")[0]
             euk_gff = self.gff_file.split(",")[1]
 
-            prokout_gtf_list = [os.path.join(self.workdir, samp, 
+            prokout_gtf_list = [os.path.join(self.workdir, samp,
                                              "stie_results",
                                              samp + "_prok_sTie.gtf")
                                 for samp in samp_list]
-            eukout_gtf_list = [os.path.join(self.workdir, samp, 
-                                             "stie_results",
-                                             samp + "_euk_sTie.gtf")
+            eukout_gtf_list = [os.path.join(self.workdir, samp,
+                                            "stie_results",
+                                            samp + "_euk_sTie.gtf")
                                for samp in samp_list]
             stie_cmd_euk_opt = ["--merge", "-G", euk_gff,
                                 "-o", self.workdir +
@@ -230,7 +256,8 @@ class MergeStringTies(luigi.Task):
 
             stie_cmd_prok_opt = ["--merge", "-G", prok_gff,
                                  "-o", self.workdir +
-                                 "/" + "/prok_sTie_merged_transcript.gtf"] + prokout_gtf_list
+                                 "/" +
+                                 "/prok_sTie_merged_transcript.gtf"] + prokout_gtf_list
             stie_cmd_prok = stringtie[stie_cmd_prok_opt]
             stie_cmd_prok()
 
@@ -296,8 +323,10 @@ class ReStringTieScoresW(luigi.WrapperTask):
                 if os.path.isdir(euk_bg_dir) is False:
                     os.makedirs(euk_bg_dir)
                     os.makedirs(prok_bg_dir)
-                prok_gtf = os.path.join(self.workdir, "prok_sTie_merged_transcript.gtf")
-                euk_gtf = os.path.join(self.workdir, "euk_sTie_merged_transcript.gtf")
+                prok_gtf = os.path.join(self.workdir,
+                                        "prok_sTie_merged_transcript.gtf")
+                euk_gtf = os.path.join(self.workdir,
+                                       "euk_sTie_merged_transcript.gtf")
                 yield ReStringTieScores(num_cpus=self.num_cpus,
                                         gtf=prok_gtf,
                                         out_gtf=prok_bg_dir + "/" + samp + "_prok_sTie.gtf",

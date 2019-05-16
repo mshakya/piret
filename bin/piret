@@ -21,8 +21,9 @@ sys.path.append(lib_path)
 sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
-from pypiret import CheckDesign, FaQC, Map, Summ, DGE, srna
-from pypiret import Workflows, CheckDependencies
+from pypiret.Checks import CheckDesign, CheckDependencies
+from pypiret.Runs import FaQC, Map, Summ, DGE, srna
+from pypiret.Workflows import DualSeq, SingleSeq
 from pypiret.Checks.GFF3 import CheckGFF
 from luigi.interface import build
 
@@ -207,11 +208,11 @@ def main():
                  workdir=workdir, star_db=args.STARDB)
 
     #TODO move this to log file
-    summarize_run(aligner=args.ALIGNER) # print run information in screen
+    summarize_run(aligner=args.ALIGNER)  # print run information in screen
 
     if args.TEST_KINGDOM in ['prokarya', 'eukarya'] and args.qsub is False:
-        #TODO: fix pathway and gage analysis, need to turn on corresponding parameters that turns on or off these analysis
-        #TODO: checks gff file amd see if it corresponds with the organism code.
+        # TODO: fix pathway and gage analysis, need to turn on corresponding parameters that turns on or off these analysis
+        # TODO: checks gff file amd see if it corresponds with the organism code.
 
         if args.TEST_KINGDOM == "prokarya":
             check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
@@ -222,20 +223,20 @@ def main():
             fasta = args.FASTA_EUK
             gff = args.GFF_EUK
         if check_method(args.METHOD, args.EXPDSN) is True:
-            single_seq = Workflows.SingleSeq(fastq_dic=samp_dic,
-                                         aligner=args.ALIGNER,
-                                         ref_fasta=fasta,
-                                         num_cpus=args.CPU,
-                                         local_scheduler=args.scheduler,
-                                         hisat_index=db,
-                                         workdir=workdir,
-                                         kingdom=args.TEST_KINGDOM,
-                                         no_of_jobs=no_of_jobs,
-                                         p_value=args.P_VALUE,
-                                         exp_desn_file=args.EXPDSN, 
-                                         prok_org_code=args.PROK_ORG,
-                                         euk_org_code=args.EUK_ORG,
-                                         stardb_dir=db)
+            single_seq = SingleSeq(fastq_dic=samp_dic,
+                                   aligner=args.ALIGNER,
+                                   ref_fasta=fasta,
+                                   num_cpus=args.CPU,
+                                   local_scheduler=args.scheduler,
+                                   hisat_index=db,
+                                   workdir=workdir,
+                                   kingdom=args.TEST_KINGDOM,
+                                   no_of_jobs=no_of_jobs,
+                                   p_value=args.P_VALUE,
+                                   exp_desn_file=args.EXPDSN, 
+                                   prok_org_code=args.PROK_ORG,
+                                   euk_org_code=args.EUK_ORG,
+                                   stardb_dir=db)
             if args.QC_OFF is False:
                 run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
                         local_scheduler=args.scheduler)
@@ -248,7 +249,7 @@ def main():
                     single_seq.create_new_gff(gff=gff) # create a new GFF file that has novel region info
                     gff=os.path.join(workdir, "updated.gff") # update gff
 
-                single_seq.feature_count(gff=gff) # count
+                single_seq.feature_count(gff=gff)  # count
                 if args.METHOD == "edgeR": 
                     single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
                                          GAGE=args.GAGE) # find diff expressed gene using edgeR

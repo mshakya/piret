@@ -1,13 +1,18 @@
 #! /usr/bin/env python
 
 """Check design."""
-from __future__ import print_function
 import os
+import sys
 import luigi
+import shutil
 from luigi import LocalTarget
-from pypiret import Summ
+from pypiret.Runs import Summ
 from luigi.util import inherits, requires
 import pandas as pd
+DIR = os.path.dirname(os.path.realpath(__file__))
+script_dir = os.path.abspath(os.path.join(DIR, "../../scripts"))
+os.environ["PATH"] += ":" + script_dir
+sys.path.insert(0, script_dir)
 from plumbum.cmd import EdgeR, Rscript, plot_pathway
 from plumbum.cmd import RDESeq2, gage_analysis, ballgown_analysis
 import logging
@@ -22,6 +27,7 @@ class edgeR(luigi.Task):
     euk_org_code = luigi.Parameter()
     GAGE = luigi.BoolParameter()
     pathway = luigi.BoolParameter()
+    gff_file = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
@@ -42,7 +48,7 @@ class edgeR(luigi.Task):
             os.makedirs(edger_dir)
         for file in os.listdir(fcount_dir):
             if file.endswith("tsv"):
-                name = file.split("_")[-2]
+                name  = file.split("_")[-2]
                 edger_list = ["-r", os.path.join(fcount_dir, file),
                           "-e", self.exp_design,
                           "-p", self.p_value,
@@ -54,6 +60,7 @@ class edgeR(luigi.Task):
                 logger.info(edger_cmd)
                 edger_cmd()
                 if file == "gene_count.tsv":
+                #TODO:convert the first column to locus tag
                     if self.pathway is True:
                         path_list = ["-d", edger_dir,
                                 "-m", "edgeR", "-c", self.org_code] # get pathway information
@@ -70,14 +77,18 @@ class edgeR(luigi.Task):
 
     def summ_summ(self):
         """Summarize the summary table to be displayed in edge"""
-        edger_dir = self.workdir + "/edgeR/" + self.kingdom
-        all_files = os.listdir(edger_dir)
-        if all_files:
+        edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
+        all_dirs = os.listdir(edger_dir)
+        if all_dirs:
             out_file = os.path.join(edger_dir, "summary_updown.csv")
-            summ_files = [pd.read_csv(os.path.join(edger_dir, file),
-                                  index_col=0) for file in all_files if "summary.csv" in file ]
-            summ_df = pd.concat(summ_files)
-            summ_df.to_csv(out_file)
+            summ_files = []
+            for root, dirs, files in os.walk(edger_dir):
+                for file in files:
+                    if "summary.csv" in file:
+                        summ_files.append(os.path.join(root, file))
+            summ_df = [pd.read_csv(file, index_col=0) for file in summ_files]
+            summ_df_ccat = pd.concat(summ_df)
+            summ_df_ccat.to_csv(out_file)
 
 
 @requires(Summ.FeatureCounts)
@@ -97,7 +108,8 @@ class DESeq2(luigi.Task):
         for file in os.listdir(fcount_dir):
             if file.endswith("__sig.csv"):
                 out_folder = file.split(".csv")[0]
-                out_filepath = os.path.join(DESeq2_dir, out_folder, "greater.csv")    
+                out_filepath = os.path.join(DESeq2_dir, out_folder,
+                                            "greater.csv")
                 return LocalTarget(out_filepath)
 
     def run(self):
@@ -120,10 +132,14 @@ class DESeq2(luigi.Task):
                     logger.info(deseq2_cmd)
                     deseq2_cmd()
             if file == "gene_count.tsv":
+                if self.prok_org_code is None:
+                    org_code=self.euk_org_code
+                else:
+                    org_code=self.prok_org_code
                 if self.pathway is True:
                     path_list = ["-d", DESeq2_dir,
                          "-m", "DESeq2", "-c",
-                         self.org_code] # get pathway information
+                         org_code] # get pathway information
                     path_cmd = plot_pathway[path_list]
                     logger.info(path_cmd)
                     path_cmd()
