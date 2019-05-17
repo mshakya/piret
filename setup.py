@@ -11,7 +11,7 @@ setup(
     url="https://github.com/mshakya/piret",
     install_requires=open("requirements.txt").read().splitlines(),
     packages=find_packages(),
-    scripts=['bin/piret'],
+    scripts=['bin/piret', 'scripts/EdgeR'],
     license="Apache License 2.0",
     platforms="Posix; MacOS X",
     classifiers=[
