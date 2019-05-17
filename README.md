@@ -1,7 +1,7 @@
 <!-- [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](https://bioconda.github.io/recipes/viral-ngs/README.html) -->
 
 [![Build Status](https://travis-ci.org/mshakya/piret.svg?branch=master)](https://travis-ci.org/mshakya/piret)
-[![codecov](https://codecov.io/gh/mshakya/PyPiReT/branch/master/graph/badge.svg)](https://codecov.io/gh/mshakya/PyPiReT)
+[![codecov](https://codecov.io/gh/mshakya/piret/branch/master/graph/badge.svg)](https://codecov.io/gh/mshakya/piret)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/piret/README.html)
 
 <!-- [ ![Codeship Status for mshakya/PyPiReT](https://app.codeship.com/projects/56b51ac0-1899-0135-279d-22ebbf49dae4/status?branch=master)](https://app.codeship.com/projects/219002) -->
