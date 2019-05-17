@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="pypiret",
+    name="piret",
     version='0.1.0',
     description="RNAseq pipeline",
     author="Migun Shakya",

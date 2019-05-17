@@ -11,10 +11,10 @@ before_install:
   - docker pull quay.io/biocontainers/piret:0.3.4--1
   - docker run -d -p 127.0.0.1:80:4567 quay.io/biocontainers/piret:0.3.4--1 /bin/sh -c "cd /root/piret; samtools --help;"
   - docker ps -a
-  - docker run quay.io/biocontainers/piret:0.3.4--1 /bin/sh -c "cd /root/piret; samtools --help"
+  - docker run quay.io/biocontainers/piret:0.3.4--1 /bin/sh -c "cd /root/piret; which piret"
 
-script:
-  - pytest --cov=./
+# script:
+#   - pytest --cov=./
 
 after_success:
   - codecov
