@@ -28,8 +28,6 @@ from pypiret.Checks.GFF3 import CheckGFF
 from luigi.interface import build
 
 
-
-
 def cmdline_parser():
     """
     Create an argparse instance.
@@ -44,7 +42,7 @@ def cmdline_parser():
 
     parser = argparse.ArgumentParser(formatter_class=CustomFormatter,
                                      prog='piret',
-                                     description="""RNASeq workflow""",
+                                     description="""piret""",
                                      epilog="""
 When selecting both kingdom runs, options that are required for both eukaryotes
 and prokaryotes run are required.
