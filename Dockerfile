@@ -12,7 +12,7 @@ RUN apt-get clean
 
 # install all piret dependencies
 RUN conda install -c bioconda hisat2=2.0.5
-RUN conda install -c bioconda faqcs=2.0.9
+RUN conda install -c bioconda faqcs
 RUN conda install -c bioconda samtools=1.6
 RUN conda install -c bioconda gffread=0.9.12
 RUN conda install -c bioconda bamtools=2.4.0
