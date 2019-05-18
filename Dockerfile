@@ -11,9 +11,10 @@ RUN apt-get -y install build-essential git-all wget
 RUN apt-get clean
 
 # install all piret dependencies
-RUN conda install -c bioconda piret
-
-# Get latest piret
-RUN git clone https://github.com/mshakya/piret.git /root/piret
-RUN cd /root/piret
-RUN export PATH="/root/piret/bin:$PATH"
+RUN conda install -c bioconda hisat2=2.0.5
+RUN conda install -c bioconda faqcs=2.0.9
+RUN conda install -c bioconda samtools=1.6
+RUN conda install -c bioconda gffread=0.9.12
+RUN conda install -c bioconda bamtools=2.4.0
+RUN conda install -c bioconda subread=1.3.3
+RUN conda install -c bioconda stringtie=1.3.3
