@@ -18,3 +18,6 @@ RUN conda install -c bioconda gffread=0.9.12
 RUN conda install -c bioconda bamtools=2.4.0
 RUN conda install -c bioconda subread=1.6.0
 RUN conda install -c bioconda stringtie=1.3.3
+RUN conda install -c bioconda bedtools=2.28.0
+RUN conda install -c bioconda STAR=2.7.1a
+
