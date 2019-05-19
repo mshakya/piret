@@ -1,6 +1,6 @@
 # .coveragerc to control coverage.py
 [run]
-source=pypiret
+source=piret
 branch = True
 
 [report]
