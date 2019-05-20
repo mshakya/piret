@@ -59,35 +59,39 @@ class ExtractPP(luigi.Task):
             self.sort_bam(euk_bbam.split(".bam")[0] + ".bam")
             self.sort_bam(prok_bbam.split(".bam")[0] + ".bam")
 
-
     def prop_paired(self, bam_file):
         """Extract properly paired reads."""
 
+        tmp_dir = os.path.join(self.workdir, "tmp")
+        if os.path.isdir(tmp_dir) is False:
+            os.makedirs(tmp_dir)
         for flag in ["-f99", "-f147", "-f163", "-f83"]:
             options = ["view", "-h", "-b", flag, bam_file, "-o",
-                       "/tmp/" + basename(bam_file).split(".bam")[0] + "_" +
+                       tmp_dir + basename(bam_file).split(".bam")[0] + "_" +
                        flag.split("-")[1] + ".bam"]
             samtools_cmd = samtools[options]
             logger = logging.getLogger('luigi-interface')
             logger.info(samtools_cmd)
             samtools_cmd()
 
-
     def merge_prop_paired(self, bam_file, fbam, bbam):
         """Merge properly paired files."""
+        tmp_dir = os.path.join(self.workdir, "tmp")
+        if os.path.isdir(tmp_dir) is False:
+            os.makedirs(tmp_dir)
         options = ["merge", fbam,
-                   "/tmp/" + basename(bam_file).split(".bam")[0] + 
+                   tmp_dir + basename(bam_file).split(".bam")[0] + 
                    "_" + "f99.bam",
-                   "/tmp/" + basename(bam_file).split(".bam")[0] + 
+                   tmp_dir + basename(bam_file).split(".bam")[0] + 
                    "_" + "f147.bam", "-f"]
         merge_cmd = samtools[options]
         merge_cmd()
         logger = logging.getLogger('luigi-interface')
         logger.info(merge_cmd)
         options = ["merge", bbam,
-                   "/tmp/" + basename(bam_file).split(".bam")[0] +
+                   tmp_dir + basename(bam_file).split(".bam")[0] +
                    "_" + "f163.bam",
-                   "/tmp/" + basename(bam_file).split(".bam")[0] +
+                   tmp_dir + basename(bam_file).split(".bam")[0] +
                    "_" + "f83.bam",
                    "-f"]
         merge_cmd = samtools[options]
