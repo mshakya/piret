@@ -11,7 +11,7 @@ before_install:
   - docker pull migun/piret
   - docker run -d -p 127.0.0.1:80:4567 migun/piret /bin/sh -c "samtools --help;"
   - docker ps -a
-  - docker run -v"$PWD/shared:/shared" migun/piret /bin/sh -c "cd /root; git clone https://github.com/mshakya/piret.git; cd piret/; python setup.py install; pytest --cov=./; mv coverage.txt shared;"
+  - docker run -v"$PWD/shared:/shared" migun/piret /bin/sh -c "cd /root; git clone https://github.com/mshakya/piret.git; cd piret/; python setup.py install; pytest --cov=./;"
 
 # script:
 #   - pytest --cov=./
