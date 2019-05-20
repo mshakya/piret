@@ -30,7 +30,7 @@ class TestPP(unittest.TestCase):
 
     def test_merge(self):
         """Test if true."""
-
+        self.pp.prop_paired(self.bam_file)
         self.pp.merge_prop_paired("samp5", "forward.samp5.pp.bam",
                                   "backward.samp5.pp.bam")
         assert os.path.exists("forward.samp5.pp.bam") == 1
@@ -44,6 +44,7 @@ class TestPP(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        rm["-rf", os.path.join("tests", "tmp")]()
         rm["-rf", 'forward.samp5.pp.bam']()
         rm["-rf", 'backward.samp5.pp.bam']()
         rm["-rf", 'forward.samp5.pp_srt.bam']()
