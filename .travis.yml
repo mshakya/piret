@@ -11,13 +11,13 @@ before_install:
   - docker pull migun/piret
   - docker run -d -p 127.0.0.1:80:4567 migun/piret /bin/sh -c "samtools --help;"
   - docker ps -a
-  - docker run -v"$PWD/shared:/shared" migun/piret /bin/sh -c "cd /root; git clone https://github.com/mshakya/piret.git; cd piret/; python setup.py install; pytest --cov=./;"
+  - docker run -v "$PWD/shared:/shared" migun/piret /bin/sh -c "cd /root; git clone https://github.com/mshakya/piret.git; cd piret/; python setup.py install; pytest --cov=./;"
 
 install:
     python setup.py install
 
 script:
-  - piret -h
+  - docker run migun/piret /bin/sh -c "piret -h"
 
 # after_success:
 #   - bash <(curl -s https://codecov.io/bash)
