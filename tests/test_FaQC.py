@@ -27,8 +27,8 @@ class TestFaQC(unittest.TestCase):
         """Test FaQC function."""
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bindir = os.path.abspath(os.path.join(dirpath, '..', 'bin'))
-        build([FaQC.PairedRunQC(fastqs=["tests/data/fastqs/BTT_test15_R1.fastq",
-                                        "tests/data/fastqs/BTT_test15_R1.fastq"],
+        build([FaQC.PairedRunQC(fastqs=["tests/data/fastqs/BTT_test15_R1.fastq.gz",
+                                        "tests/data/fastqs/BTT_test15_R1.fastq.gz"],
                                 sample="samp1",
                                 num_cpus=1,
                                 qc_outdir="test_faqc",
