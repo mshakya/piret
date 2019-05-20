@@ -20,7 +20,7 @@ migun/
 *.bedfile
 *.tab
 *.log
-*.bam
+# *.bam
 *.ht2l
 *.tsv
 *.sam

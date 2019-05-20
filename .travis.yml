@@ -13,8 +13,11 @@ before_install:
   - docker ps -a
   - docker run -v"$PWD/shared:/shared" migun/piret /bin/sh -c "cd /root; git clone https://github.com/mshakya/piret.git; cd piret/; python setup.py install; pytest --cov=./;"
 
-# script:
-#   - pytest --cov=./
+install:
+    python setup.py install
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+script:
+  - piret -h
+
+# after_success:
+#   - bash <(curl -s https://codecov.io/bash)
