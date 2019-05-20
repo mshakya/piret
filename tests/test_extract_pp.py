@@ -14,6 +14,7 @@ from pypiret.Runs.srna import FindNovelRegions, CompileGFF
 class TestPP(unittest.TestCase):
     """Unittest testcase."""
     bam_file = "tests/data/samp5.bam"
+    workdir = "tests"
     pp = ExtractPP(kingdom="prokarya",
                        workdir="tests/",
                        map_dir="tests/data/",
@@ -25,13 +26,13 @@ class TestPP(unittest.TestCase):
 
         self.pp.prop_paired(self.bam_file)
 
-        assert os.path.exists("/tmp/samp5_f163.bam") == 1
+        assert os.path.exists(os.path.join(self.workdir, "tmp", "samp5_f163.bam")) == 1
 
     def test_merge(self):
         """Test if true."""
-        
+
         self.pp.merge_prop_paired("samp5", "forward.samp5.pp.bam",
-                             "backward.samp5.pp.bam")
+                                  "backward.samp5.pp.bam")
         assert os.path.exists("forward.samp5.pp.bam") == 1
         assert os.path.exists("backward.samp5.pp.bam") == 1
 

@@ -32,7 +32,6 @@ class ExtractPP(luigi.Task):
             prok_bam_srt = self.map_dir + "/" + self.sample + "_srt_prok.fw_srt.bam"
             return luigi.LocalTarget(prok_bam_srt)
 
-
     def run(self):
         """Run split and merges."""
         if self.kingdom in ['prokarya', 'eukarya']:
@@ -66,9 +65,9 @@ class ExtractPP(luigi.Task):
         if os.path.isdir(tmp_dir) is False:
             os.makedirs(tmp_dir)
         for flag in ["-f99", "-f147", "-f163", "-f83"]:
+            fn = basename(bam_file).split(".bam")[0] + "_" + flag.split("-")[1] + ".bam"  # name of the file
             options = ["view", "-h", "-b", flag, bam_file, "-o",
-                       tmp_dir + basename(bam_file).split(".bam")[0] + "_" +
-                       flag.split("-")[1] + ".bam"]
+                       os.path.join(tmp_dir, fn)]
             samtools_cmd = samtools[options]
             logger = logging.getLogger('luigi-interface')
             logger.info(samtools_cmd)
@@ -79,21 +78,18 @@ class ExtractPP(luigi.Task):
         tmp_dir = os.path.join(self.workdir, "tmp")
         if os.path.isdir(tmp_dir) is False:
             os.makedirs(tmp_dir)
-        options = ["merge", fbam,
-                   tmp_dir + basename(bam_file).split(".bam")[0] + 
-                   "_" + "f99.bam",
-                   tmp_dir + basename(bam_file).split(".bam")[0] + 
-                   "_" + "f147.bam", "-f"]
+        f99 = basename(bam_file).split(".bam")[0] + "_" + "f99.bam"
+        f147 = basename(bam_file).split(".bam")[0] + "_" + "f147.bam"
+        options = ["merge", fbam, os.path.join(tmp_dir, f99),
+                   os.path.join(tmp_dir, f147), "-f"]
         merge_cmd = samtools[options]
         merge_cmd()
         logger = logging.getLogger('luigi-interface')
         logger.info(merge_cmd)
-        options = ["merge", bbam,
-                   tmp_dir + basename(bam_file).split(".bam")[0] +
-                   "_" + "f163.bam",
-                   tmp_dir + basename(bam_file).split(".bam")[0] +
-                   "_" + "f83.bam",
-                   "-f"]
+        f163 = basename(bam_file).split(".bam")[0] + "_" + "f163.bam"
+        f83 = basename(bam_file).split(".bam")[0] + "_" + "f83.bam"
+        options = ["merge", bbam, os.path.join(tmp_dir, f163),
+                   os.path.join(tmp_dir, f83), "-f"]
         merge_cmd = samtools[options]
         logger.info(merge_cmd)
         merge_cmd()
