@@ -15,17 +15,9 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-Please download PiReT from the [github](https://github.com/mshakya/PyPiReT).
-
+using conda
 ```
-git clone https://github.com/mshakya/PyPiReT.git
-```
-
-`cd` into the `PyPiReT` directory
-
-```
-cd PyPiReT
-./INSTALL.SH
+conda install piret
 ```
 
 PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`

@@ -7,7 +7,6 @@ wrapper for running RNASeq pipeline
 
 """
 
-from __future__ import print_function
 import os
 import sys
 import argparse
@@ -74,10 +73,11 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     
     required_args.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
         when eukarya or both is chosen, it expects alternative splicing""",
-                        required=False, default='prokarya',
-                        choices=['prokarya', 'eukarya', 'both'])
+                               required=False, default='prokarya',
+                               choices=['prokarya', 'eukarya', 'both'])
 
-    required_prok_args = parser.add_argument_group('required arguments (for prokaryotes)')
+    required_prok_args = parser.add_argument_group("""required arguments
+                                                      (for prokaryotes)""")
 
     required_prok_args.add_argument("-fp", dest="FASTA_PROK", help="""fasta for
         Prokaryotic Reference""", required=False, default=None)
@@ -144,15 +144,15 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     parser.add_argument("--qsub", help="""run the SGE version of the code, it
         currently is set to SGE with smp""", required=False,
                         action='store_true', default=False)
-    
+
     parser.add_argument("--aligner", dest="ALIGNER", help="""Pick a aligner to be used for the analysis.
                         hisat2 is default. STAR only works for eukaryotes.""",
                         required=False, default='hisat2',
                         choices=['STAR', 'hisat2'])
-    
+
     parser.add_argument("--qc_off", dest="QC_OFF", help="""A flag indicating not to perform QC.""",
                         required=False, default=False, action="store_true")
-    
+
     parser.add_argument("--novel", dest="NOVEL", help="""A flag indicating to find novel regions.""",
                         required=False, default=False, action="store_true")
 
@@ -237,33 +237,33 @@ def main():
                                    stardb_dir=db)
             if args.QC_OFF is False:
                 run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
-                        local_scheduler=args.scheduler)
-                single_seq.create_db(gff=gff) # create database, hisat2 or stardb
-                single_seq.map_reads() # map reads, hisat2 or stardb
-                single_seq.map_summarize() # summarize the reads               
-                if args.NOVEL is True: # if novel regions are to be reported
-                    single_seq.extract_pp() # extract properly paired reads
-                    single_seq.novel_regions(gff=gff) # find novel regions
-                    single_seq.create_new_gff(gff=gff) # create a new GFF file that has novel region info
-                    gff=os.path.join(workdir, "updated.gff") # update gff
+                         local_scheduler=args.scheduler)
+                single_seq.create_db(gff=gff)  # create database, hisat2 or stardb
+                single_seq.map_reads()  # map reads, hisat2 or stardb
+                single_seq.map_summarize()  # summarize the reads               
+                if args.NOVEL is True:  # if novel regions are to be reported
+                    single_seq.extract_pp()  # extract properly paired reads
+                    single_seq.novel_regions(gff=gff)  # find novel regions
+                    single_seq.create_new_gff(gff=gff)  # create a new GFF file that has novel region info
+                    gff = os.path.join(workdir, "updated.gff")  # update gff
 
                 single_seq.feature_count(gff=gff)  # count
                 if args.METHOD == "edgeR": 
                     single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
                                          GAGE=args.GAGE) # find diff expressed gene using edgeR
                 elif args.METHOD == "DESeq2":
-                    single_seq.run_deseq2(gff,pathway=args.PATHWAY,
+                    single_seq.run_deseq2(gff, pathway=args.PATHWAY,
                                          GAGE=args.GAGE)   # use DESeq2
                 elif args.METHOD == "ballgown":
                     single_seq.merge_stringtie(gff=gff)
                     single_seq.restringtie(gff=gff)
                     single_seq.run_ballgown(gff=gff)
-                elif args.METHOD == "DEedge": # use both
+                elif args.METHOD == "DEedge":  # use both
                     single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
                                          GAGE=args.GAGE) 
                     single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
                                          GAGE=args.GAGE) 
-                elif args.METHOD == "DEgown": # use deseq and ballgown
+                elif args.METHOD == "DEgown":  # use deseq and ballgown
                     single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
                                          GAGE=args.GAGE)
                     single_seq.merge_stringtie()
