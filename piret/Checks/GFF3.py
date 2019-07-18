@@ -44,19 +44,22 @@ class CheckGFF():
         p_reg = re.compile('ID=.*?;')
 
         if gff_mrna.empty is False:
-            gff_mrna['mRNA_ID'] = gff_mrna.apply(lambda row: p_reg.search(row['attributes']).group(0),
-                                                 axis=1)
+            mrna_id = gff_mrna.apply(lambda row: p_reg.search(row['attributes']).group(0),
+                                     axis=1)
+            gff_mrna.loc[gff_mrna.index, 'mRNA_ID'] = mrna_id
             mrna_ids = gff_mrna['mRNA_ID'].tolist()
         if gff_cds.empty is False:
-            gff_cds['cds_ID'] = gff_cds.apply(lambda row: p_reg.search(row['attributes']).group(0),
-                                              axis=1)
+            cds_id = gff_cds.apply(lambda row: p_reg.search(row['attributes']).group(0),
+                                   axis=1)
+            gff_cds.loc[gff_cds.index, 'cds_ID'] = cds_id
             cds_ids = gff_cds['cds_ID'].tolist()
         if gff_gene.empty is False:
-            gff_gene['gene_ID'] = gff_gene.apply(lambda row: p_reg.search(row['attributes']).group(0), axis=1)
+            gene_id = gff_gene.apply(lambda row: p_reg.search(row['attributes']).group(0), axis=1)
+            gff_gene.loc[gff_gene.index, 'gene_ID'] = gene_id
             gene_ids = gff_gene['gene_ID'].tolist()
         if gff_exon.empty is False:
-            gff_exon['exon_ID'] = gff_exon['attributes'].str.extract('(ID=.*?;)', expand=True)
-            # gff_exon['exon_ID'] = gff_exon.apply(lambda row: p_reg.search(row['attributes']).group(0), axis=1)
+            exon_id = gff_exon.apply(lambda row: p_reg.search(row['attributes']).group(0), axis=1)
+            gff_exon.loc[gff_exon.index, 'exon_ID'] = exon_id
             exon_ids = gff_exon['exon_ID'].tolist()
         if gff_mrna.empty is False and gff_cds.empty is False:
             if len(list(set(mrna_ids).intersection(cds_ids))) > 0:
