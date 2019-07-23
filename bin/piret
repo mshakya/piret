@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 RNA seq pipeline.
@@ -20,10 +20,10 @@ sys.path.append(lib_path)
 sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
-from pypiret.Checks import CheckDesign, CheckDependencies
-from pypiret.Runs import FaQC, Map, Summ, DGE, srna
-from pypiret.Workflows import DualSeq, SingleSeq
-from pypiret.Checks.GFF3 import CheckGFF
+from piret.Checks import CheckDesign, CheckDependencies
+from piret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.Workflows import DualSeq, SingleSeq
+from piret.Checks.GFF3 import CheckGFF
 from luigi.interface import build
 
 
@@ -98,15 +98,15 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     required_path_args.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
                         required=False, default=False, action="store_true")
     
-    required_path_args.add_argument("--p_org", dest="PROK_ORG", help="""organism code for prokaryote reference,
-        obtained from KEGG, required for pathway and GAGE analysis. For the list of available organims code, see
-        the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
-                        required=False, default=None)
+    # required_path_args.add_argument("--p_org", dest="PROK_ORG", help="""organism code for prokaryote reference,
+    #     obtained from KEGG, required for pathway and GAGE analysis. For the list of available organims code, see
+    #     the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
+    #                     required=False, default=None)
     
-    required_path_args.add_argument("--e_org", dest="EUK_ORG", help="""organism code for eukarya reference,
-        obtained from KEGG, required for pathway and GAGE analysis.For the list of available organims code, see
-        the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
-                        required=False, default=None)
+    # required_path_args.add_argument("--e_org", dest="EUK_ORG", help="""organism code for eukarya reference,
+    #     obtained from KEGG, required for pathway and GAGE analysis.For the list of available organims code, see
+    #     the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
+    #                     required=False, default=None)
 
     required_path_args.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
                         required=False, default=False, action="store_true")
@@ -123,10 +123,6 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
                         default='DESeq2',
                         choices=['edgeR', 'DESeq2', 'ballgown', 'DEedge',
                                  'DEgown', 'balledgeR', 'all'])
-    
-    parser.add_argument("--comp", dest="COMPAR", help="""A tsv file containing information regarding the
-        groups that are to be compared.""", required=False)
-
     
     parser.add_argument("--star_db", dest="STARDB", help="""A folder to keep star formatted DB.""",
                         required=False)
@@ -231,58 +227,57 @@ def main():
                                    kingdom=args.TEST_KINGDOM,
                                    no_of_jobs=no_of_jobs,
                                    p_value=args.P_VALUE,
-                                   exp_desn_file=args.EXPDSN, 
-                                   prok_org_code=args.PROK_ORG,
-                                   euk_org_code=args.EUK_ORG,
-                                   stardb_dir=db)
+                                   exp_desn_file=args.EXPDSN,
+                                   stardb_dir=db,
+                                   gff_file=gff)
             if args.QC_OFF is False:
                 run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
                          local_scheduler=args.scheduler)
-                single_seq.create_db(gff=gff)  # create database, hisat2 or stardb
+                single_seq.create_db()  # create database, hisat2 or stardb
                 single_seq.map_reads()  # map reads, hisat2 or stardb
                 single_seq.map_summarize()  # summarize the reads               
                 if args.NOVEL is True:  # if novel regions are to be reported
                     single_seq.extract_pp()  # extract properly paired reads
-                    single_seq.novel_regions(gff=gff)  # find novel regions
-                    single_seq.create_new_gff(gff=gff)  # create a new GFF file that has novel region info
+                    single_seq.novel_regions()  # find novel regions
+                    single_seq.create_new_gff()  # create a new GFF file that has novel region info
                     gff = os.path.join(workdir, "updated.gff")  # update gff
 
-                single_seq.feature_count(gff=gff)  # count
-                if args.METHOD == "edgeR": 
-                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
-                                         GAGE=args.GAGE) # find diff expressed gene using edgeR
+                single_seq.feature_count()  # count
+                if args.METHOD == "edgeR":
+                    single_seq.run_edger(pathway=args.PATHWAY,
+                                         GAGE=args.GAGE)  # find diff expressed gene using edgeR
                 elif args.METHOD == "DESeq2":
-                    single_seq.run_deseq2(gff, pathway=args.PATHWAY,
+                    single_seq.run_deseq2(pathway=args.PATHWAY,
                                          GAGE=args.GAGE)   # use DESeq2
                 elif args.METHOD == "ballgown":
-                    single_seq.merge_stringtie(gff=gff)
-                    single_seq.restringtie(gff=gff)
-                    single_seq.run_ballgown(gff=gff)
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
                 elif args.METHOD == "DEedge":  # use both
-                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                    single_seq.run_edger(pathway=args.PATHWAY,
                                          GAGE=args.GAGE) 
-                    single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
+                    single_seq.run_deseq2(pathway=args.PATHWAY,
                                          GAGE=args.GAGE) 
                 elif args.METHOD == "DEgown":  # use deseq and ballgown
-                    single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
+                    single_seq.run_deseq2(pathway=args.PATHWAY,
                                          GAGE=args.GAGE)
                     single_seq.merge_stringtie()
-                    single_seq.restringtie(gff=gff)
-                    single_seq.run_ballgown(gff=gff)
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
                 elif args.METHOD == "balledgeR": # use ball and edgeR
-                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                    single_seq.run_edger(pathway=args.PATHWAY,
                                          GAGE=args.GAGE)
-                    single_seq.merge_stringtie(gff=gff)
-                    single_seq.restringtie(gff=gff)
-                    single_seq.run_ballgown(gff=gff)
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
                 elif args.METHOD == "all": # use all
-                    single_seq.run_edger(gff=gff, pathway=args.PATHWAY,
+                    single_seq.run_edger(pathway=args.PATHWAY,
                                          GAGE=args.GAGE)
-                    single_seq.run_deseq2(gff=gff, pathway=args.PATHWAY,
+                    single_seq.run_deseq2(pathway=args.PATHWAY,
                                          GAGE=args.GAGE)
-                    single_seq.merge_stringtie(gff=gff)
-                    single_seq.restringtie(gff=gff)
-                    single_seq.run_ballgown(gff=gff)
+                    single_seq.merge_stringtie()
+                    single_seq.restringtie()
+                    single_seq.run_ballgown()
             elif args.QC_OFF is True:
                 pass
 
@@ -305,8 +300,6 @@ def main():
                                      exp_desn_file=args.EXPDSN,
                                      p_value=args.P_VALUE,
                                      ref_gffs=gffs, # gff of both,
-                                     prok_org_code=args.PROK_ORG,
-                                     euk_org_code=args.EUK_ORG,
                                      stardb_dir=db
                                      )
 
@@ -316,8 +309,8 @@ def main():
         dual_seq.split_prokeuk()
         if args.NOVEL is True: # if novel regions are to be reported
             dual_seq.extract_pp() # extract properly paired reads
-            dual_seq.novel_regions(gff=gffs) # find novel regions
-            dual_seq.create_new_gff(gff=gffs) # create a new GFF file that has novel region info
+            dual_seq.novel_regions() # find novel regions
+            dual_seq.create_new_gff() # create a new GFF file that has novel region info
             gffs = ",".join([os.path.join(workdir, "prok_updated.gff"), os.path.join(workdir, "euk_updated.gff")]) # update gff
         dual_seq.feature_counts()
         if args.METHOD == "edgeR":
@@ -359,8 +352,8 @@ def check_input(args, parser, workdir):
     if args.TEST_KINGDOM == "prokarya" and args.GFF_EUK != None:
         parser.error("-k prokarya does not need eukarya gff -ge to be specified")
     # pathway
-    if args.TEST_KINGDOM == "prokarya" and args.PATHWAY is True and args.PROK_ORG is None:
-        parser.error("if pathway analysis is turned on, you need to specify organism code")
+    # if args.TEST_KINGDOM == "prokarya" and args.PATHWAY is True and args.PROK_ORG is None:
+    #     parser.error("if pathway analysis is turned on, you need to specify organism code")
     # for eukarya
     if args.TEST_KINGDOM == "eukarya" and args.FASTA_EUK is None:
         parser.error("-k eukarya requires fasta file to be specified using -fe")
@@ -402,31 +395,6 @@ def check_aligner(aligner, hisat_index, workdir, star_db):
         else:
             os.makedirs(star_db)
             return star_db
-            
-
-def check_comp(comp_file, exp_design):
-    """Check if comparison file is tsv and the groups in it actually
-    corresponds to one mentioned in experimental design file."""
-    
-    group = []
-    with open(exp_design, 'r') as e:
-        elines = e.readlines()
-        for line in elines:
-            group.append(line.split("\t")[2].rstrip())
-    grp = list(set(group))
-    with open(comp_file, 'r') as c:
-        clines = c.readlines()
-        for line in clines:
-            if len(line.split("\t")) == 2:
-                for l in line.split("\t"):
-                    if l in grp:
-                        pass
-                    else:
-                        print(*grp, sep="\t")
-                        sys.exit("'%s' not found design file!" %l)
-            else:
-                sys.exit("Comparison file is not correct. Its a two column tab delimited file.")
-            
 
 def check_depen(tool_list, logger):
     """A function that checks the list of tool are in path or not."""
