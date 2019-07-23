@@ -12,6 +12,7 @@ import sys
 import argparse
 import luigi
 import logging
+import configparser
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
@@ -24,6 +25,7 @@ from piret.Checks import CheckDesign, CheckDependencies
 from piret.Runs import FaQC, Map, Summ, DGE, srna
 from piret.Workflows import DualSeq, SingleSeq
 from piret.Checks.GFF3 import CheckGFF
+from piret.logger import create_logger
 from luigi.interface import build
 
 
@@ -98,16 +100,6 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     required_path_args.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
                         required=False, default=False, action="store_true")
     
-    # required_path_args.add_argument("--p_org", dest="PROK_ORG", help="""organism code for prokaryote reference,
-    #     obtained from KEGG, required for pathway and GAGE analysis. For the list of available organims code, see
-    #     the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
-    #                     required=False, default=None)
-    
-    # required_path_args.add_argument("--e_org", dest="EUK_ORG", help="""organism code for eukarya reference,
-    #     obtained from KEGG, required for pathway and GAGE analysis.For the list of available organims code, see
-    #     the list provided by KEGG at https://www.genome.jp/kegg/catalog/org_list.html""",
-    #                     required=False, default=None)
-
     required_path_args.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
                         required=False, default=False, action="store_true")
 
@@ -168,26 +160,25 @@ def main():
     args = parser.parse_args()
 
     # setting up logging files
-    log_file = os.path.join(args.WORKDIR, "piret.log")
-    if os.path.exists(args.WORKDIR) is False:
-        os.makedirs(args.WORKDIR)
-    open(log_file, 'a').close()
-    logger = logging.basicConfig(format='%(asctime)s %(message)s',
-                                 filename=log_file, level=logging.INFO)
+    logger = create_logger(args.WORKDIR)
 
+    # read in the config file
+    config=configparser.ConfigParser()
+    config.lead("luigi.cfg")
     
-    check_input(args=args, parser=parser, workdir=args.WORKDIR) # check if correct options are selected
+
+
+    # check if correct options are selected
+    check_input(args=args, parser=parser, workdir=args.WORKDIR)
+
     # check if third party tools are in path
-    if args.ALIGNER == "STAR": 
+    if args.ALIGNER == "STAR":
         check_depen(["STAR", "samtools"], logger)
     elif args.ALIGNER == "hisat2":
         check_depen(["hisat2", "samtools"], logger)
     workdir = os.path.abspath(args.WORKDIR) # Getting absolute path of workdir
     if check_exp_design(args.EXPDSN) is False: #check if experimental design file is OK
         sys.exit("Your experimental design file has formatting problems!")
-    
-    if args.COMPAR != None: # check if comparison file is correctly formatted
-        check_comp(args.COMPAR, args.EXPDSN)
     
     if check_ballgown_method(args.METHOD, args.TEST_KINGDOM) is True: # checking ballgown method
         pass
