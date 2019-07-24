@@ -66,9 +66,8 @@ class PairedRunQC(luigi.Task):
         faqc_cmd()
 
 
-
 class RunAllQC(luigi.WrapperTask):
-    """Run all QC."""
+    """Wrapper task to Run all QC."""
 
     fastq_dic = DictParameter()
     workdir = Parameter()
@@ -79,7 +78,7 @@ class RunAllQC(luigi.WrapperTask):
     def requires(self):
         """A wrapper for running the QC."""
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
+            trim_dir = os.path.join(self.workdir, "processes", samp, "qc_files")
             if os.path.isdir(trim_dir) is False:
                 os.makedirs(trim_dir)
             if isinstance(fastq, (list, tuple)):
@@ -126,8 +125,9 @@ class SummarizeQC(luigi.Task):
         summ_dic = {}
 
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            filename = trim_dir + "/" + samp + ".stats.txt"
+            trim_dir = os.path.join(self.workdir, "processes",
+                                        samp, "qc_files")
+            filename = os.path.join(trim_dir, samp + ".stats.txt")
             with open(filename, 'r') as file:
                 lines = file.readlines()
                 reads_before_trimming = lines[1].split(":")[1].strip()
