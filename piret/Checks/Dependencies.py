@@ -43,3 +43,9 @@ class CheckDependencies():
 thirdparty_tools = ["bamtools", "samtools", ]
 
 # CheckDependencies("bamtools")
+
+def check_depen(tool_list, logger):
+    """A function that checks the list of tool are in path or not."""
+    for tool in tool_list:
+        check = CheckDependencies(package=tool, logger=logger)
+        check.check_thirdparty()
