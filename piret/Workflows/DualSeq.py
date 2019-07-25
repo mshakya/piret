@@ -8,8 +8,8 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from pypiret.Checks.Design import CheckDesign
-from pypiret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.Checks.Design import CheckDesign
+from piret.Runs import FaQC, Map, Summ, DGE, srna
 from luigi.interface import build
 
 
@@ -162,14 +162,14 @@ class DualSeq:
     def feature_counts(self):
         build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
-                                  gff=os.path.join(self.workdir, "prok_updated.gff"),
+                                  gff_file=os.path.join(self.workdir, "prok_updated.gff"),
                                   indexfile=self.hisat_index,
                                   kingdom='prokarya',
                                   workdir=self.workdir,
                                   ref_file=self.ref_fastas.split(",")[0]),
           Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                              num_cpus=self.num_cpus,
-                             gff=os.path.join(self.workdir, "euk_updated.gff"),
+                             gff_file=os.path.join(self.workdir, "euk_updated.gff"),
                              indexfile=self.hisat_index,
                              kingdom='eukarya',
                              workdir=self.workdir,
@@ -184,7 +184,7 @@ class DualSeq:
                    workdir=self.workdir,
                    ref_file=self.ref_fastas.split(",")[0],
                    kingdom='prokarya',
-                   gff=os.path.join(self.workdir, "prok_updated.gff"),
+                   gff_file=os.path.join(self.workdir, "prok_updated.gff"),
                    exp_design=self.exp_desn_file,
                    p_value=self.p_value,
                    prok_org_code=self.prok_org_code,
@@ -194,7 +194,7 @@ class DualSeq:
                     workdir=self.workdir,
                     ref_file=self.ref_fastas.split(",")[1],
                     kingdom='eukarya',
-                    gff=os.path.join(self.workdir, "euk_updated.gff"),
+                    gff_file=os.path.join(self.workdir, "euk_updated.gff"),
                     exp_design=self.exp_desn_file,
                     p_value=self.p_value,
                     euk_org_code=self.euk_org_code,
@@ -208,7 +208,7 @@ class DualSeq:
                           workdir=self.workdir,
                           ref_file=self.ref_fastas.split(",")[0],
                           kingdom='prokarya',
-                          gff=os.path.join(self.workdir, "prok_updated.gff"),
+                          gff_file=os.path.join(self.workdir, "prok_updated.gff"),
                           exp_design=self.exp_desn_file,
                           p_value=self.p_value,
                           prok_org_code=self.prok_org_code,
@@ -219,7 +219,7 @@ class DualSeq:
                             workdir=self.workdir,
                             ref_file=self.ref_fastas.split(",")[1],
                             kingdom='eukarya',
-                            gff=os.path.join(self.workdir, "euk_updated.gff"),
+                            gff_file=os.path.join(self.workdir, "euk_updated.gff"),
                             exp_design=self.exp_desn_file,
                             p_value=self.p_value,
                             euk_org_code=self.euk_org_code,
