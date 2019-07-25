@@ -5,7 +5,7 @@ from __future__ import print_function
 import os
 from os.path import basename, splitext
 from plumbum.cmd import stringtie, featureCounts
-from pypiret.Runs import Map
+from piret.Runs import Map
 import pandas as pd
 from luigi.util import inherits, requires
 from luigi.contrib.external_program import ExternalProgramTask
@@ -30,7 +30,7 @@ class FeatureCounts(luigi.Task):
 
     fastq_dic = luigi.DictParameter()
     kingdom = luigi.Parameter()
-    gff = luigi.Parameter()
+    gff_file = luigi.Parameter()
     workdir = luigi.Parameter()
     indexfile = luigi.Parameter()
     num_cpus = luigi.IntParameter()
@@ -42,8 +42,8 @@ class FeatureCounts(luigi.Task):
         """Expected output of featureCounts."""
         counts_dir = os.path.join(self.workdir, "featureCounts",
                                   self.kingdom)
-        if ',' in self.gff:
-            gff_list = self.gff.split(",")
+        if ',' in self.gff_file:
+            gff_list = self.gff_file.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
             all_target = []
             for gffs in gff_full_path:
@@ -54,7 +54,7 @@ class FeatureCounts(luigi.Task):
                 all_target = loc_target + all_target
                 return all_target
         else:
-            gff_fp = os.path.abspath(self.gff)
+            gff_fp = os.path.abspath(self.gff_file)
             features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
                                             comment='#')[2].tolist()))
             features = [feat for feat in features if feat in ['CDS', 'rRNA',
@@ -68,16 +68,16 @@ class FeatureCounts(luigi.Task):
 
     def run(self):
         """Running featureCounts on all."""
+        map_dir = os.path.join(self.workdir, "processes", "mapping")
         samp_list = list(self.fastq_dic.keys())
-        in_srtbam_list = [self.workdir + "/" + samp + "/" +
-                          "mapping_results" + "/" + samp + "_srt.bam"
+        in_srtbam_list = [os.path.join(map_dir, samp, samp + "_srt.bam")
                           for samp in samp_list]
-        counts_dir = os.path.join(self.workdir, "featureCounts",
+        counts_dir = os.path.join(self.workdir, "processes", "featureCounts",
                                   self.kingdom)
         if not os.path.exists(counts_dir):
             os.makedirs(counts_dir)
-        if ',' in self.gff:
-            gff_list = self.gff.split(",")
+        if ',' in self.gff_file:
+            gff_list = self.gff_file.split(",")
             gff_full_path = [os.path.abspath(gff) for gff in gff_list]
             for gffs in gff_full_path:
                 feature = list(set(pd.read_csv(gffs,
@@ -86,7 +86,7 @@ class FeatureCounts(luigi.Task):
                 for feat in feature:
                     if feat in ['CDS', 'rRNA', 'tRNA', 'exon',
                                 'novel_region', 'transcript', 'mRNA']:
-                        fcount_cmd_opt = ["-a", self.gff,
+                        fcount_cmd_opt = ["-a", self.gff_file,
                                           "-s", self.stranded,
                                           "-B",
                                           "-p", "-P", "-C",
@@ -96,11 +96,11 @@ class FeatureCounts(luigi.Task):
                                           "-o", counts_dir + "/" + feat +
                                           "_count.tsv"] + in_srtbam_list
                     elif feat in ['gene']:
-                        fcount_cmd_opt = ["-a", self.gff,
+                        fcount_cmd_opt = ["-a", self.gff_file,
                                           "-s", self.stranded,
                                           "-B",
                                           "-p", "-P", "-C",
-                                          "-g", self.fid,
+                                          "-g", "ID",
                                           "-t", feat,
                                           "-T", self.num_cpus,
                                           "-o", counts_dir + "/" + feat +
@@ -108,12 +108,12 @@ class FeatureCounts(luigi.Task):
                     fcount_cmd = featureCounts[fcount_cmd_opt]
                     fcount_cmd()
         else:
-            feature = list(set(pd.read_csv(self.gff, sep="\t", header=None,
+            feature = list(set(pd.read_csv(self.gff_file, sep="\t", header=None,
                                            comment='#')[2].tolist()))
         for feat in feature:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
                         'novel_region']:
-                fcount_cmd_opt = ["-a", self.gff,
+                fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",
                                   "-p", "-P", "-C",
@@ -125,11 +125,11 @@ class FeatureCounts(luigi.Task):
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
             if feat in ['gene']:
-                fcount_cmd_opt = ["-a", self.gff,
+                fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", self.fid,
+                                  "-g", "ID",
                                   "-t", feat,
                                   "-T", self.num_cpus,
                                   "-o", counts_dir + "/" + feat +
@@ -141,7 +141,7 @@ class FeatureCounts(luigi.Task):
 class FeatureCountsII(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
-    gff = Parameter()
+    gff_file = Parameter()
     num_cpus = IntParameter()
     stranded = IntParameter()
     bam_list = Parameter()
@@ -149,13 +149,13 @@ class FeatureCountsII(luigi.Task):
 
     def requires(self):
         """Check if gff and bam file exist"""
-        all_list = self.bam_list + tuple(self.gff)
+        all_list = self.bam_list + tuple(self.gff_file)
         for bam in all_list:
             return RefFile(bam)
 
     def output(self):
         """Expected output of featureCounts."""
-        gff_fp = os.path.abspath(self.gff)
+        gff_fp = os.path.abspath(self.gff_file)
         features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
                                         comment='#')[2].tolist()))
         features = [feat for feat in features if feat in ['CDS', 'rRNA',
@@ -175,7 +175,7 @@ class FeatureCountsII(luigi.Task):
         for feat in feature:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
                         'novel_region']:
-                fcount_cmd_opt = ["-a", self.gff,
+                fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",
                                   "-p", "-P", "-C",
@@ -188,11 +188,11 @@ class FeatureCountsII(luigi.Task):
                 fcount_cmd = featureCounts[fcount_cmd_opt]
                 fcount_cmd()
             elif feat in ['gene']:
-                fcount_cmd_opt = ["-a", self.gff,
+                fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",
                                   "-p", "-P", "-C",
-                                  "-g", "locus_tag",
+                                  "-g", "ID",
                                   "-t", feat,
                                   "-T", self.num_cpus,
                                   "-o", os.path.join(self.out_dir, feat +
@@ -209,8 +209,8 @@ class MergeStringTies(luigi.Task):
     def ouput(self):
         """Ouptut of string tie merge."""
         if self.kingdom in ['prokarya', 'eukarya']:
-            return [Map.RefFile(self.workdir + "/" +
-                                "stringtie_merged_transcript.gtf")]
+            return [Map.RefFile(os.path.join(self.workdir, "processes",
+                                             "stringtie", "stringtie_merged_transcript.gtf"))]
         elif self.kingdom == 'both':
             return [Map.RefFile(self.workdir + "/" +
                                 "prok_sTie_merged_transcript.gtf"),
@@ -219,7 +219,7 @@ class MergeStringTies(luigi.Task):
 
     def run(self):
         """Running stringtie merge."""
-        samp_list = list(self.fastq_dic.keys())
+        samp_list=list(self.fastq_dic.keys())
         if self.kingdom in ['prokarya', 'eukarya']:
             if self.kingdom == 'prokarya':
                 append_name = '_prok'
@@ -227,9 +227,9 @@ class MergeStringTies(luigi.Task):
                 append_name = '_euk'
             gtf = self.workdir + "/" + \
                 self.gff_file.split("/")[-1].split(".gff")[0] + ".gtf"
-            out_gtf_list = [self.workdir + "/" + samp + "/" + "stie_results" +
-                            "/" + samp + append_name +
-                            "_sTie.gtf" for samp in samp_list]
+            out_gtf_list = [os.path.join(self.workdir, "processes",
+                            "stringtie", samp, samp + append_name +
+                            "_sTie.gtf") for samp in samp_list]
             stie_cmd_opt = ["--merge", "-G", self.gff_file,
                             "-o", self.workdir +
                             "/" +
@@ -240,12 +240,12 @@ class MergeStringTies(luigi.Task):
             prok_gff = self.gff_file.split(",")[0]
             euk_gff = self.gff_file.split(",")[1]
 
-            prokout_gtf_list = [os.path.join(self.workdir, samp,
-                                             "stie_results",
+            prokout_gtf_list = [os.path.join(self.workdir, "processes",
+                                             "stringtie", samp,
                                              samp + "_prok_sTie.gtf")
                                 for samp in samp_list]
-            eukout_gtf_list = [os.path.join(self.workdir, samp,
-                                            "stie_results",
+            eukout_gtf_list = [os.path.join(self.workdir, "processes",
+                                            "stringtie", samp, 
                                             samp + "_euk_sTie.gtf")
                                for samp in samp_list]
             stie_cmd_euk_opt = ["--merge", "-G", euk_gff,
@@ -306,7 +306,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
     def requires(self):
         """A wrapper for restringtie processes."""
         for samp, fastq in self.fastq_dic.items():
-            map_dir = os.path.join(self.workdir, samp, "mapping_results")
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if self.kingdom in ['prokarya', 'eukarya']:
                 bg_dir = os.path.join(self.workdir, "bg_results", self.kingdom, samp)
                 if os.path.isdir(bg_dir) is False:
