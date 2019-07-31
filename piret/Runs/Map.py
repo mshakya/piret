@@ -424,8 +424,8 @@ class HisatMapW(luigi.WrapperTask):
         else:
             splice_file = ''
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             yield Hisat(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
@@ -452,7 +452,7 @@ class SummarizeHisatMap(luigi.Task):
         """Parse the FaQC stats."""
         summ_dic = {}
         for samp, fastq in self.fastq_dic.items():
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             filename = map_dir + "/" + "mapping.log"
             with open(filename, 'r') as file:
                 lines = file.readlines()
@@ -493,22 +493,22 @@ class STARindex(luigi.Task):
             os.makedirs(self.stardb_dir)
         if self.kingdom == "eukarya":
             ind_opt = ["--runMode", "genomeGenerate",
-                   "--runThreadN", self.num_cpus,
-                   "--genomeDir", self.stardb_dir,
-                   "--genomeFastaFiles", self.fasta,
-                   "--sjdbGTFfile", self.gff_file]
+                       "--runThreadN", self.num_cpus,
+                       "--genomeDir", self.stardb_dir,
+                       "--genomeFastaFiles", self.fasta,
+                       "--sjdbGTFfile", self.gff_file]
         elif self.kingdom == "prokarya":
             ind_opt = ["--runMode", "genomeGenerate",
-                   "--runThreadN", self.num_cpus,
-                   "--genomeDir", self.stardb_dir,
-                   "--genomeFastaFiles", self.fasta]
+                       "--runThreadN", self.num_cpus,
+                       "--genomeDir", self.stardb_dir,
+                       "--genomeFastaFiles", self.fasta]
         elif self.kingdom == "both":
             ind_opt = ["--runMode", "genomeGenerate",
-                   "--runThreadN", self.num_cpus,
-                   "--genomeDir", self.stardb_dir,
-                   "--genomeFastaFiles", self.fasta.split(",")[0],
-                   self.fasta.split(",")[1]]
-            
+                       "--runThreadN", self.num_cpus,
+                       "--genomeDir", self.stardb_dir,
+                       "--genomeFastaFiles", self.fasta.split(",")[0],
+                       self.fasta.split(",")[1]]
+
         star_cmd = STAR[ind_opt]
         logger = logging.getLogger('luigi-interface')
         logger.info(star_cmd)
@@ -561,12 +561,11 @@ class map_starW(luigi.WrapperTask):
     def requires(self):
         """A wrapper task for mapping using STAR."""
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
-            yield map_star(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                   trim_dir + "/" + samp + ".2.trimmed.fastq"],
+            yield map_star(fastqs=[fastq.split(":")[0],
+                                   fastq.split(":")[1]],
                                    stardb_dir=self.stardb_dir, map_dir=map_dir,
                                    sample=samp, num_cpus=self.num_cpus)
 
@@ -583,7 +582,7 @@ class SummarizeStarMap(luigi.Task):
         """Parse the mapping stats."""
         summ_dic = {}
         for samp, fastq in self.fastq_dic.items():
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             filename = map_dir + "/" + samp + "_Log.final.out"
             with open(filename, 'r') as file:
                 lines = file.readlines()
@@ -638,8 +637,8 @@ class GetRefNames(luigi.WrapperTask):
         else:
             splice_file = splist[0]
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             yield RefNames(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                    trim_dir + "/" + samp + ".2.trimmed.fastq"],
                            num_cpus=self.num_cpus,
@@ -655,7 +654,7 @@ class GetRefNames(luigi.WrapperTask):
 
 class StringTieScores(luigi.Task):
     """Calculate scores using string tie."""
-    gff_file=luigi.Parameter()
+    gff_file = luigi.Parameter()
     out_gtf = luigi.Parameter()
     out_cover = luigi.Parameter()
     out_abun = luigi.Parameter()
@@ -698,9 +697,9 @@ class StringTieScoresW(luigi.WrapperTask):
     def requires(self):
         """A wrapper for running Stringtie scores on all samples."""
         for samp, fastq in self.fastq_dic.items():
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            stng_dir = self.workdir + "/" + samp + "/stie_results"
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
+            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+            stng_dir = os.path.join(self.workdir, "processes", "stringtie", samp)
             if os.path.isdir(stng_dir) is False:
                 os.makedirs(stng_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
@@ -708,13 +707,12 @@ class StringTieScoresW(luigi.WrapperTask):
                     apd = '_prok'
                 elif self.kingdom == 'eukarya':
                     apd = '_euk'
-
                 yield StringTieScores(num_cpus=self.num_cpus,
                                       gff_file=self.gff_file,
-                                      out_gtf=stng_dir + "/" + samp +  apd + "_sTie.gtf",
-                                      out_cover=stng_dir + "/" + samp +  apd + "_covered_sTie.gtf",
-                                      out_abun=stng_dir + "/" + samp +  apd + "_sTie.tab",
-                                      in_bam_file=map_dir + "/" + samp + "_srt.bam")
+                                      out_gtf=os.path.join(stng_dir, samp +  apd + "_sTie.gtf"),
+                                      out_cover=os.path.join(stng_dir, samp + apd + "_covered_sTie.gtf"),
+                                      out_abun=os.path.join(stng_dir, samp +  apd + "_sTie.tab"),
+                                      in_bam_file=os.path.join(map_dir, samp + "_srt.bam"))
             elif self.kingdom == 'both':
                 prok_gff = self.gff_file.split(",")[0]
                 euk_gff = self.gff_file.split(",")[1]
@@ -779,8 +777,7 @@ class Split2ProkEukW(luigi.WrapperTask):
         else:
             splice_file = splst[0]
         for samp, fastq in self.fastq_dic.items():
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             yield Split2ProkEuk(outsam=map_dir + "/" + samp + ".sam",
                                 ref_file=self.ref_file,
                                 workdir=self.workdir)
-

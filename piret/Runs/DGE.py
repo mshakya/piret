@@ -6,7 +6,7 @@ import sys
 import luigi
 import shutil
 from luigi import LocalTarget
-from pypiret.Runs import Summ
+from piret.Runs import Summ
 from luigi.util import inherits, requires
 import pandas as pd
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -18,15 +18,15 @@ from plumbum.cmd import RDESeq2, gage_analysis, ballgown_analysis
 import logging
 
 
-@requires(Summ.FeatureCounts)
+# @inherits(Summ.FeatureCounts)
 class edgeR(luigi.Task):
     """Find DGE using edgeR."""
+    kingdom = luigi.Parameter()
+    workdir = luigi.Parameter()
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    prok_org_code = luigi.Parameter()
-    euk_org_code = luigi.Parameter()
-    GAGE = luigi.BoolParameter()
-    pathway = luigi.BoolParameter()
+    # GAGE = luigi.BoolParameter()
+    # pathway = luigi.BoolParameter()
     gff_file = luigi.Parameter()
 
     def output(self):
@@ -42,7 +42,7 @@ class edgeR(luigi.Task):
 
     def run(self):
         """Run edgeR."""
-        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
+        fcount_dir = os.path.join(self.workdir, "processes", "featureCounts", self.kingdom)
         edger_dir = os.path.join(self.workdir, "edgeR", self.kingdom)
         if not os.path.exists(edger_dir):
             os.makedirs(edger_dir)
@@ -54,25 +54,25 @@ class edgeR(luigi.Task):
                           "-p", self.p_value,
                           "-n", name,
                           "-o", edger_dir]
-                #TODO: get the output that has locus tag
+                # TODO: get the output that has locus tag
                 edger_cmd = EdgeR[edger_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(edger_cmd)
                 edger_cmd()
-                if file == "gene_count.tsv":
-                #TODO:convert the first column to locus tag
-                    if self.pathway is True:
-                        path_list = ["-d", edger_dir,
-                                "-m", "edgeR", "-c", self.org_code] # get pathway information
-                        path_cmd = plot_pathway[path_list]
-                        logger.info(path_cmd)
-                        path_cmd()
-                    if self.GAGE is True:
-                        gage_list = ["-d", edger_dir, "-m",
-                                "edgeR", "-c", self.org_code]
-                        gage_cmd = gage_analysis[gage_list]
-                        logger.info(gage_cmd)
-                        gage_cmd()
+                # if file == "gene_count.tsv":
+                # # TODO:convert the first column to locus tag
+                #     if self.pathway is True:
+                #         path_list = ["-d", edger_dir,
+                #                      "-m", "edgeR", "-c", self.org_code] # get pathway information
+                #         path_cmd = plot_pathway[path_list]
+                #         logger.info(path_cmd)
+                #         path_cmd()
+                #     if self.GAGE is True:
+                #         gage_list = ["-d", edger_dir, "-m",
+                #                      "edgeR", "-c", self.org_code]
+                #         gage_cmd = gage_analysis[gage_list]
+                #         logger.info(gage_cmd)
+                #         gage_cmd()
         self.summ_summ()
 
     def summ_summ(self):
@@ -91,20 +91,21 @@ class edgeR(luigi.Task):
             summ_df_ccat.to_csv(out_file)
 
 
-@requires(Summ.FeatureCounts)
+# @requires(Summ.FeatureCounts)
 class DESeq2(luigi.Task):
     """Find DGE using DESeq2."""
+    workdir = luigi.Parameter()
     exp_design = luigi.Parameter()
     p_value = luigi.FloatParameter()
-    prok_org_code = luigi.Parameter()
-    euk_org_code = luigi.Parameter()
-    GAGE = luigi.BoolParameter()
-    pathway = luigi.BoolParameter()
+    kingdom = luigi.Parameter()
+    # GAGE = luigi.BoolParameter()
+    # pathway = luigi.BoolParameter()
+    gff_file = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using DESeq2."""
-        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
-        DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
+        fcount_dir = os.path.join(self.workdir, "processes","featureCounts", self.kingdom)
+        DESeq2_dir = os.path.join(self.workdir, "processes","DESeq2", self.kingdom)
         for file in os.listdir(fcount_dir):
             if file.endswith("__sig.csv"):
                 out_folder = file.split(".csv")[0]
@@ -114,8 +115,8 @@ class DESeq2(luigi.Task):
 
     def run(self):
         """Run DESeq2."""
-        fcount_dir = os.path.join(self.workdir, "featureCounts", self.kingdom)
-        DESeq2_dir = os.path.join(self.workdir, "DESeq2", self.kingdom)
+        fcount_dir = os.path.join(self.workdir, "processes", "featureCounts", self.kingdom)
+        DESeq2_dir = os.path.join(self.workdir, "processes", "DESeq2", self.kingdom)
         if not os.path.exists(DESeq2_dir):
             os.makedirs(DESeq2_dir)
         for file in os.listdir(fcount_dir):
@@ -131,24 +132,24 @@ class DESeq2(luigi.Task):
                     logger = logging.getLogger('luigi-interface')
                     logger.info(deseq2_cmd)
                     deseq2_cmd()
-            if file == "gene_count.tsv":
-                if self.prok_org_code is None:
-                    org_code=self.euk_org_code
-                else:
-                    org_code=self.prok_org_code
-                if self.pathway is True:
-                    path_list = ["-d", DESeq2_dir,
-                         "-m", "DESeq2", "-c",
-                         org_code] # get pathway information
-                    path_cmd = plot_pathway[path_list]
-                    logger.info(path_cmd)
-                    path_cmd()
-                if self.GAGE is True:
-                    gage_list = ["-d", DESeq2_dir, "-m",
-                         "DESeq2", "-c", self.org_code]
-                    gage_cmd = gage_analysis[gage_list]
-                    logger.info(gage_cmd)
-                    gage_cmd()
+            # if file == "gene_count.tsv":
+            #     if self.prok_org_code is None:
+            #         org_code=self.euk_org_code
+            #     else:
+            #         org_code=self.prok_org_code
+            #     if self.pathway is True:
+            #         path_list = ["-d", DESeq2_dir,
+            #              "-m", "DESeq2", "-c",
+            #              org_code] # get pathway information
+            #         path_cmd = plot_pathway[path_list]
+            #         logger.info(path_cmd)
+            #         path_cmd()
+            #     if self.GAGE is True:
+            #         gage_list = ["-d", DESeq2_dir, "-m",
+            #              "DESeq2", "-c", self.org_code]
+            #         gage_cmd = gage_analysis[gage_list]
+            #         logger.info(gage_cmd)
+            #         gage_cmd()
         self.summ_summ()
 
     def summ_summ(self):
@@ -173,13 +174,13 @@ class ballgown(luigi.Task):
 
     def output(self):
         """Expected output of DGE using edgeR."""
-        bg_rdir = os.path.join(self.workdir, "bg_results", self.kingdom)
+        bg_rdir = os.path.join(self.workdir, "processes", "ballgown", self.kingdom)
         return LocalTarget(bg_rdir)
 
     def run(self):
         """Run ballgown."""
-        bg_dir = os.path.join(self.workdir, "bg_results", self.kingdom)
-        bg_results = os.path.join(self.workdir, "bg_results", self.kingdom)
+        bg_dir = os.path.join(self.workdir, "processes", "ballgown", self.kingdom)
+        bg_results = os.path.join(self.workdir, "ballgown", self.kingdom)
         if os.path.isdir(bg_results) is False:
             os.makedirs(bg_results)
 
