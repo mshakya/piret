@@ -7,7 +7,7 @@ from os.path import basename, isdir
 from os import makedirs, listdir
 import sys
 from plumbum.cmd import samtools, grep, sed, bedtools, cat, awk
-from pypiret.Runs import Map
+from piret.Runs import Map
 from luigi.util import requires, inherits
 import luigi
 import logging
@@ -125,8 +125,8 @@ class ExtractPPW(luigi.WrapperTask):
         else:
             splice_file = ''
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             if self.kingdom in ['prokarya', 'eukarya']:
@@ -145,9 +145,6 @@ class ExtractPPW(luigi.WrapperTask):
                                 sample=samp,
                                 kingdom=self.kingdom,
                                 workdir=self.workdir)
-
-
-
 
 
 # @requires(ExtractPP)
@@ -180,7 +177,7 @@ class FindNovelRegions(luigi.Task):
             bw_gcov = self.map_dir + "/" + self.sample + "_bw_gcov.bedfile"
             fw_novels = self.map_dir + "/" + self.sample + "_fw_novel.bedfile"
             bw_novels = self.map_dir + "/" + self.sample + "_bw_novel.bedfile"
-            out_gff = os.path.join(self.workdir, "no_region.gff")
+            out_gff = os.path.join(self.workdir, "processes", "no_region.gff")
             self.get_genome_ref(srt_bam_file, chrom_sizes)
             self.remove_region(self.gff_file, out_gff)
             self.genome_coverage(fw_srt_bam_file, fw_gcov)
@@ -216,10 +213,10 @@ class FindNovelRegions(luigi.Task):
             self.genome_coverage(prok_fw_srt_bam_file, prok_fw_gcov)
             self.genome_coverage(euk_bw_srt_bam_file, euk_bw_gcov)
             self.genome_coverage(prok_bw_srt_bam_file, prok_bw_gcov)
-            self.novel_regions(euk_out_gff, euk_fw_gcov, euk_fw_novels)
-            self.novel_regions(prok_out_gff, prok_fw_gcov, prok_fw_novels)
-            self.novel_regions(euk_out_gff, euk_bw_gcov, euk_bw_novels)
-            self.novel_regions(prok_out_gff, prok_bw_gcov, prok_bw_novels)
+            self.novel_regions(gff=euk_out_gff, gcov=euk_fw_gcov, novels=euk_fw_novels)
+            self.novel_regions(gff=prok_out_gff, gcov=prok_fw_gcov, novels=prok_fw_novels)
+            self.novel_regions(gff=euk_out_gff, gcov=euk_bw_gcov, novels=euk_bw_novels)
+            self.novel_regions(gff=prok_out_gff, gcov=prok_bw_gcov, novels=prok_bw_novels)
 
     def get_genome_ref(self, sorted_bam_file, chrom_sizes):
         """Calculate the size of each chromosome/contig."""
@@ -262,8 +259,8 @@ class FindNovelRegionsW(luigi.WrapperTask):
         else:
             splice_file = ''
         for samp, fastq in self.fastq_dic.items():
-            trim_dir = self.workdir + "/" + samp + "/trimming_results"
-            map_dir = self.workdir + "/" + samp + "/mapping_results"
+            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             yield FindNovelRegions(map_dir=map_dir,
                                    sample=samp,
                                    workdir=self.workdir,
@@ -281,22 +278,23 @@ class CompileGFF(luigi.Task):
 
     def output(self):
         if self.kingdom in ["prokarya", "eukarya"]:
-            bw_novel = self.workdir + "/" + "updated.gff"
+            bw_novel = os.path.join(self.workdir, "processes", "novel", "updated.gff")
         elif self.kingdom == "both":
             bw_novel = self.workdir + "/" + "prok_updated.gff"
         return luigi.LocalTarget(bw_novel)
 
     def run(self):
         if self.kingdom in ["prokarya", "eukarya"]:
-            fw_novel = os.path.join(self.workdir, "fw_all_novel.txt")
-            bw_novel = os.path.join(self.workdir, "bw_all_novel.txt")
-            fw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
-                                    "_fw_novel.bedfile") for samp in self.fastq_dic.keys()]
-            bw_beds = [os.path.join(self.workdir, samp, "mapping_results", samp +
-                                    "_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
-            fw_gff = os.path.join(self.workdir, "fw_all_novel.gff")
-            bw_gff = os.path.join(self.workdir, "bw_all_novel.gff")
-            final_gff = os.path.join(self.workdir, "updated.gff")
+            map_dir = os.path.join(self.workdir, "processes", "mapping")
+            if os.path.exists(os.path.join(self.workdir, "processes", "novel")) is False:
+                os.makedirs(os.path.join(self.workdir, "processes", "novel"))
+            fw_novel = os.path.join(self.workdir, "processes", "novel", "fw_all_novel.txt")
+            bw_novel = os.path.join(self.workdir, "processes", "novel", "bw_all_novel.txt")
+            fw_beds = [os.path.join(map_dir, samp, samp + "_fw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            bw_beds = [os.path.join(map_dir, samp, samp + "_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
+            fw_gff = os.path.join(self.workdir, "processes", "novel", "fw_all_novel.gff")
+            bw_gff = os.path.join(self.workdir, "processes", "novel", "bw_all_novel.gff")
+            final_gff = os.path.join(self.workdir, "novel", "updated.gff")
 
             self.compile_novel_regions(fw_beds, fw_novel)
             self.compile_novel_regions(bw_beds, bw_novel)
