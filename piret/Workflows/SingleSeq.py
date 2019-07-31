@@ -8,18 +8,21 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from pypiret.Checks.Design import CheckDesign
-from pypiret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.Checks.Design import CheckDesign
+from piret.Runs.conversions import conversions
+from piret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.Runs.function import RunEmapper
 from luigi.interface import build
 
 
 class SingleSeq:
     """Class that pieces luigi task for prokarya."""
 
-    def __init__(self, fastq_dic, ref_fasta, num_cpus,
+    def __init__(self, qc, fastq_dic, ref_fasta, num_cpus,
                  local_scheduler, hisat_index, stardb_dir, workdir, kingdom,
                  no_of_jobs, exp_desn_file,
-                 p_value, prok_org_code, euk_org_code, aligner ):
+                 p_value, aligner, gff_file, pathway):
+        self.qc = qc
         self.ref_fasta = ref_fasta
         self.fastq_dic = fastq_dic
         self.num_cpus = num_cpus
@@ -31,35 +34,59 @@ class SingleSeq:
         self.no_of_jobs = no_of_jobs,
         self.exp_desn_file = exp_desn_file
         self.p_value = p_value
-        self.prok_org_code = prok_org_code
-        self.euk_org_code = euk_org_code
         self.aligner = aligner
+        self.gff_file = gff_file
+        self.pathway = pathway
 
-    def create_db(self, gff):
-        """Function to create hisat index."""
-        if self.aligner == "hisat2":
-            build([Map.HisatIndex(fasta=self.ref_fasta, hi_index=self.hisat_index,
-               num_cpus=self.num_cpus)],
-                local_scheduler=self.local_scheduler)
-        elif self.aligner == "STAR":
+    def run_faqc(self):
+        """A function that calls the FaQC function.
+
+        it returns QCed files in respective directory
+        """
+        if self.qc is True:
+            print("cnn")
+            build([FaQC.SummarizeQC(fastq_dic=self.fastq_dic,
+                                num_cpus=self.num_cpus,
+                                workdir=self.workdir)],
+                local_scheduler=self.local_scheduler,
+                workers=1)
+            qc_dic = {}
+            for samp, path in self.fastq_dic.items():
+                trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+                print(trim_dir)
+                qc_dic[samp] = trim_dir + "/" + samp + ".1.trimmed.fastq" + ":" + \
+                               trim_dir + "/" + samp + ".2.trimmed.fastq"          
+            return qc_dic
+
+        else:
+            return self.fastq_dic
+
+    def create_db(self):
+        """Function to create hisat or STAR index."""
+        if self.aligner in ["hisat2", "hisat"]:
+            build([Map.HisatIndex(fasta=self.ref_fasta,
+                                  hi_index=self.hisat_index,
+                                  num_cpus=self.num_cpus)],
+                  local_scheduler=self.local_scheduler)
+        elif self.aligner in ["star", "STAR"]:
             build([Map.STARindex(fasta=self.ref_fasta,
-                             num_cpus=self.num_cpus,
-                             gff_file=gff,
-                             stardb_dir = self.stardb_dir,
-                             kingdom=self.kingdom)],
-              local_scheduler=self.local_scheduler)
+                                 num_cpus=self.num_cpus,
+                                 gff_file=self.gff_file,
+                                 stardb_dir=self.stardb_dir,
+                                 kingdom=self.kingdom)],
+                  local_scheduler=self.local_scheduler)
 
-    def map_reads(self):
+    def map_reads(self, qc_dic):
         """Function to map reads."""
         if self.aligner == "hisat2":
-            build([Map.HisatMapW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+            build([Map.HisatMapW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
                                  indexfile=self.hisat_index, workdir=self.workdir)],
               local_scheduler=self.local_scheduler)
-        elif self.aligner == "STAR":
-            build([Map.map_starW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+        elif self.aligner in ["STAR", "star"]:
+            build([Map.map_starW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
                                  stardb_dir=self.stardb_dir, workdir=self.workdir)],
               local_scheduler=self.local_scheduler)
-    
+
     def map_summarize(self):
         """Summarize mapped reads into a table."""
         if self.aligner == "hisat2":
@@ -68,34 +95,33 @@ class SingleSeq:
                                     indexfile=self.hisat_index,
                                     num_cpus=self.num_cpus)],
             local_scheduler=self.local_scheduler, workers=1)
-        elif self.aligner == "STAR":
+        elif self.aligner in ["STAR", "star"]:
             build([Map.SummarizeStarMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     stardb_dir=self.stardb_dir,
                                     num_cpus=self.num_cpus)],
             local_scheduler=self.local_scheduler, workers=1)
-    
+
     def extract_pp(self):
         """Extract properly paired reads."""
         build([srna.ExtractPPW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                                  indexfile=self.hisat_index, workdir=self.workdir,
                                  kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
-    
-    def novel_regions(self, gff):
+
+    def novel_regions(self):
         """Find novel regions."""
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                   workdir=self.workdir,
-                                 kingdom=self.kingdom, 
-                                 gff_file=gff)],
+                                 kingdom=self.kingdom,
+                                 gff_file=self.gff_file)],
               local_scheduler=self.local_scheduler)
-    
 
-    def create_new_gff(self, gff):
+    def create_new_gff(self):
         build([srna.CompileGFF(fastq_dic=self.fastq_dic,
                                kingdom=self.kingdom,
                                workdir=self.workdir,
-                               gff_file=gff)],
+                               gff_file=self.gff_file)],
           local_scheduler=self.local_scheduler, workers=1)
 
 
@@ -109,21 +135,21 @@ class SingleSeq:
                                   kingdom=self.kingdom)],
          local_scheduler=self.local_scheduler, workers=no_of_jobs)
 
-    def find_novel_regions(self, gff):
+    def find_novel_regions(self):
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                       num_cpus=self.num_cpus,
                                       indexfile=self.hisat_index,
                                       kingdom=self.kingdom,
                                       workdir=self.workdir,
                                       ref_file=self.ref_fasta,
-                                      gff_file=gff)],
+                                      gff_file=self.gff_file)],
         local_scheduler = self.local_scheduler,
         workers=1)
 
-    def feature_count(self, gff):
+    def feature_count(self):
         build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
-                                  gff=gff,
+                                  gff_file=self.gff_file,
                                   indexfile=self.hisat_index,
                                   kingdom=self.kingdom,
                                   workdir=self.workdir,
@@ -134,13 +160,12 @@ class SingleSeq:
     def feature_count_updated(self):
         build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
-                                  gff=os.path.join(self.workdir, "updated.gff"),
+                                  gff_file=os.path.join(self.workdir, "updated.gff"),
                                   indexfile=self.hisat_index,
                                   kingdom=self.kingdom,
                                   workdir=self.workdir,
                                   ref_file=self.ref_fasta)],
         local_scheduler=self.local_scheduler, workers=1)
-       
 
     def run_stringtie(self):
         build([Map.StringTieScoresW(fastq_dic=self.fastq_dic,
@@ -153,44 +178,32 @@ class SingleSeq:
                           local_scheduler=self.local_scheduler,
                           workers=1)
 
-    def run_edger(self, gff, pathway, GAGE):
-        build([DGE.edgeR(fastq_dic=self.fastq_dic,
-                         num_cpus=self.num_cpus,
-                         indexfile=self.hisat_index,
+    def run_edger(self):
+        build([DGE.edgeR(kingdom=self.kingdom,
                          workdir=self.workdir,
-                         ref_file=self.ref_fasta,
-                         kingdom=self.kingdom,
-                         gff=gff,
-                         pathway=pathway,
-                         GAGE=GAGE,
+                         gff_file=self.gff_file,
+                        #  pathway=pathway,
+                        #  GAGE=GAGE,
                          exp_design=self.exp_desn_file,
-                         p_value=self.p_value,
-                         prok_org_code=self.prok_org_code,
-                         euk_org_code=self.euk_org_code)],
+                         p_value=self.p_value)],
         local_scheduler=self.local_scheduler, workers=1)
 
-    def run_deseq2(self, gff, pathway, GAGE):
-        build([DGE.DESeq2(fastq_dic=self.fastq_dic,
-                          num_cpus=self.num_cpus,
-                          indexfile=self.hisat_index,
-                          workdir=self.workdir,
-                          ref_file=self.ref_fasta,
+    def run_deseq2(self):
+        build([DGE.DESeq2(workdir=self.workdir,
                           kingdom=self.kingdom,
-                          gff=gff,
-                          pathway=pathway,
-                          GAGE=GAGE,
+                          gff_file=self.gff_file,
+                        #   pathway=pathway,
+                        #   GAGE=GAGE,
                           exp_design=self.exp_desn_file,
-                          p_value=self.p_value,
-                          prok_org_code=self.prok_org_code,
-                          euk_org_code=self.euk_org_code)],
+                          p_value=self.p_value)],
         local_scheduler=self.local_scheduler, workers=1)
 
-    def merge_stringtie(self, gff):
+    def merge_stringtie(self):
         build([Summ.MergeStringTies(fastq_dic=self.fastq_dic,
                                     num_cpus=self.num_cpus,
                                     indexfile=self.hisat_index,
                                     workdir=self.workdir,
-                                    gff_file=gff,
+                                    gff_file=self.gff_file,
                                     kingdom=self.kingdom)],
                 local_scheduler=self.local_scheduler, workers=1)
 
@@ -202,7 +215,6 @@ class SingleSeq:
               local_scheduler=self.local_scheduler,
               workers=1)
 
-
     def run_ballgown(self, gff):
         build([DGE.ballgown(fastq_dic=self.fastq_dic,
                           num_cpus=self.num_cpus,
@@ -212,5 +224,15 @@ class SingleSeq:
                           p_value=self.p_value)],
         local_scheduler=self.local_scheduler, workers=1)
 
+    def run_emapper(self):
+        build([RunEmapper(workdir=self.workdir,
+                   gff_file=self.gff_file,
+                   fasta_file=self.ref_fasta)],
+                   local_scheduler=self.local_scheduler,
+                   workers=1)
 
-
+    def summ_json(self):
+        build([conversions.conv2json(gff_file=self.gff_file,
+                                     fasta_file=self.fasta, 
+                                     pathway=self.pathway)],
+        local_scheduler=self.local_scheduler, workers=1)
