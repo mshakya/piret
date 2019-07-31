@@ -231,9 +231,9 @@ class MergeStringTies(luigi.Task):
                             "stringtie", samp, samp + append_name +
                             "_sTie.gtf") for samp in samp_list]
             stie_cmd_opt = ["--merge", "-G", self.gff_file,
-                            "-o", self.workdir +
-                            "/" +
-                            "stringtie_merged_transcript.gtf"] + out_gtf_list
+                            "-o", os.path.join(self.workdir, "processes",
+                                               "stringtie",
+                            "stringtie_merged_transcript.gtf")] + out_gtf_list
             stie_cmd = stringtie[stie_cmd_opt]
             stie_cmd()
         elif self.kingdom == 'both':
@@ -308,7 +308,7 @@ class ReStringTieScoresW(luigi.WrapperTask):
         for samp, fastq in self.fastq_dic.items():
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if self.kingdom in ['prokarya', 'eukarya']:
-                bg_dir = os.path.join(self.workdir, "bg_results", self.kingdom, samp)
+                bg_dir = os.path.join(self.workdir, "processes", "ballgown", self.kingdom, samp)
                 if os.path.isdir(bg_dir) is False:
                     os.makedirs(bg_dir)
                 yield ReStringTieScores(num_cpus=self.num_cpus,
@@ -318,8 +318,8 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         out_abun=os.path.join(bg_dir, samp + "_merged_sTie.tab"),
                                         in_bam_file=os.path.join(map_dir, samp + "_srt.bam"))
             elif self.kingdom == 'both':
-                euk_bg_dir = os.path.join(self.workdir, "bg_results", "eukarya", samp)
-                prok_bg_dir = os.path.join(self.workdir, "bg_results", "prokarya", samp)
+                euk_bg_dir = os.path.join(self.workdir, "processes", "ballgown", "eukarya", samp)
+                prok_bg_dir = os.path.join(self.workdir, "processes", "ballgown", "prokarya", samp)
                 if os.path.isdir(euk_bg_dir) is False:
                     os.makedirs(euk_bg_dir)
                     os.makedirs(prok_bg_dir)
