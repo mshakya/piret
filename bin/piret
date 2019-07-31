@@ -22,9 +22,12 @@ sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
 from piret.Checks import CheckDesign, CheckDependencies
+from piret.Checks.Dependencies import check_depen
 from piret.Runs import FaQC, Map, Summ, DGE, srna
 from piret.Workflows import DualSeq, SingleSeq
 from piret.Checks.GFF3 import CheckGFF
+from piret.Checks.aligner import check_aligner
+from piret.Checks.config import parse_config, check_input
 from piret.logger import create_logger
 from luigi.interface import build
 
@@ -61,9 +64,9 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         -i <hisat2 index> -k both -m <edgeR/DESeq2> -fe <FASTA> -fp <FASTA>
         """)
 
-    parser.add_argument("-c", dest="CPU", help="""number of threads. The parameter
-    is passed to threads parameter in QC, HISAT, STAR, etc.""",
-                        required=False, default=1)
+    # parser.add_argument("-c", dest="CPU", help="""number of threads. The parameter
+    # is passed to threads parameter in QC, HISAT, STAR, etc.""",
+    #                     required=False, default=1)
 
     required_args = parser.add_argument_group('required arguments')
 
@@ -72,11 +75,9 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
 
     required_args.add_argument("-e", dest="EXPDSN", help="""tab delimited experimental
         design file""", required=True, default=argparse.SUPPRESS)
-    
-    required_args.add_argument("-k", dest="TEST_KINGDOM", help="""which kingdom to test,
-        when eukarya or both is chosen, it expects alternative splicing""",
-                               required=False, default='prokarya',
-                               choices=['prokarya', 'eukarya', 'both'])
+
+    required_args.add_argument("-c", "--config", help="""luigi config file for setting
+        parameters that control each step, see github repo for an example""", required=True, default=None)
 
     required_prok_args = parser.add_argument_group("""required arguments
                                                       (for prokaryotes)""")
@@ -94,28 +95,25 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
         rence""", required=False, default=None)
     required_euk_args.add_argument("-ge", dest="GFF_EUK", help="""path to gff files for eukar
         yotic organism, must be a .gff file""", required=False, default=None)
-    
+
     required_path_args = parser.add_argument_group('required arguments (for pathway and GAGE analysis)')
 
     required_path_args.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
                         required=False, default=False, action="store_true")
-    
+
     required_path_args.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
                         required=False, default=False, action="store_true")
 
     parser.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
         creates index if it does not exist""", required=False, default=None)
 
-    parser.add_argument("--config", help="""luigi config file for setting
-        parameters that control each step, see github repo for an example""", required=False, default=None)
-    
     parser.add_argument("-m", dest="METHOD", help="""Method to use for detecting
         differentially expressed genes, DESeq2 requires 3 biological replicates
         and ballgown only processes eukaryotes""", required=False,
                         default='DESeq2',
                         choices=['edgeR', 'DESeq2', 'ballgown', 'DEedge',
                                  'DEgown', 'balledgeR', 'all'])
-    
+
     parser.add_argument("--star_db", dest="STARDB", help="""A folder to keep star formatted DB.""",
                         required=False)
 
@@ -132,11 +130,6 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     parser.add_argument("--qsub", help="""run the SGE version of the code, it
         currently is set to SGE with smp""", required=False,
                         action='store_true', default=False)
-
-    parser.add_argument("--aligner", dest="ALIGNER", help="""Pick a aligner to be used for the analysis.
-                        hisat2 is default. STAR only works for eukaryotes.""",
-                        required=False, default='hisat2',
-                        choices=['STAR', 'hisat2'])
 
     parser.add_argument("--qc_off", dest="QC_OFF", help="""A flag indicating not to perform QC.""",
                         required=False, default=False, action="store_true")
@@ -162,249 +155,153 @@ def main():
     # setting up logging files
     logger = create_logger(args.WORKDIR)
 
-    # read in the config file
-    config=configparser.ConfigParser()
-    config.lead("luigi.cfg")
-    
-
+    # get parameters
+    paras = parse_config(args.config)
 
     # check if correct options are selected
-    check_input(args=args, parser=parser, workdir=args.WORKDIR)
+    check_input(paras, parser=parser)
 
     # check if third party tools are in path
-    if args.ALIGNER == "STAR":
+    if paras["aligner"] == "STAR":
         check_depen(["STAR", "samtools"], logger)
-    elif args.ALIGNER == "hisat2":
+    elif paras["aligner"] == "hisat2":
         check_depen(["hisat2", "samtools"], logger)
-    workdir = os.path.abspath(args.WORKDIR) # Getting absolute path of workdir
+
+    # Getting absolute path of workdir
+    workdir = os.path.abspath(args.WORKDIR)
+
     if check_exp_design(args.EXPDSN) is False: #check if experimental design file is OK
         sys.exit("Your experimental design file has formatting problems!")
-    
-    if check_ballgown_method(args.METHOD, args.TEST_KINGDOM) is True: # checking ballgown method
-        pass
-    
-    # if check_star_aligner(args.ALIGNER, args.TEST_KINGDOM) is True: # check if STAR is only used with euks
-        # pass
 
-    no_of_jobs = 1
+    # convert exerimental design file to a dictionary object
     samp_dic = CheckDesign(args.EXPDSN).extract_sample_fastqs()
 
-    db = check_aligner(aligner=args.ALIGNER, hisat_index=args.INDEX_HISAT,
-                 workdir=workdir, star_db=args.STARDB)
+    no_of_jobs = 1
 
-    #TODO move this to log file
-    summarize_run(aligner=args.ALIGNER)  # print run information in screen
+    # assigns filenames for databases if not specified.
+    db = check_aligner(aligner=paras["aligner"], hisat_index=paras["hisat_index"],
+                       workdir=workdir, star_db=paras["star_index"])
+    print(db)
 
-    if args.TEST_KINGDOM in ['prokarya', 'eukarya'] and args.qsub is False:
-        # TODO: fix pathway and gage analysis, need to turn on corresponding parameters that turns on or off these analysis
-        # TODO: checks gff file amd see if it corresponds with the organism code.
+    # TODO move this to log file
+    summarize_run(aligner=paras["aligner"])  # print run information in screen
 
-        if args.TEST_KINGDOM == "prokarya":
-            check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
-            fasta = args.FASTA_PROK
-            gff = args.GFF_PROK
-        elif args.TEST_KINGDOM == "eukarya":
-            check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
-            fasta = args.FASTA_EUK
-            gff = args.GFF_EUK
-        if check_method(args.METHOD, args.EXPDSN) is True:
-            single_seq = SingleSeq(fastq_dic=samp_dic,
-                                   aligner=args.ALIGNER,
-                                   ref_fasta=fasta,
-                                   num_cpus=args.CPU,
-                                   local_scheduler=args.scheduler,
-                                   hisat_index=db,
-                                   workdir=workdir,
-                                   kingdom=args.TEST_KINGDOM,
-                                   no_of_jobs=no_of_jobs,
-                                   p_value=args.P_VALUE,
-                                   exp_desn_file=args.EXPDSN,
-                                   stardb_dir=db,
-                                   gff_file=gff)
-            if args.QC_OFF is False:
-                run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
-                         local_scheduler=args.scheduler)
-                single_seq.create_db()  # create database, hisat2 or stardb
-                single_seq.map_reads()  # map reads, hisat2 or stardb
-                single_seq.map_summarize()  # summarize the reads               
-                if args.NOVEL is True:  # if novel regions are to be reported
-                    single_seq.extract_pp()  # extract properly paired reads
-                    single_seq.novel_regions()  # find novel regions
-                    single_seq.create_new_gff()  # create a new GFF file that has novel region info
-                    gff = os.path.join(workdir, "updated.gff")  # update gff
+    if paras["kingdom"] == "prokarya":
+        fasta = paras["fasta_prok"]
+        gff = paras["gff_prok"]
+    elif paras["kingdom"] == "eukarya":
+        fasta = paras["fasta_euk"]
+        gff = paras["gff_euk"]
 
-                single_seq.feature_count()  # count
-                if args.METHOD == "edgeR":
-                    single_seq.run_edger(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE)  # find diff expressed gene using edgeR
-                elif args.METHOD == "DESeq2":
-                    single_seq.run_deseq2(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE)   # use DESeq2
-                elif args.METHOD == "ballgown":
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
-                elif args.METHOD == "DEedge":  # use both
-                    single_seq.run_edger(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE) 
-                    single_seq.run_deseq2(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE) 
-                elif args.METHOD == "DEgown":  # use deseq and ballgown
-                    single_seq.run_deseq2(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE)
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
-                elif args.METHOD == "balledgeR": # use ball and edgeR
-                    single_seq.run_edger(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE)
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
-                elif args.METHOD == "all": # use all
-                    single_seq.run_edger(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE)
-                    single_seq.run_deseq2(pathway=args.PATHWAY,
-                                         GAGE=args.GAGE)
-                    single_seq.merge_stringtie()
-                    single_seq.restringtie()
-                    single_seq.run_ballgown()
-            elif args.QC_OFF is True:
-                pass
+    single_seq = SingleSeq(qc=paras["qc"],
+                           fastq_dic=samp_dic,
+                           aligner=paras["aligner"],
+                           ref_fasta=fasta,
+                           num_cpus=paras["threads"],
+                           local_scheduler=args.scheduler,
+                           hisat_index=db,
+                           workdir=workdir,
+                           kingdom=paras["kingdom"],
+                           no_of_jobs=no_of_jobs,
+                           p_value=paras["q_value"],
+                           exp_desn_file=args.EXPDSN,
+                           stardb_dir=db,
+                           gff_file=gff,
+                           pathway=paras["pathway"])
 
-    elif args.TEST_KINGDOM == 'both' and args.qsub is False:
-        check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
-        check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
-        fastas = ",".join([args.FASTA_PROK, args.FASTA_EUK])
-        gffs = ",".join([args.GFF_PROK, args.GFF_EUK])
-        if check_method(args.METHOD, args.EXPDSN) is True:
-            run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
-                     local_scheduler=args.scheduler)
-        dual_seq = Workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
-                                     aligner=args.ALIGNER,
-                                     hisat_index=db,
-                                     workdir=workdir,
-                                     kingdom=args.TEST_KINGDOM,
-                                     no_of_jobs=1,
-                                     local_scheduler=args.scheduler,
-                                     num_cpus=args.CPU,
-                                     exp_desn_file=args.EXPDSN,
-                                     p_value=args.P_VALUE,
-                                     ref_gffs=gffs, # gff of both,
-                                     stardb_dir=db
-                                     )
+    # step 1, create database, hisat2 or stardb
+    qc_dic = single_seq.run_faqc()
 
-        dual_seq.create_db(gffs) # create database (star or hisat2 based on choice)
-        dual_seq.map_reads()
-        dual_seq.map_summarize()
-        dual_seq.split_prokeuk()
-        if args.NOVEL is True: # if novel regions are to be reported
-            dual_seq.extract_pp() # extract properly paired reads
-            dual_seq.novel_regions() # find novel regions
-            dual_seq.create_new_gff() # create a new GFF file that has novel region info
-            gffs = ",".join([os.path.join(workdir, "prok_updated.gff"), os.path.join(workdir, "euk_updated.gff")]) # update gff
-        dual_seq.feature_counts()
-        if args.METHOD == "edgeR":
-            dual_seq.run_edger()
-        elif args.METHOD == "DESeq2":
-            dual_seq.run_deseq2()
-        elif args.METHOD == "ballgown":
-            dual_seq.merge_stringties()
-            dual_seq.restringtie()
-            dual_seq.run_ballgown()
-        elif args.METHOD == "DEedge":
-            dual_seq.run_edger()
-            dual_seq.run_deseq2()
-        elif args.METHOD == "DEgown":
-            dual_seq.run_deseq2()
-            dual_seq.restringtie()
-            dual_seq.run_ballgown()
-        elif args.METHOD == "balledgeR":
-            dual_seq.run_edger()
-            dual_seq.restringtie()
-            dual_seq.run_ballgown()
-        elif args.METHOD == "all":
-            dual_seq.run_edger()
-            dual_seq.run_deseq2()
-            dual_seq.restringtie()
-            dual_seq.run_ballgown()
+    # step 1, create database, hisat2 or stardb
+    single_seq.create_db()
 
+    # map reads, hisat2 or stardb
+    single_seq.map_reads(qc_dic=qc_dic)
 
-def check_input(args, parser, workdir):
-    """ A function to check if complimentary options are selected. """
+    # summarize the mapped reads
+    single_seq.map_summarize()
+
+    # run emapper
+    single_seq.run_emapper()
+
+    if paras["novel"] is True:  # if novel regions are to be reported
+        single_seq.extract_pp()  # extract properly paired reads
+        single_seq.novel_regions()  # find novel regions
+        single_seq.create_new_gff()  # create a new GFF file that has novel region info
+        gff = os.path.join(workdir, "processes", "novel", "updated.gff")  # update gff
+
+    # run read counts
+    single_seq.feature_count()
+
+    # find diff expressed gene using edgeR
+    # if "edger" in paras["method"]:
+        # single_seq.run_edger()
+    # use DESeq2
+    if "deseq2" in paras["method"]:
+        single_seq.run_deseq2()
+    elif "ballgown" in paras["method"]:
+        single_seq.merge_stringtie()
+        single_seq.restringtie(gff=gff)
+        single_seq.run_ballgown(gff=gff)
     
-    # for prokarya
-    if args.TEST_KINGDOM == "prokarya" and args.FASTA_PROK is None:
-        parser.error("-k prokarya requires fasta file to be specified using -fp")
-    elif args.TEST_KINGDOM == "prokarya" and args.GFF_PROK is None:
-        parser.error("-k prokarya requires gff file to be specified using -gp")
-    if args.TEST_KINGDOM == "prokarya" and args.FASTA_EUK != None:
-        parser.error("-k prokarya does not need eukarya fasta -fe to be specified")
-    if args.TEST_KINGDOM == "prokarya" and args.GFF_EUK != None:
-        parser.error("-k prokarya does not need eukarya gff -ge to be specified")
-    # pathway
-    # if args.TEST_KINGDOM == "prokarya" and args.PATHWAY is True and args.PROK_ORG is None:
-    #     parser.error("if pathway analysis is turned on, you need to specify organism code")
-    # for eukarya
-    if args.TEST_KINGDOM == "eukarya" and args.FASTA_EUK is None:
-        parser.error("-k eukarya requires fasta file to be specified using -fe")
-    elif args.TEST_KINGDOM == "eukarya" and args.GFF_EUK is None:
-        parser.error("-k eukarya requires gff file to be specified using -ge")
-    if args.TEST_KINGDOM == "eukarya" and args.FASTA_PROK != None:
-        parser.error("-k eukarya does not need eukarya fasta -fe to be specified")
-    if args.TEST_KINGDOM == "eukarya" and args.GFF_PROK != None:
-        parser.error("-k eukarya does not need prokarya gff -gp to be specified")
-    if args.TEST_KINGDOM == "eukarya" and args.PATHWAY is True and args.EUK_ORG is None:
-        parser.error("if pathway analysis is turned on, you need to specify organism code")
-    # for both
-    if args.TEST_KINGDOM == "both":
-        if args.GFF_PROK is None or args.GFF_EUK is None or args.FASTA_EUK is None or args.FASTA_PROK is None:
-            parser.error("-k both needs fasta and gff file specified for both prokarya and eukarya")
-    if args.TEST_KINGDOM == "both" and args.PATHWAY is True and args.PROK_ORG is None:
-        parser.error("if pathway analysis is turned on, you need to specify organism code")
-    elif args.TEST_KINGDOM == "both" and args.PATHWAY is True and args.EUK_ORG is None:
-        parser.error("if pathway analysis is turned on, you need to specify organism code")
-    # for pathway
-    if args.GAGE is True:
-        if args.ORG_CODE is None:
-            parser.error("need to specify an organism code")
+    single_seq.summ_json()
 
+    # if args.TEST_KINGDOM == 'both' and args.qsub is False:
+    #     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
+    #     check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
+    #     fastas = ",".join([args.FASTA_PROK, args.FASTA_EUK])
+    #     gffs = ",".join([args.GFF_PROK, args.GFF_EUK])
+    #     if check_method(args.METHOD, args.EXPDSN) is True:
+    #         run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
+    #                  local_scheduler=args.scheduler)
+    #     dual_seq = Workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
+    #                                  aligner=args.ALIGNER,
+    #                                  hisat_index=db,
+    #                                  workdir=workdir,
+    #                                  kingdom=args.TEST_KINGDOM,
+    #                                  no_of_jobs=1,
+    #                                  local_scheduler=args.scheduler,
+    #                                  num_cpus=args.CPU,
+    #                                  exp_desn_file=args.EXPDSN,
+    #                                  p_value=args.P_VALUE,
+    #                                  ref_gffs=gffs,  # gff of both,
+    #                                  stardb_dir=db
+    #                                  )
 
-def check_aligner(aligner, hisat_index, workdir, star_db):
-    if aligner == "hisat2":
-        if hisat_index is None:
-            hisat_index_name = os.path.join(workdir, "hisat_index")
-        else:
-            hisat_index_name = hisat_index
-        return hisat_index_name
-    elif aligner == "STAR":
-        if star_db is None:
-            new_stardb = os.path.join(workdir, "stardb")
-            if os.path.exists(new_stardb) is False:
-                os.makedirs(new_stardb)
-            return new_stardb
-        else:
-            os.makedirs(star_db)
-            return star_db
-
-def check_depen(tool_list, logger):
-    """A function that checks the list of tool are in path or not."""
-    for tool in tool_list:
-        check = CheckDependencies(package=tool, logger=logger)
-        check.check_thirdparty()
-
-    
-def run_faqc(fastq_dic, num_cpus, workdir, local_scheduler):
-    """A function that calls the FaQC function.
-
-    it returns QCed files in respective directory
-    """
-    build([FaQC.SummarizeQC(fastq_dic=fastq_dic,
-                            num_cpus=num_cpus,
-                            workdir=workdir)],
-          local_scheduler=local_scheduler,
-          workers=1)
-
+    #     dual_seq.create_db(gffs) # create database (star or hisat2 based on choice)
+    #     dual_seq.map_reads()
+    #     dual_seq.map_summarize()
+    #     dual_seq.split_prokeuk()
+    #     if args.NOVEL is True: # if novel regions are to be reported
+    #         dual_seq.extract_pp() # extract properly paired reads
+    #         dual_seq.novel_regions() # find novel regions
+    #         dual_seq.create_new_gff() # create a new GFF file that has novel region info
+    #         gffs = ",".join([os.path.join(workdir, "prok_updated.gff"), os.path.join(workdir, "euk_updated.gff")]) # update gff
+    #     dual_seq.feature_counts()
+    #     if args.METHOD == "edgeR":
+    #         dual_seq.run_edger()
+    #     elif args.METHOD == "DESeq2":
+    #         dual_seq.run_deseq2()
+    #     elif args.METHOD == "ballgown":
+    #         dual_seq.merge_stringties()
+    #         dual_seq.restringtie()
+    #         dual_seq.run_ballgown()
+    #     elif args.METHOD == "DEedge":
+    #         dual_seq.run_edger()
+    #         dual_seq.run_deseq2()
+    #     elif args.METHOD == "DEgown":
+    #         dual_seq.run_deseq2()
+    #         dual_seq.restringtie()
+    #         dual_seq.run_ballgown()
+    #     elif args.METHOD == "balledgeR":
+    #         dual_seq.run_edger()
+    #         dual_seq.restringtie()
+    #         dual_seq.run_ballgown()
+    #     elif args.METHOD == "all":
+    #         dual_seq.run_edger()
+    #         dual_seq.run_deseq2()
+    #         dual_seq.restringtie()
+    #         dual_seq.run_ballgown()
 
 
 def check_exp_design(exp_design_file):
@@ -443,14 +340,6 @@ def check_index_file(indexfile):
         return True
     else:
         return False
-
-
-def check_ballgown_method(method, kingdom):
-    """Only allow ballgown to be picked for both or eukarya."""
-    if method in ('ballgown', 'balledgeR', 'DEgown', 'all') and kingdom == "prokarya":
-        sys.exit("Ballgown does not work for prokaryotic genomes, pick method that does not have ballgown!")
-    else:
-        return True
 
 
 def check_star_aligner(method, kingdom):
@@ -493,6 +382,7 @@ def check_ref(ref_fasta=None, ref_gff=None):
                 sys.exit(exit_message)
             elif os.path.exists(ref_gff) is False:
                 exit_message = ' '.join(("Reference GFF", ref_gff, "does not exist!"))
+
 
 def summarize_run(aligner):
     """Prints summary information of runs."""
