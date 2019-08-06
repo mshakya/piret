@@ -32,6 +32,8 @@ from piret.logger import create_logger
 from luigi.interface import build
 
 
+
+
 def cmdline_parser():
     """
     Create an argparse instance.
@@ -152,25 +154,27 @@ def main():
     parser = cmdline_parser()
     args = parser.parse_args()
 
+    os.environ["LUIGI_CONFIG_PATH"] = args.config
+
     # setting up logging files
     logger = create_logger(args.WORKDIR)
 
-    # get parameters
+    # get parameters from the config file
     paras = parse_config(args.config)
 
     # check if correct options are selected
     check_input(paras, parser=parser)
 
-    # check if third party tools are in path
+    # check if required third party tools are in path
     if paras["aligner"] == "STAR":
         check_depen(["STAR", "samtools"], logger)
     elif paras["aligner"] == "hisat2":
         check_depen(["hisat2", "samtools"], logger)
 
-    # Getting absolute path of workdir
+    # getting absolute path of workdir
     workdir = os.path.abspath(args.WORKDIR)
 
-    if check_exp_design(args.EXPDSN) is False: #check if experimental design file is OK
+    if check_exp_design(args.EXPDSN) is False:  # check if experimental design file is OK
         sys.exit("Your experimental design file has formatting problems!")
 
     # convert exerimental design file to a dictionary object
@@ -179,72 +183,75 @@ def main():
     no_of_jobs = 1
 
     # assigns filenames for databases if not specified.
-    db = check_aligner(aligner=paras["aligner"], hisat_index=paras["hisat_index"],
+    db = check_aligner(aligner=paras["aligner"],
+                       hisat_index=paras["hisat_index"],
                        workdir=workdir, star_db=paras["star_index"])
-    print(db)
 
     # TODO move this to log file
     summarize_run(aligner=paras["aligner"])  # print run information in screen
 
-    if paras["kingdom"] == "prokarya":
-        fasta = paras["fasta_prok"]
-        gff = paras["gff_prok"]
-    elif paras["kingdom"] == "eukarya":
-        fasta = paras["fasta_euk"]
-        gff = paras["gff_euk"]
+    # assign universal fasta and gff variable
+    if paras["kingdom"] in ["prokarya", "eukarya"]:
+        if paras["kingdom"] == "prokarya":
+            fasta = paras["fasta_prok"]
+            gff = paras["gff_prok"]
+        elif paras["kingdom"] == "eukarya":
+            fasta = paras["fasta_euk"]
+            gff = paras["gff_euk"]
+        single_seq = SingleSeq(qc=paras["qc"],
+                                fastq_dic=samp_dic,
+                            aligner=paras["aligner"],
+                            ref_fasta=fasta,
+                            num_cpus=paras["threads"],
+                            local_scheduler=args.scheduler,
+                            hisat_index=db,
+                            workdir=workdir,
+                            kingdom=paras["kingdom"],
+                            no_of_jobs=no_of_jobs,
+                            p_value=paras["q_value"],
+                            exp_desn_file=args.EXPDSN,
+                            stardb_dir=db,
+                            gff_file=gff,
+                            pathway=paras["pathway"])
 
-    single_seq = SingleSeq(qc=paras["qc"],
-                           fastq_dic=samp_dic,
-                           aligner=paras["aligner"],
-                           ref_fasta=fasta,
-                           num_cpus=paras["threads"],
-                           local_scheduler=args.scheduler,
-                           hisat_index=db,
-                           workdir=workdir,
-                           kingdom=paras["kingdom"],
-                           no_of_jobs=no_of_jobs,
-                           p_value=paras["q_value"],
-                           exp_desn_file=args.EXPDSN,
-                           stardb_dir=db,
-                           gff_file=gff,
-                           pathway=paras["pathway"])
+        # step 1, run qc
+        qc_dic = single_seq.run_faqc()
 
-    # step 1, create database, hisat2 or stardb
-    qc_dic = single_seq.run_faqc()
+        # step 2, create database, hisat2 or stardb
+        single_seq.create_db()
 
-    # step 1, create database, hisat2 or stardb
-    single_seq.create_db()
+        # step 3, map reads, hisat2 or stardb
+        single_seq.map_reads(qc_dic=qc_dic)
 
-    # map reads, hisat2 or stardb
-    single_seq.map_reads(qc_dic=qc_dic)
+        # step 4, summarize the mapped reads
+        single_seq.map_summarize()
 
-    # summarize the mapped reads
-    single_seq.map_summarize()
+        # step 5, if needed
+        if paras["novel"] is True:  # if novel regions are to be reported
+            single_seq.extract_pp()  # extract properly paired reads
+            single_seq.novel_regions()  # find novel regions
+            single_seq.create_new_gff()  # create a new GFF file that has novel region info
+            gff = os.path.join(workdir, "processes", "novel", "updated.gff")  # update gff
 
-    # run emapper
-    single_seq.run_emapper()
+        # step 6, run read counts
+        single_seq.feature_count()
 
-    if paras["novel"] is True:  # if novel regions are to be reported
-        single_seq.extract_pp()  # extract properly paired reads
-        single_seq.novel_regions()  # find novel regions
-        single_seq.create_new_gff()  # create a new GFF file that has novel region info
-        gff = os.path.join(workdir, "processes", "novel", "updated.gff")  # update gff
+        # run emapper
+        single_seq.run_emapper()
 
-    # run read counts
-    single_seq.feature_count()
 
-    # find diff expressed gene using edgeR
-    # if "edger" in paras["method"]:
-        # single_seq.run_edger()
-    # use DESeq2
-    if "deseq2" in paras["method"]:
-        single_seq.run_deseq2()
-    elif "ballgown" in paras["method"]:
-        single_seq.merge_stringtie()
-        single_seq.restringtie(gff=gff)
-        single_seq.run_ballgown(gff=gff)
-    
-    single_seq.summ_json()
+        # find diff expressed gene using edgeR
+        # if "edger" in paras["method"]:
+            # single_seq.run_edger()
+        # use DESeq2
+        if "deseq2" in paras["method"]:
+            single_seq.run_deseq2()
+        elif "ballgown" in paras["method"]:
+            single_seq.merge_stringtie()
+            single_seq.restringtie(gff=gff)
+            single_seq.run_ballgown(gff=gff)
+        
+        single_seq.summ_json()
 
     # if args.TEST_KINGDOM == 'both' and args.qsub is False:
     #     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)

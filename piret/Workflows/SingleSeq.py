@@ -9,7 +9,7 @@ bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
 from piret.Checks.Design import CheckDesign
-from piret.Runs.conversions import conversions
+from piret.Runs.conversions import conversions, conver2json
 from piret.Runs import FaQC, Map, Summ, DGE, srna
 from piret.Runs.function import RunEmapper
 from luigi.interface import build
@@ -227,12 +227,13 @@ class SingleSeq:
     def run_emapper(self):
         build([RunEmapper(workdir=self.workdir,
                    gff_file=self.gff_file,
-                   fasta_file=self.ref_fasta)],
+                   fasta_file=self.ref_fasta,
+                   kingdom=self.kingdom)],
                    local_scheduler=self.local_scheduler,
                    workers=1)
 
     def summ_json(self):
-        build([conversions.conv2json(gff_file=self.gff_file,
-                                     fasta_file=self.fasta, 
+        build([conver2json(gff_file=self.gff_file,
+                                     fasta_file=self.ref_fasta,
                                      pathway=self.pathway)],
         local_scheduler=self.local_scheduler, workers=1)
