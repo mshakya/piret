@@ -1,0 +1,6 @@
+#SampleID	Files	Group
+CYP1	tests/data/fastq_yp/CYP1_R1_sub.fastq.gz:tests/data/fastq_yp/CYP1_R2_sub.fastq.gz	Control
+CYP2	tests/data/fastq_yp/CYP2_R1_sub.fastq.gz:tests/data/fastq_yp/CYP2_R2_sub.fastq.gz	Control
+IYP1	tests/data/fastq_yp/IYP1_R1_sub.fastq.gz:tests/data/fastq_yp/IYP1_R2_sub.fastq.gz	Intracellular
+IYP2	tests/data/fastq_yp/IYP2_R1_sub.fastq.gz:tests/data/fastq_yp/IYP2_R2_sub.fastq.gz	Intracellular
+IYP3	tests/data/fastq_yp/IYP3_R1_sub.fastq.gz:tests/data/fastq_yp/IYP3_R2_sub.fastq.gz	Intracellular
