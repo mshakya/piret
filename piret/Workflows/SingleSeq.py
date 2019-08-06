@@ -44,7 +44,6 @@ class SingleSeq:
         it returns QCed files in respective directory
         """
         if self.qc is True:
-            print("cnn")
             build([FaQC.SummarizeQC(fastq_dic=self.fastq_dic,
                                 num_cpus=self.num_cpus,
                                 workdir=self.workdir)],

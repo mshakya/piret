@@ -79,6 +79,7 @@ def main():
     parser = cmdline_parser()
     args = parser.parse_args()
 
+    #TODO: figure out why this is not working
     os.environ["LUIGI_CONFIG_PATH"] = args.config
 
     # setting up logging files
@@ -128,7 +129,7 @@ def main():
                             aligner=paras["aligner"],
                             ref_fasta=fasta,
                             num_cpus=paras["threads"],
-                            local_scheduler=args.scheduler,
+                            local_scheduler=True,
                             hisat_index=db,
                             workdir=workdir,
                             kingdom=paras["kingdom"],
@@ -164,10 +165,9 @@ def main():
         # run emapper
         single_seq.run_emapper()
 
-
         # find diff expressed gene using edgeR
-        # if "edger" in paras["method"]:
-            # single_seq.run_edger()
+        if "edger" in paras["method"]:
+            single_seq.run_edger()
         # use DESeq2
         if "deseq2" in paras["method"]:
             single_seq.run_deseq2()
@@ -175,7 +175,8 @@ def main():
             single_seq.merge_stringtie()
             single_seq.restringtie(gff=gff)
             single_seq.run_ballgown(gff=gff)
-        
+
+        # summarize all results into one big json file.        
         single_seq.summ_json()
 
     # if args.TEST_KINGDOM == 'both' and args.qsub is False:
