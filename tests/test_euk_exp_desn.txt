@@ -1,0 +1,7 @@
+ID	Files	Group
+samp1	tests/data2/fastqs/HBR_Rep1_ERCC-Mix2_Build37-ErccTranscripts-chr22.read1.fastq:tests/data2/fastqs/HBR_Rep1_ERCC-Mix2_Build37-ErccTranscripts-chr22.read2.fastq	HBR
+samp2	tests/data2/fastqs/HBR_Rep2_ERCC-Mix2_Build37-ErccTranscripts-chr22.read1.fastq:tests/data2/fastqs/HBR_Rep2_ERCC-Mix2_Build37-ErccTranscripts-chr22.read2.fastq	HBR
+samp3	tests/data2/fastqs/HBR_Rep3_ERCC-Mix2_Build37-ErccTranscripts-chr22.read1.fastq:tests/data2/fastqs/HBR_Rep3_ERCC-Mix2_Build37-ErccTranscripts-chr22.read1.fastq	HBR
+samp4	tests/data2/fastqs/UHR_Rep1_ERCC-Mix1_Build37-ErccTranscripts-chr22.read1.fastq:tests/data2/fastqs/UHR_Rep1_ERCC-Mix1_Build37-ErccTranscripts-chr22.read2.fastq	UBR
+samp5	tests/data2/fastqs/UHR_Rep2_ERCC-Mix1_Build37-ErccTranscripts-chr22.read1.fastq:tests/data2/fastqs/UHR_Rep2_ERCC-Mix1_Build37-ErccTranscripts-chr22.read2.fastq	UBR
+samp6	tests/data2/fastqs/UHR_Rep3_ERCC-Mix1_Build37-ErccTranscripts-chr22.read1.fastq:tests/data2/fastqs/UHR_Rep3_ERCC-Mix1_Build37-ErccTranscripts-chr22.read2.fastq	UBR

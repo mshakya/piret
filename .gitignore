@@ -20,7 +20,14 @@ migun/
 *.bedfile
 *.tab
 *.log
-# *.bam
+*.bam
+*.gz
+*.fastq
+*.fa
+*.db
+*.fna
+*.gff
+comp.txt
 *.ht2l
 *.tsv
 *.sam
@@ -52,3 +59,4 @@ dist/pypiret-0.1.0-py3.6.egg
 *.chroms
 chr*.txt
 SAindex
+aas.faa
