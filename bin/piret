@@ -50,25 +50,9 @@ def cmdline_parser():
                                      prog='piret',
                                      description="""piret""",
                                      epilog="""
-When selecting both kingdom runs, options that are required for both eukaryotes
-and prokaryotes run are required.
-
-Example run for Prokaryotes RNA seq:\n
-        piret -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
-        -k prokarya -m <edgeR/DESeq2> -fp <FASTA>
-
-Example run for Eukaryotes RNA seq:\n
-        piret -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
-        -k eukarya -m <edgeR/DESeq2> -fe <FASTA>
-
-Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
-        piret -d <workdir> -e <design file>  -gp <gff> -ge <gff>
-        -i <hisat2 index> -k both -m <edgeR/DESeq2> -fe <FASTA> -fp <FASTA>
+Example runs:\n
+        piret -d <workdir> -e <design file>  -c <config file>
         """)
-
-    # parser.add_argument("-c", dest="CPU", help="""number of threads. The parameter
-    # is passed to threads parameter in QC, HISAT, STAR, etc.""",
-    #                     required=False, default=1)
 
     required_args = parser.add_argument_group('required arguments')
 
@@ -81,66 +65,7 @@ Example run for Both (Eukaryotes and Prokaryotes) RNA seq:\n
     required_args.add_argument("-c", "--config", help="""luigi config file for setting
         parameters that control each step, see github repo for an example""", required=True, default=None)
 
-    required_prok_args = parser.add_argument_group("""required arguments
-                                                      (for prokaryotes)""")
-
-    required_prok_args.add_argument("-fp", dest="FASTA_PROK", help="""fasta for
-        Prokaryotic Reference""", required=False, default=None)
-
-    required_prok_args.add_argument("-gp", dest="GFF_PROK", help="""path to gff
-        files for prokaryotic organism, must be a .gff file""", required=False,
-                                    default=None)
-
-    required_euk_args = parser.add_argument_group('required arguments (for eukaryotes)')
-
-    required_euk_args.add_argument("-fe", dest="FASTA_EUK", help="""fasta for Eukaryotic Refe
-        rence""", required=False, default=None)
-    required_euk_args.add_argument("-ge", dest="GFF_EUK", help="""path to gff files for eukar
-        yotic organism, must be a .gff file""", required=False, default=None)
-
-    required_path_args = parser.add_argument_group('required arguments (for pathway and GAGE analysis)')
-
-    required_path_args.add_argument("--pathway", dest="PATHWAY", help="""Generate Pathway heatmaps. Specifying --pathway turns this ON.""",
-                        required=False, default=False, action="store_true")
-
-    required_path_args.add_argument("--gage", dest="GAGE", help="""Perform GAGE analysis. Specifying --gage turns this ON.""",
-                        required=False, default=False, action="store_true")
-
-    parser.add_argument("-i", dest="INDEX_HISAT", help="""hisat2 index file, it only
-        creates index if it does not exist""", required=False, default=None)
-
-    parser.add_argument("-m", dest="METHOD", help="""Method to use for detecting
-        differentially expressed genes, DESeq2 requires 3 biological replicates
-        and ballgown only processes eukaryotes""", required=False,
-                        default='DESeq2',
-                        choices=['edgeR', 'DESeq2', 'ballgown', 'DEedge',
-                                 'DEgown', 'balledgeR', 'all'])
-
-    parser.add_argument("--star_db", dest="STARDB", help="""A folder to keep star formatted DB.""",
-                        required=False)
-
-    parser.add_argument("-p", dest="P_VALUE", help="""P-Value to consider ifs
-        genes are significantly different, default is 0.001""",
-                        required=False, default=0.001,
-                        type=float)
-
-    parser.add_argument("--scheduler", help="""when specified, will use luigi
-        scheduler which allows you to keep track of task using an url
-        specified through luigid""", required=False, default=True,
-                        action='store_false')
-
-    parser.add_argument("--qsub", help="""run the SGE version of the code, it
-        currently is set to SGE with smp""", required=False,
-                        action='store_true', default=False)
-
-    parser.add_argument("--qc_off", dest="QC_OFF", help="""A flag indicating not to perform QC.""",
-                        required=False, default=False, action="store_true")
-
-    parser.add_argument("--novel", dest="NOVEL", help="""A flag indicating to find novel regions.""",
-                        required=False, default=False, action="store_true")
-
-    parser.add_argument('--version', action='version', version='%(prog)s 0.3.4')
-
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.3.4')
 
     return parser
 
