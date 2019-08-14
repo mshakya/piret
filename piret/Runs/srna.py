@@ -294,7 +294,7 @@ class CompileGFF(luigi.Task):
             bw_beds = [os.path.join(map_dir, samp, samp + "_bw_novel.bedfile") for samp in self.fastq_dic.keys()]
             fw_gff = os.path.join(self.workdir, "processes", "novel", "fw_all_novel.gff")
             bw_gff = os.path.join(self.workdir, "processes", "novel", "bw_all_novel.gff")
-            final_gff = os.path.join(self.workdir, "novel", "updated.gff")
+            final_gff = os.path.join(self.workdir, "processes", "novel", "updated.gff")
 
             self.compile_novel_regions(fw_beds, fw_novel)
             self.compile_novel_regions(bw_beds, bw_novel)

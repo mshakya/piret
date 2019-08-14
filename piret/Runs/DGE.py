@@ -31,14 +31,9 @@ class edgeR(luigi.Task):
 
     def output(self):
         """Expected output of DGE using edgeR."""
-        fcount_dir = os.path.join(self.workdir, "processes", "featureCounts", self.kingdom)
         edger_dir = os.path.join(self.workdir, "processes", "edgeR", self.kingdom)
-        for root, dirs, files in os.walk(edger_dir):
-            for file in files:
-                if file.endswith("__sig.csv"):
-                    out_folder = file.split(".csv")[0]
-                    out_filepath = os.path.join(edger_dir, out_folder, "greater.csv")
-                    return LocalTarget(out_filepath)
+        out_filepath = os.path.join(edger_dir, "summary_updown.csv")
+        return LocalTarget(out_filepath)
 
     def run(self):
         """Run edgeR."""
@@ -105,14 +100,10 @@ class DESeq2(luigi.Task):
 
     def output(self):
         """Expected output of DGE using DESeq2."""
-        fcount_dir = os.path.join(self.workdir, "processes","featureCounts", self.kingdom)
-        DESeq2_dir = os.path.join(self.workdir, "processes","DESeq2", self.kingdom)
-        for file in os.listdir(fcount_dir):
-            if file.endswith("__sig.csv"):
-                out_folder = file.split(".csv")[0]
-                out_filepath = os.path.join(DESeq2_dir, out_folder,
-                                            "greater.csv")
-                return LocalTarget(out_filepath)
+        deseq_dir = os.path.join(self.workdir, "processes", "DESeq2",
+                                 self.kingdom)
+        out_filepath = os.path.join(deseq_dir, "summary_updown.csv")
+        return LocalTarget(out_filepath)
 
     def run(self):
         """Run DESeq2."""
@@ -124,12 +115,13 @@ class DESeq2(luigi.Task):
             if file.endswith("tsv"):
                 feat_name = file.split("_")[-2]
                 # only run deseq on gene and CDS
-                if any(feat == feat_name for feat in ["CDS", "gene"]) is True:
-                    deseq2_list = ["-r", os.path.join(fcount_dir, file),
-                               "-e", self.exp_design, "-p", self.p_value,
-                               "-n", feat_name,
+                if any(feat == feat_name for feat in ["CDS", "gene", "rRNA", "tRNA", "exon", "transcript"]) is True:
+                    deseq2_list = [os.path.join(script_dir, "RDESeq2"),
+                                  "-r", os.path.join(fcount_dir, file),
+                                  "-e", self.exp_design, "-p", self.p_value,
+                                  "-n", feat_name,
                                "-o", DESeq2_dir]
-                    deseq2_cmd = RDESeq2[deseq2_list]
+                    deseq2_cmd = Rscript[deseq2_list]
                     logger = logging.getLogger('luigi-interface')
                     logger.info(deseq2_cmd)
                     deseq2_cmd()
@@ -155,14 +147,18 @@ class DESeq2(luigi.Task):
 
     def summ_summ(self):
         """Summarize the summary table to be displayed in edge"""
-        deseq2_dir = self.workdir + "/DESeq2/" + self.kingdom
-        all_files = os.listdir(deseq2_dir)
-        out_file = os.path.join(deseq2_dir, "summary_updown.csv")
-        summ_files = [pd.read_csv(os.path.join(deseq2_dir, file),
-                                  index_col=0) for file in all_files if "summary.csv" in file ]
-        summ_df = pd.concat(summ_files)
-        summ_df.to_csv(out_file)
-
+        deseq_dir = os.path.join(self.workdir, "processes", "DESeq2", self.kingdom)
+        all_dirs = os.listdir(deseq_dir)
+        if all_dirs:
+            out_file = os.path.join(deseq_dir, "summary_updown.csv")
+            summ_files = []
+            for root, dirs, files in os.walk(deseq_dir):
+                for file in files:
+                    if "summary.csv" in file:
+                        summ_files.append(os.path.join(root, file))
+            summ_df = [pd.read_csv(file, index_col=0) for file in summ_files]
+            summ_df_ccat = pd.concat(summ_df)
+            summ_df_ccat.to_csv(out_file)
 
 
 @inherits(Summ.ReStringTieScoresW)

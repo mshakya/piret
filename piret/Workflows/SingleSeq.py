@@ -234,5 +234,7 @@ class SingleSeq:
     def summ_json(self):
         build([conver2json(gff_file=self.gff_file,
                                      fasta_file=self.ref_fasta,
-                                     pathway=self.pathway)],
+                                     pathway=self.pathway,
+                                     workdir=self.workdir,
+                                     kingdom=self.kingdom )],
         local_scheduler=self.local_scheduler, workers=1)
