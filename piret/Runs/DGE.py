@@ -43,14 +43,14 @@ class edgeR(luigi.Task):
             os.makedirs(edger_dir)
         for file in os.listdir(fcount_dir):
             if file.endswith("tsv"):
+                print(file)
                 name  = file.split("_")[-2]
                 edger_list = [os.path.join(script_dir, "EdgeR"), "-r",
                               os.path.join(fcount_dir, file),
                             "-e", self.exp_design,
-                          "-p", self.p_value,
-                          "-n", name,
-                          "-o", edger_dir]
-                # TODO: get the output that has locus tag
+                            "-p", self.p_value,
+                            "-n", name,
+                            "-o", edger_dir]
                 edger_cmd = Rscript[edger_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(edger_cmd)
@@ -147,7 +147,8 @@ class DESeq2(luigi.Task):
 
     def summ_summ(self):
         """Summarize the summary table to be displayed in edge"""
-        deseq_dir = os.path.join(self.workdir, "processes", "DESeq2", self.kingdom)
+        deseq_dir = os.path.join(self.workdir, "processes",
+                                 "DESeq2", self.kingdom)
         all_dirs = os.listdir(deseq_dir)
         if all_dirs:
             out_file = os.path.join(deseq_dir, "summary_updown.csv")

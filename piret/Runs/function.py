@@ -69,7 +69,6 @@ class RunEmapper(luigi.Task):
                                    description=desc)
                     SeqIO.write(record, f, "fasta")
 
-
     def run_emapper(self):
         """Using the amino acid fasta file, run emapper."""
 
