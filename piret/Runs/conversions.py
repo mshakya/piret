@@ -122,6 +122,7 @@ class conver2json(luigi.Task):
         dge_deseq_cds = self.dge_summary("CDS", "DESeq2")
         dge_deseq_gene = self.dge_summary("gene", "DESeq2")
         read_summ_exon = self.read_summary("exon")
+        emaps = self.get_emapper()
         with open(out_json, "w") as json_file:
             for feat_obj in db.all_features():
                 feat_dic = {}  # an empty dictionary to append features
@@ -169,6 +170,14 @@ class conver2json(luigi.Task):
                     self.assign_dges(feat_type="CDS", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
                                      method="DESeq2", dge_dict=dge_deseq_cds)
+                    # assign EC#s, KOs, etc.
+                    try:
+                        feat_dic["emapper"] = emaps[feat_obj.id]
+                    except KeyError:
+                        feat_dic["emapper"] = None
+
+
+                    
 # ============================================================================#
                 elif feat_type == 'rRNA':
                     try:
@@ -228,6 +237,20 @@ class conver2json(luigi.Task):
             feat_dic["deseq_fpkm"] = deseq_sdic[1][feat_id]
         except KeyError:
             feat_dic["deseq_fpkm"] = None
+
+    def get_emapper(self):
+        emapper_files = os.path.join(self.workdir, "processes", "emapper",
+                                     "emapper.emapper.annotations")
+        if os.path.exists(emapper_files) is True:
+            emap = pd.read_csv(emapper_files, sep='\t', skiprows=[0,1,2],
+                               skipinitialspace=True, skipfooter=3,
+                               header=None, engine='python')
+            emap1 = emap.reset_index()
+            emap1.columns = emap1.iloc[0]
+            emap2 = emap1.drop(0).set_index('#query_name').to_dict(orient="index")
+            return emap2
+        else:
+            return None
 
     def read_summary(self, feat_type):
         """Get read values as a dictionary."""
@@ -297,7 +320,7 @@ class conver2json(luigi.Task):
             cpm_dict = pd.read_csv(cpm_file, sep=",",
                                    index_col=0).to_dict(orient="index")
             rpkm_dict = pd.read_csv(rpkm_file, sep=",",
-                                    index_col=0).to_dict(orient="index")            
+                                    index_col=0).to_dict(orient="index")          
             return(cpm_dict, rpkm_dict)
         elif os.path.exists(cpm_file) is True and os.path.exists(rpkm_file) is False:
             cpm_dict = pd.read_csv(cpm_file, sep=",",
