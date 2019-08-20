@@ -121,7 +121,7 @@ class DualSeq:
                                  kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
 
-    def novel_regions(self, gff):
+    def NovelRegions(self, gff):
         """Find novel regions."""
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                   workdir=self.workdir,

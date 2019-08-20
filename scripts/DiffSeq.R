@@ -113,7 +113,6 @@ plotSmear(dge_object)
 edgeR::plotMD.DGEList(dge_object)
 dev.off()
 
-print(group_table)
 rownames(group_table) <- group_table$X.SampleID
 group_table$X.SampleID <- NULL
 print(group_table)

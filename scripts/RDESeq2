@@ -64,7 +64,6 @@ pair.comb <- function(exp_des){
     colnames(group_table) <- c("Files", "Group")
     group_table <- dplyr::select(group_table, Group)
     read_counts <- read_counts[, rownames(group_table)]
-    print(head(read_counts))
     deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read_counts,
                                               colData = group_table,
                                               design = ~ Group,
@@ -116,7 +115,6 @@ pair.comb <- function(exp_des){
                                paste(strsplit(basename(out_fpkm), ".csv")[[1]],
                                      "_violin.png", sep = ""))
         df_results <- dplyr::filter_all(as.data.frame(fpkm_df), dplyr::any_vars(. != 0))
-        print(head(df_results))
         f_data <- reshape2::melt(as.data.frame(df_results),
                              variable.name = "sample", value.name = "FPKM")
         group_table <- read.delim(group_file, row.names = 1)
@@ -146,7 +144,6 @@ pair.comb <- function(exp_des){
                                paste(strsplit(basename(out_fpm), ".csv")[[1]],
                                      "_violin.png", sep = ""))
         df_results <- dplyr::filter_all(as.data.frame(fpm_df), dplyr::any_vars(. != 0))
-        print(head(df_results))
         f_data <- reshape2::melt(as.data.frame(df_results),
                              variable.name = "sample", value.name = "FPM")
         group_table <- read.delim(group_file, row.names = 1)
@@ -204,7 +201,7 @@ pair.comb <- function(exp_des){
 
     }
 
-if (feature_name %in% c("CDS", "gene", "transcript", "exon", "novel_region")){
+if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
 
     # calculate size factors
     dds <- DESeq2::DESeq(deseq_ds)

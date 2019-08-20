@@ -14,29 +14,22 @@ from luigi.interface import build
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
 from plumbum.cmd import time
+from luigi.util import requires
+from piret.Runs import FaQC
 
 
-class RunEmapper(luigi.Task):
-    """ Run emapper.
-
-        Get KEGG# and other"""
+class GetAAs(luigi.Task):
+    """Get amino acid sequences."""
     gff_file = luigi.Parameter()
     fasta_file = luigi.Parameter()
     workdir = luigi.Parameter()
-    ave_map = luigi.FloatParameter()
     kingdom = luigi.Parameter()
+    ave_map = luigi.FloatParameter()
 
-
-    def output(self):
-        """Expected output JSON."""
-        jfile = os.path.join(self.workdir, "processes", "emapper",
-                             "emapper.emapper.annotations")
-        return luigi.LocalTarget(jfile)
-
-    def run(self):
-        """ Create fasta file."""
-        self.gff2faa(self.gff_file, self.fasta_file)
-        self.run_emapper()
+    def requires(self):
+        """Check if those two files are present."""
+        for f in [self.gff_file, self.fasta_file]:
+            return FaQC.RefFile(f)
 
     def gff2faa(self, gff_file, fasta):
         """reads in gff file and fasta to output proteome."""
@@ -69,21 +62,6 @@ class RunEmapper(luigi.Task):
                                    description=desc)
                     SeqIO.write(record, f, "fasta")
 
-    def run_emapper(self):
-        """Using the amino acid fasta file, run emapper."""
-
-        aa_file = os.path.join(self.workdir, "processes", "databases",
-                               "aas.faa")
-        egg_dir = os.path.join(self.workdir, "processes", "emapper", "emapper")
-        if os.path.exists(egg_dir) is False:
-            os.makedirs(egg_dir)
-
-        emap = ["thirdparty/eggnog-mapper/emapper.py", "-i",
-                aa_file, "-o", egg_dir, "--data_dir", "../eggnog-mapper/data/",
-                "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
-                "--temp_dir", egg_dir]
-        time[emap]()
-
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""
         if type == "CDS":
@@ -106,79 +84,58 @@ class RunEmapper(luigi.Task):
         cds_df = cds_df[cds_df["mean"] > ave_map]
         return cds_df
 
-    def gff2json(self, out_json):
-        """A function that converts a gff file to JSON file."""
+    def run(self):
+        """Create fasta file."""
+        self.gff2faa(self.gff_file, self.fasta_file)
 
-        # read in the gff file to a database
-        db_path = os.paht.join(self.workdir, "processes", "database", "piret.db")
-        db_path = gffutils.create_db(gff_file, dbfn="piret.db", force=True,
-                                keep_order=True, merge_strategy="create_unique")
-
-        feat_dic = {}  # an empty dictionary to append features
-        with open(self.out_json, "w") as json_file:
-            for feat_obj in db.all_features():
-                feat_dic['seqid'] = feat_obj.seqid
-                feat_dic['id'] = feat_obj.id
-                feat_dic['source'] = feat_obj.source
-                feat_type = feat_obj.featuretype
-                feat_dic['featuretype'] = feat_type
-                feat_dic['start'] = feat_obj.start
-                feat_dic['end'] = feat_obj.end
-                feat_dic['strand'] = feat_obj.strand
-                feat_dic['frame'] = feat_obj.frame
-                feat_dic['attributes'] = feat_obj.attributes.items()
-                feat_dic['extra'] = feat_obj.extra
-                if feat_dic['featuretype'] not in ["region"]:
-                    nt_seqs = feat_obj.sequence(fasta_file)
-                    feat_dic['nt_seq'] = nt_seqs
-                    if feat_dic['featuretype'] in ["CDS"]:
-                        feat_dic['aa_seqs'] = translate(nt_seqs, "CDS")
-                feat_json = simplejson.dumps(feat_dic)
-                simplejson.dump(feat_dic, json_file)
+    def output(self):
+        """Expected amino acid output."""
+        aa_file = os.path.join(self.workdir, "processes", "databases",
+                               "aas.faa")
+        return luigi.LocalTarget(aa_file)
 
 
+@requires(GetAAs)
+class RunEmapper(luigi.ExternalTask):
+    """ Run emapper.
 
-def gff2json(gff_file, fasta_file, out_json, translate=None):
-    """A function that converts a gff file to JSON file."""
+        Get KEGG# and other"""
+    query_coverage = luigi.FloatParameter()
+    subject_coverage = luigi.FloatParameter()
 
-    # read in the gff file to a database
-    db = gffutils.create_db(gff_file, dbfn="piret.db", force=True,
-                            keep_order=True, merge_strategy="create_unique")
+    def run_emapper(self):
+        """Using the amino acid fasta file, run emapper."""
 
-    feat_dic = {}  # an empty dictionary to append features
-    with open(out_json, "w") as json_file:
-        for feat_obj in db.all_features():
-            feat_dic['seqid'] = feat_obj.seqid
-            feat_dic['id'] = feat_obj.id
-            feat_dic['source'] = feat_obj.source
-            feat_type = feat_obj.featuretype
-            feat_dic['featuretype'] = feat_type
-            feat_dic['start'] = feat_obj.start
-            feat_dic['end'] = feat_obj.end
-            feat_dic['strand'] = feat_obj.strand
-            feat_dic['frame'] = feat_obj.frame
-            feat_dic['attributes'] = feat_obj.attributes.items()
-            feat_dic['extra'] = feat_obj.extra
-            if feat_dic['featuretype'] not in ["region"]:
-                nt_seqs = feat_obj.sequence(fasta_file)
-                feat_dic['nt_seq'] = nt_seqs
-                if feat_dic['featuretype'] in ["CDS"]:
-                    feat_dic['aa_seqs'] = translate(nt_seqs, "CDS")
-            feat_json = simplejson.dumps(feat_dic)
-            simplejson.dump(feat_dic, json_file)
+        aa_file = os.path.join(self.workdir, "processes", "databases",
+                               "aas.faa")
+        egg_dir = os.path.join(self.workdir, "processes", "emapper", "emapper")
+        if os.path.exists(egg_dir) is False:
+            os.makedirs(egg_dir)
 
+        emap = ["thirdparty/eggnog-mapper/emapper.py", "-i",
+                aa_file, "-o", egg_dir, "--data_dir", "../eggnog-mapper/data/",
+                "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
+                "--query-cover", self.query_coverage,
+                "--subject-cover", self.subject_coverage,
+                "--temp_dir", egg_dir]
+        time[emap]()
 
-# gff2faa("tests/data/GCF_000009065.1_ASM906v1_genomic.gff",
-# "tests/data/GCF_000009065.1_ASM906v1_genomic.fna")
-# gff2json("tests/data/GCF_000009065.1_ASM906v1_genomic.gff",
-# "tests/data/GCF_000009065.1_ASM906v1_genomic.fna",
-# "test.json", translate=translate)
+    def translate(self, nucleotide, type):
+        """Takes in a string of nucleotides and translate to AA."""
+        if type == "CDS":
+            aa = Bio.Seq.translate(nucleotide, cds=False)
+        elif type == "exon":
+            aa = Bio.Seq.translate(nucleotide, cds=False)
+        else:
+            aa = "not translated"
+        return aa
 
-# def count2json(jf, ):
-#     """Reads in a JSON file and append new information like FPKMS, reads,
-#     etc."""
+    def run(self):
+        """ Create fasta file."""
+        self.run_emapper()
 
-#     with open(jf) as json_file:
-#         data = json.load(json_file)
-#         for p in data['people']:
-
+    def output(self):
+        """Expected output JSON."""
+        jfile = os.path.join(self.workdir, "processes", "emapper",
+                             "emapper.emapper.annotations")
+        return luigi.LocalTarget(jfile)

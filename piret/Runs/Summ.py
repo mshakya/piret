@@ -40,31 +40,18 @@ class FeatureCounts(luigi.Task):
 
     def output(self):
         """Expected output of featureCounts."""
-        counts_dir = os.path.join(self.workdir, "featureCounts",
+        counts_dir = os.path.join(self.workdir, "processes", "featureCounts",
                                   self.kingdom)
-        if ',' in self.gff_file:
-            gff_list = self.gff_file.split(",")
-            gff_full_path = [os.path.abspath(gff) for gff in gff_list]
-            all_target = []
-            for gffs in gff_full_path:
-                feature = list(set(pd.read_csv(gffs, sep="\t", header=None,
-                                               comment='#')[2].tolist()))
-                loc_target = [LocalTarget(counts_dir + feat +
-                                          "_count.tsv") for feat in feature]
-                all_target = loc_target + all_target
-                return all_target
-        else:
-            gff_fp = os.path.abspath(self.gff_file)
-            features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
-                                            comment='#')[2].tolist()))
-            features = [feat for feat in features if feat in ['CDS', 'rRNA',
-                                                              'tRNA', 'exon',
-                                                              'gene',
-                                                              'transcript']]
-            loc_target = LocalTarget(counts_dir + "/" +
-                                     features[-1] +
-                                     "_count.tsv")
-            return loc_target
+        gff_fp = os.path.abspath(self.gff_file)
+        features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
+                                        comment='#')[2].tolist()))
+        features = [feat for feat in features if feat in ['CDS', 'rRNA',
+                                                          'tRNA', 'exon',
+                                                          'gene',
+                                                          'transcript']]
+        loc_target = LocalTarget(os.path.join(counts_dir, features[-1] +
+                                 "_count.tsv"))
+        return loc_target
 
     def run(self):
         """Running featureCounts on all."""
@@ -85,7 +72,7 @@ class FeatureCounts(luigi.Task):
                                                comment='#')[2].tolist()))
                 for feat in feature:
                     if feat in ['CDS', 'rRNA', 'tRNA', 'exon',
-                                'novel_region', 'transcript', 'mRNA']:
+                                'NovelRegion', 'transcript', 'mRNA']:
                         fcount_cmd_opt = ["-a", self.gff_file,
                                           "-s", self.stranded,
                                           "-B",
@@ -112,7 +99,7 @@ class FeatureCounts(luigi.Task):
                                            comment='#')[2].tolist()))
         for feat in feature:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
-                        'novel_region']:
+                        'NovelRegion']:
                 fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",
@@ -174,7 +161,7 @@ class FeatureCountsII(luigi.Task):
                                        comment='#')[2].tolist()))
         for feat in feature:
             if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
-                        'novel_region']:
+                        'NovelRegion']:
                 fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",

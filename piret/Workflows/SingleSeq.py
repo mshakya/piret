@@ -11,7 +11,8 @@ os.environ["PATH"] += os.pathsep + bin_path
 from piret.Checks.Design import CheckDesign
 from piret.Runs.conversions import conversions, conver2json
 from piret.Runs import FaQC, Map, Summ, DGE, srna
-from piret.Runs.function import RunEmapper
+from piret.Runs.function import RunEmapper, GetAAs
+from piret.Runs.opaver import RunOpaver
 from luigi.interface import build
 
 
@@ -52,7 +53,6 @@ class SingleSeq:
             qc_dic = {}
             for samp, path in self.fastq_dic.items():
                 trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
-                print(trim_dir)
                 qc_dic[samp] = trim_dir + "/" + samp + ".1.trimmed.fastq" + ":" + \
                                trim_dir + "/" + samp + ".2.trimmed.fastq"          
             return qc_dic
@@ -108,7 +108,7 @@ class SingleSeq:
                                  kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
 
-    def novel_regions(self):
+    def NovelRegions(self):
         """Find novel regions."""
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                   workdir=self.workdir,
@@ -134,7 +134,7 @@ class SingleSeq:
                                   kingdom=self.kingdom)],
          local_scheduler=self.local_scheduler, workers=no_of_jobs)
 
-    def find_novel_regions(self):
+    def find_NovelRegions(self):
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                       num_cpus=self.num_cpus,
                                       indexfile=self.hisat_index,
@@ -145,21 +145,20 @@ class SingleSeq:
         local_scheduler = self.local_scheduler,
         workers=1)
 
-    def feature_count(self):
+    def feature_count(self, new_gff):
         build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
-                                  gff_file=self.gff_file,
+                                  gff_file=new_gff,
                                   indexfile=self.hisat_index,
                                   kingdom=self.kingdom,
                                   workdir=self.workdir,
                                   ref_file=self.ref_fasta)],
         local_scheduler=self.local_scheduler, workers=1)
 
-
-    def feature_count_updated(self):
+    def feature_count_updated(self, new_gff):
         build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
-                                  gff_file=os.path.join(self.workdir, "updated.gff"),
+                                  gff_file=new_gff,
                                   indexfile=self.hisat_index,
                                   kingdom=self.kingdom,
                                   workdir=self.workdir,
@@ -216,25 +215,30 @@ class SingleSeq:
 
     def run_ballgown(self, gff):
         build([DGE.ballgown(fastq_dic=self.fastq_dic,
-                          num_cpus=self.num_cpus,
-                          workdir=self.workdir,
-                          kingdom=self.kingdom,
-                          exp_design=self.exp_desn_file,
-                          p_value=self.p_value)],
-        local_scheduler=self.local_scheduler, workers=1)
+                            num_cpus=self.num_cpus,
+                            workdir=self.workdir,
+                            kingdom=self.kingdom,
+                            exp_design=self.exp_desn_file,
+                            p_value=self.p_value)],
+              local_scheduler=self.local_scheduler, workers=1)
 
-    def run_emapper(self):
+    def run_emapper(self, new_gff):
         build([RunEmapper(workdir=self.workdir,
-                   gff_file=self.gff_file,
-                   fasta_file=self.ref_fasta,
-                   kingdom=self.kingdom)],
-                   local_scheduler=self.local_scheduler,
-                   workers=1)
+                          gff_file=new_gff,
+                          fasta_file=self.ref_fasta,
+                          kingdom=self.kingdom)],
+              local_scheduler=self.local_scheduler, workers=1)
 
-    def summ_json(self):
-        build([conver2json(gff_file=self.gff_file,
-                                     fasta_file=self.ref_fasta,
-                                     pathway=self.pathway,
-                                     workdir=self.workdir,
-                                     kingdom=self.kingdom )],
-        local_scheduler=self.local_scheduler, workers=1)
+    def run_opaver(self, method):
+        build([RunOpaver(workdir=self.workdir,
+                         kingdom=self.kingdom,
+                         method=method)],
+              local_scheduler=self.local_scheduler, workers=1)
+
+    def summ_json(self, new_gff):
+        build([conver2json(gff_file=new_gff,
+                           fasta_file=self.ref_fasta,
+                           pathway=self.pathway,
+                           workdir=self.workdir,
+                           kingdom=self.kingdom)],
+              local_scheduler=self.local_scheduler, workers=1)

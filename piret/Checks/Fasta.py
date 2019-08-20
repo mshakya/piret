@@ -92,5 +92,4 @@ def check_quotations(gff_file):
         content = g.readlines()
         for l in content:
             if '"' in l:
-                print(l)
                 raise TypeError("There is a quotation in above line, remove them first")

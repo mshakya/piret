@@ -182,8 +182,8 @@ class FindNovelRegions(luigi.Task):
             self.remove_region(self.gff_file, out_gff)
             self.genome_coverage(fw_srt_bam_file, fw_gcov)
             self.genome_coverage(bw_srt_bam_file, bw_gcov)
-            self.novel_regions(out_gff, fw_gcov, fw_novels)
-            self.novel_regions(out_gff, bw_gcov, bw_novels)
+            self.NovelRegions(out_gff, fw_gcov, fw_novels)
+            self.NovelRegions(out_gff, bw_gcov, bw_novels)
         elif self.kingdom == "both":
             prok_gff = self.gff_file.split(",")[0]
             euk_gff = self.gff_file.split(",")[1]
@@ -213,10 +213,10 @@ class FindNovelRegions(luigi.Task):
             self.genome_coverage(prok_fw_srt_bam_file, prok_fw_gcov)
             self.genome_coverage(euk_bw_srt_bam_file, euk_bw_gcov)
             self.genome_coverage(prok_bw_srt_bam_file, prok_bw_gcov)
-            self.novel_regions(gff=euk_out_gff, gcov=euk_fw_gcov, novels=euk_fw_novels)
-            self.novel_regions(gff=prok_out_gff, gcov=prok_fw_gcov, novels=prok_fw_novels)
-            self.novel_regions(gff=euk_out_gff, gcov=euk_bw_gcov, novels=euk_bw_novels)
-            self.novel_regions(gff=prok_out_gff, gcov=prok_bw_gcov, novels=prok_bw_novels)
+            self.NovelRegions(gff=euk_out_gff, gcov=euk_fw_gcov, novels=euk_fw_novels)
+            self.NovelRegions(gff=prok_out_gff, gcov=prok_fw_gcov, novels=prok_fw_novels)
+            self.NovelRegions(gff=euk_out_gff, gcov=euk_bw_gcov, novels=euk_bw_novels)
+            self.NovelRegions(gff=prok_out_gff, gcov=prok_bw_gcov, novels=prok_bw_novels)
 
     def get_genome_ref(self, sorted_bam_file, chrom_sizes):
         """Calculate the size of each chromosome/contig."""
@@ -236,7 +236,7 @@ class FindNovelRegions(luigi.Task):
                         if line.split("\t")[2] != "region":
                             o.write(line)
 
-    def novel_regions(self, gff, gcov, novels):
+    def NovelRegions(self, gff, gcov, novels):
         """Get regions that are novel, not found in gff"""
         (bedtools["subtract", "-A", "-a", gcov, "-b", gff] | bedtools["merge"] >
          novels)()
@@ -296,8 +296,8 @@ class CompileGFF(luigi.Task):
             bw_gff = os.path.join(self.workdir, "processes", "novel", "bw_all_novel.gff")
             final_gff = os.path.join(self.workdir, "processes", "novel", "updated.gff")
 
-            self.compile_novel_regions(fw_beds, fw_novel)
-            self.compile_novel_regions(bw_beds, bw_novel)
+            self.compile_NovelRegions(fw_beds, fw_novel)
+            self.compile_NovelRegions(bw_beds, bw_novel)
             self.make_gff(fw_novel, "+", fw_gff)
             self.make_gff(bw_novel, "-", bw_gff)
             self.concat_gff(self.gff_file, fw_gff, bw_gff, final_gff)
@@ -321,10 +321,10 @@ class CompileGFF(luigi.Task):
             euk_final_gff = os.path.join(self.workdir, "euk_updated.gff")
             prok_final_gff = os.path.join(self.workdir, "prok_updated.gff")
 
-            self.compile_novel_regions(euk_fw_beds, euk_fw_novel)
-            self.compile_novel_regions(prok_fw_beds, prok_fw_novel)
-            self.compile_novel_regions(euk_bw_beds, euk_bw_novel)
-            self.compile_novel_regions(prok_bw_beds, prok_bw_novel)
+            self.compile_NovelRegions(euk_fw_beds, euk_fw_novel)
+            self.compile_NovelRegions(prok_fw_beds, prok_fw_novel)
+            self.compile_NovelRegions(euk_bw_beds, euk_bw_novel)
+            self.compile_NovelRegions(prok_bw_beds, prok_bw_novel)
             self.make_gff(euk_fw_novel, "+", euk_fw_gff)
             self.make_gff(prok_fw_novel, "+", prok_fw_gff)
             self.make_gff(euk_bw_novel, "-", euk_bw_gff)
@@ -335,7 +335,7 @@ class CompileGFF(luigi.Task):
 
 
 
-    def compile_novel_regions(self, bedfiles, all_novel):
+    def compile_NovelRegions(self, bedfiles, all_novel):
         """get the novel regions that has at least 1 coverage and compile as 1"""
         (cat[bedfiles] | bedtools["sort"] |bedtools["merge"] > all_novel)()
 
@@ -352,12 +352,12 @@ class CompileGFF(luigi.Task):
                 elems = line.split('\t')
                 start = int(elems[1]) + 1
                 end = int(elems[2])
-                feature = "novel_region"
+                feature = "NovelRegion"
                 score = "."
                 if strand == "+":
-                    group = 'ID=%s;Name=%s' % ("novel_regions_plus_" + str(i), "novel_regions_" + str(i))
+                    group = 'ID=%s;Name=%s' % ("NovelRegions_plus_" + str(i), "NovelRegions_" + str(i))
                 elif strand == "-":
-                    group = 'ID=%s;Name=%s' % ("novel_regions_nega_" + str(i), "novel_regions_" + str(i))
+                    group = 'ID=%s;Name=%s' % ("NovelRegions_nega_" + str(i), "NovelRegions_" + str(i))
                 out.write('%s\tbed2gff\t%s\t%d\t%d\t%s\t%s\t.\t%s;\n'
                     % (elems[0], feature, start, end, score, strand, group))
         out.close()

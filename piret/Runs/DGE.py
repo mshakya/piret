@@ -43,7 +43,6 @@ class edgeR(luigi.Task):
             os.makedirs(edger_dir)
         for file in os.listdir(fcount_dir):
             if file.endswith("tsv"):
-                print(file)
                 name  = file.split("_")[-2]
                 edger_list = [os.path.join(script_dir, "EdgeR"), "-r",
                               os.path.join(fcount_dir, file),

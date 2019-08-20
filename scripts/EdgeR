@@ -192,7 +192,7 @@ if(nrow(read_counts.non0) < 2 ){
         ggsave(out_rpkm_violin_pdf, rpkm_violin, device = "pdf")
         ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
 
-        if (feature_name %in% c("CDS", "gene", "transcript", "novel_region")){
+        if (feature_name %in% c("CDS", "gene", "transcript", "NovelRegion")){
                 keep <- rowSums(edgeR::cpm(edger_dge)) >= nrow(group_table)
                 edger_dge <- edger_dge[keep, ]
                 if (nrow(edger_dge$counts) < 10 ) {

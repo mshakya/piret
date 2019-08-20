@@ -102,7 +102,7 @@ class conver2json(luigi.Task):
                               "piret.db")
         if os.path.exists(db_out) is False:
             # create db if not already present
-            db = gffutils.create_db(gff_file, dbfn=db_out, force=True,
+            db = gffutils.create_db(self.gff_file, dbfn=db_out, force=True,
                                     keep_order=True,
                                     merge_strategy="create_unique")
         else:
@@ -117,6 +117,7 @@ class conver2json(luigi.Task):
         read_summ_gene = self.read_summary("gene")
         read_summ_rRNA = self.read_summary("rRNA")
         read_summ_tRNA = self.read_summary("tRNA")
+        read_summ_NovelRegion = self.read_summary("NovelRegion")
         dge_edger_cds = self.dge_summary("CDS", "edgeR")
         dge_edger_gene = self.dge_summary("gene", "edgeR")
         dge_deseq_cds = self.dge_summary("CDS", "DESeq2")
@@ -175,9 +176,12 @@ class conver2json(luigi.Task):
                         feat_dic["emapper"] = emaps[feat_obj.id]
                     except KeyError:
                         feat_dic["emapper"] = None
-
-
-                    
+# ============================================================================#
+                elif feat_type == "NovelRegion":
+                    try:
+                        feat_dic["read_count"] = read_summ_NovelRegion[feat_obj.id]
+                    except KeyError:
+                        feat_dic["read_count"] = None
 # ============================================================================#
                 elif feat_type == 'rRNA':
                     try:
@@ -216,6 +220,7 @@ class conver2json(luigi.Task):
                                      feat_id=feat_obj.id,
                                      method="DESeq2", dge_dict=dge_deseq_gene)
                 else:
+                    # print(feat_type)
                     pass
                 json.dump(feat_dic, json_file, indent=4)
 
@@ -256,6 +261,7 @@ class conver2json(luigi.Task):
         """Get read values as a dictionary."""
         read_file = os.path.join(self.workdir, "processes", "featureCounts",
                                  self.kingdom, feat_type + "_count_sorted.csv")
+
         if os.path.exists(read_file) is True:
             read_data = pd.read_csv(read_file, sep=",",
                                     index_col="Geneid")

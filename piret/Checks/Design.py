@@ -95,7 +95,6 @@ class CheckDesign():
                         err_message = "%s does not exist"
                         sys.exit(err_message % f)
             elif isinstance(fastqs, list):
-                print(fastqs)
                 for pairs in fastqs:
                     files = pairs.split(":")
                     for f in files:
