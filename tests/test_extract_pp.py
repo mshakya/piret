@@ -71,7 +71,7 @@ class TestCov(unittest.TestCase):
         assert os.path.exists("samp5.fw_srt.bam.genome_size")
 
     # def test_novel(self):
-    #     FindNovelRegions.novel_regions(self, "tests/data/test_prok.gff",
+    #     FindNovelRegions.NovelRegions(self, "tests/data/test_prok.gff",
     #                                    "samp5_fw_novel.bedfile",
     #                                    "test.txt.novel")
     #     assert os.path.exists("test.txt.novel") == 1
@@ -84,7 +84,7 @@ class TestNovelGFF(unittest.TestCase):
                     fastq_dic={})
 
     def test_compile_bed(self):
-        self.cg.compile_novel_regions(["tests/data/bedfile1.txt",
+        self.cg.compile_NovelRegions(["tests/data/bedfile1.txt",
                                        "tests/data/bedfile2.txt"],
                                        "all_novel.txt")
         assert os.path.exists("all_novel.txt") == 1
