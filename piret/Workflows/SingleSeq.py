@@ -8,9 +8,17 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from piret.Checks.Design import CheckDesign
+from piret.checks.Design import CheckDesign
 from piret.Runs.conversions import conversions, conver2json
-from piret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.Runs import Map, srna
+from piret.qc import FaQC
+from piret.maps import hisat2
+from piret.maps import star
+from piret.dge import edgeR
+from piret.dge import DESeq2
+from piret.dge import ballgown
+from piret.counts import stringtie
+from piret.counts import featurecounts
 from piret.Runs.function import RunEmapper, GetAAs
 from piret.Runs.opaver import RunOpaver
 from luigi.interface import build
@@ -63,12 +71,12 @@ class SingleSeq:
     def create_db(self):
         """Function to create hisat or STAR index."""
         if self.aligner in ["hisat2", "hisat"]:
-            build([Map.HisatIndex(fasta=self.ref_fasta,
+            build([hisat2.HisatIndex(fasta=self.ref_fasta,
                                   hi_index=self.hisat_index,
                                   num_cpus=self.num_cpus)],
                   local_scheduler=self.local_scheduler)
         elif self.aligner in ["star", "STAR"]:
-            build([Map.STARindex(fasta=self.ref_fasta,
+            build([star.STARindex(fasta=self.ref_fasta,
                                  num_cpus=self.num_cpus,
                                  gff_file=self.gff_file,
                                  stardb_dir=self.stardb_dir,
@@ -78,24 +86,24 @@ class SingleSeq:
     def map_reads(self, qc_dic):
         """Function to map reads."""
         if self.aligner == "hisat2":
-            build([Map.HisatMapW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
+            build([hisat2.HisatMapW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
                                  indexfile=self.hisat_index, workdir=self.workdir)],
               local_scheduler=self.local_scheduler)
         elif self.aligner in ["STAR", "star"]:
-            build([Map.map_starW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
+            build([star.map_starW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
                                  stardb_dir=self.stardb_dir, workdir=self.workdir)],
               local_scheduler=self.local_scheduler)
 
     def map_summarize(self):
         """Summarize mapped reads into a table."""
         if self.aligner == "hisat2":
-            build([Map.SummarizeHisatMap(fastq_dic=self.fastq_dic,
+            build([hisat2.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,
                                     num_cpus=self.num_cpus)],
             local_scheduler=self.local_scheduler, workers=1)
         elif self.aligner in ["STAR", "star"]:
-            build([Map.SummarizeStarMap(fastq_dic=self.fastq_dic,
+            build([star.SummarizeStarMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     stardb_dir=self.stardb_dir,
                                     num_cpus=self.num_cpus)],
@@ -146,7 +154,7 @@ class SingleSeq:
         workers=1)
 
     def feature_count(self, new_gff):
-        build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
+        build([featurecounts.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
                                   gff_file=new_gff,
                                   indexfile=self.hisat_index,
@@ -156,7 +164,7 @@ class SingleSeq:
         local_scheduler=self.local_scheduler, workers=1)
 
     def feature_count_updated(self, new_gff):
-        build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
+        build([featurecounts.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
                                   gff_file=new_gff,
                                   indexfile=self.hisat_index,
@@ -177,7 +185,7 @@ class SingleSeq:
                           workers=1)
 
     def run_edger(self):
-        build([DGE.edgeR(kingdom=self.kingdom,
+        build([edgeR.edgeR(kingdom=self.kingdom,
                          workdir=self.workdir,
                          gff_file=self.gff_file,
                         #  pathway=pathway,
@@ -187,7 +195,7 @@ class SingleSeq:
         local_scheduler=self.local_scheduler, workers=1)
 
     def run_deseq2(self):
-        build([DGE.DESeq2(workdir=self.workdir,
+        build([DESeq2.DESeq2(workdir=self.workdir,
                           kingdom=self.kingdom,
                           gff_file=self.gff_file,
                         #   pathway=pathway,
@@ -196,26 +204,24 @@ class SingleSeq:
                           p_value=self.p_value)],
         local_scheduler=self.local_scheduler, workers=1)
 
-    def merge_stringtie(self):
-        build([Summ.MergeStringTies(fastq_dic=self.fastq_dic,
+    def merge_stringtie(self, new_gff):
+        build([stringtie.MergeStringTies(fastq_dic=self.fastq_dic,
                                     num_cpus=self.num_cpus,
-                                    indexfile=self.hisat_index,
                                     workdir=self.workdir,
-                                    gff_file=self.gff_file,
+                                    gff_file=new_gff,
                                     kingdom=self.kingdom)],
                 local_scheduler=self.local_scheduler, workers=1)
 
-    def restringtie(self, gff):
-        build([Summ.ReStringTieScoresW(fastq_dic=self.fastq_dic,
+    def restringtie(self):
+        build([stringtie.ReStringTieScoresW(fastq_dic=self.fastq_dic,
                                        num_cpus=self.num_cpus,
                                        workdir=self.workdir,
                                        kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler,
               workers=1)
 
-    def run_ballgown(self, gff):
-        build([DGE.ballgown(fastq_dic=self.fastq_dic,
-                            num_cpus=self.num_cpus,
+    def run_ballgown(self):
+        build([ballgown.ballgown(
                             workdir=self.workdir,
                             kingdom=self.kingdom,
                             exp_design=self.exp_desn_file,

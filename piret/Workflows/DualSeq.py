@@ -8,8 +8,8 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from piret.Checks.Design import CheckDesign
-from piret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.checks.Design import CheckDesign
+from piret.Runs import Map, srna
 from luigi.interface import build
 
 
@@ -137,14 +137,14 @@ class DualSeq:
           local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
 
     def merge_stringties(self):
-        build([Summ.MergeStringTies(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+        build([stringtie.MergeStringTies(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                                 indexfile=self.hisat_index, workdir=self.workdir,
                                 gff_file=self.ref_gffs,
                                 kingdom="both")],
            local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
     
     def restringtie(self):
-        build([Summ.ReStringTieScoresW(fastq_dic=self.fastq_dic,
+        build([stringtie.ReStringTieScoresW(fastq_dic=self.fastq_dic,
                                        num_cpus=self.num_cpus,
                                        workdir=self.workdir,
                                        kingdom=self.kingdom)],
@@ -152,7 +152,7 @@ class DualSeq:
            )
 
     def run_ballgown(self):
-        build([DGE.ballgown(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+        build([ballgown.ballgown(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                             workdir=self.workdir,
                             kingdom="eukarya",
                             exp_design=self.exp_desn_file,
@@ -160,14 +160,14 @@ class DualSeq:
                local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
 
     def feature_counts(self):
-        build([Summ.FeatureCounts(fastq_dic=self.fastq_dic,
+        build([featurecount.FeatureCounts(fastq_dic=self.fastq_dic,
                                   num_cpus=self.num_cpus,
                                   gff_file=os.path.join(self.workdir, "prok_updated.gff"),
                                   indexfile=self.hisat_index,
                                   kingdom='prokarya',
                                   workdir=self.workdir,
                                   ref_file=self.ref_fastas.split(",")[0]),
-          Summ.FeatureCounts(fastq_dic=self.fastq_dic,
+          featurecounts.FeatureCounts(fastq_dic=self.fastq_dic,
                              num_cpus=self.num_cpus,
                              gff_file=os.path.join(self.workdir, "euk_updated.gff"),
                              indexfile=self.hisat_index,
@@ -178,7 +178,7 @@ class DualSeq:
 
 
     def run_edger(self):
-        build([DGE.edgeR(fastq_dic=self.fastq_dic,
+        build([edgeR.edgeR(fastq_dic=self.fastq_dic,
                    num_cpus=self.num_cpus,
                    indexfile=self.hisat_index,
                    workdir=self.workdir,
@@ -202,7 +202,7 @@ class DualSeq:
                           workers=self.no_of_jobs)
 
     def run_deseq2(self):
-        build([DGE.DESeq2(fastq_dic=self.fastq_dic,
+        build([DESeq2.DESeq2(fastq_dic=self.fastq_dic,
                           num_cpus=self.num_cpus,
                           indexfile=self.hisat_index,
                           workdir=self.workdir,
@@ -213,7 +213,7 @@ class DualSeq:
                           p_value=self.p_value,
                           prok_org_code=self.prok_org_code,
                           euk_org_code=None),
-                DGE.DESeq2(fastq_dic=self.fastq_dic,
+                DESeq2.DESeq2(fastq_dic=self.fastq_dic,
                             num_cpus=self.num_cpus,
                             indexfile=self.hisat_index,
                             workdir=self.workdir,

@@ -6,7 +6,6 @@ import sys
 import luigi
 import shutil
 from luigi import LocalTarget
-from piret.Runs import Summ
 from luigi.util import inherits, requires
 import pandas as pd
 DIR = os.path.dirname(os.path.realpath(__file__))
