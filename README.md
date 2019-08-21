@@ -15,13 +15,14 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-using conda
+to install most of the dependencies using conda
 ```
 conda install piret
 ```
 
 PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log`
 
+In addition to dependencies, additional tools such as emapper should be installed manually in thirdparty folder.
 ### 0.1 Dependencies
 PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
 
@@ -29,6 +30,7 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [Python >=v3.6.3](https://www.python.org/downloads/release/python-2712/)
     - The pipeline is not compatible with Python v3.0 or higher.
 - [R >=v3.3.1](https://www.r-project.org)
+- [Perl >=v5.26.2](https://www.perl.org/)
 
 #### 0.1.1 Installing dependencies
 - [conda v4.2.13](http://conda.pydata.org/docs/index.html)
@@ -37,12 +39,11 @@ PiReT requires following dependencies, all of which should be installed and in t
 
 
 #### 0.1.2 Third party softwares/packages
-- [jellyfish (v2.2.6)](http://www.genome.umd.edu/jellyfish.html)
-- [samtools (v1.3.1)](http://www.htslib.org)
-- [HiSat2 (v2.0.5)](https://ccb.jhu.edu/software/hisat/index.shtml)
-- [gffread (v0.9.6)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
-- [featurecount (v1.5.2)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
-- [stringTie (v1.3.3b)](https://ccb.jhu.edu/software/stringtie/)
+- [samtools (v1.6)](http://www.htslib.org)
+- [HiSat2 (v2.1.0)](https://ccb.jhu.edu/software/hisat/index.shtml)
+- [gffread (v0.9.12)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
+- [featurecount (v1.6.3)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
+- [stringTie (v1.3.4d)](https://ccb.jhu.edu/software/stringtie/)
 
 #### 0.1.3 R packages
 - [edgeR (v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
@@ -54,6 +55,7 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [pandas (v0.19.2)](http://pandas.pydata.org/)
 - [plumbum (v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
 - [Biopython (v1.68)](https://github.com/biopython/biopython.github.io/)
+- [gffread (v0.8.4rc1)](https://pythonhosted.org/gffutils/)
 
 
 ## 1.0 Test
@@ -69,73 +71,26 @@ These shell script automatically creates `test_experimental_design.txt` and runs
 
 ## 2.0 Running PiReT
 ```
-usage: runPiReT [-h] [-c CPU] -d WORKDIR -e EXPDSN [-fp FASTA_PROK]
-                [-gp GFF_PROK] [-fe FASTA_EUK] [-ge GFF_EUK] [-i INDEX_HISAT]
-                [-k {prokarya,eukarya,both}]
-                [-m {edgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}]
-                [-p P_VALUE] [--scheduler] [--qsub]
+usage: piret [-h] -d WORKDIR -e EXPDSN -c CONFIG [-v]
 
-Luigi based workflow for running
-                                     RNASeq pipeline
+piret
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c CPU                number of CPUs/threads to run per task. Here, task
-                        refers to a processing step. For example, number of
-                        CPUs specified here will be used for QC, HISAT index
-                        and mapping steps. Since QC and mapping steps are run
-                        for every sample, be aware that the total number of
-                        CPUs needed are your number of samples times CPU
-                        specified here. (default: 1)
-  -i INDEX_HISAT        hisat2 index file, it only creates index if it does
-                        not exist (default: None)
-  -k {prokarya,eukarya,both}
-                        which kingdom to test, when eukarya or both is chosen,
-                        it expects alternative splicing (default: prokarya)
-  -m {edgeR,Deseq2,ballgown,DeEdge,Degown,ballEdge,all}
-                        Method to use for detecting differentially expressed
-                        genes, Deseq2 requires 3 biological replicates and
-                        ballgown only processes eukaryotes (default: ballEdge)
-  -p P_VALUE            P-Value to consider if genes are significantly
-                        different, default is 0.001 (default: 0.001)
-  --scheduler           when specified, will use luigi scheduler which allows
-                        you to keep track of task using an url specified
-                        through luigid (default: True)
-  --qsub                run the SGE version of the code, it currently is set
-                        to SGE with smp (default: False)
+  -v, --version         show program's version number and exit
 
 required arguments:
   -d WORKDIR            working directory where all output files will be
                         processed and written (default: None)
   -e EXPDSN             tab delimited experimental design file
+  -c CONFIG, --config CONFIG
+                        luigi config file for setting parameters that control
+                        each step, see github repo for an example (default:
+                        None)
 
-required arguments (for prokaryotes):
-  -fp FASTA_PROK        fasta for Prokaryotic Ref erence (default: None)
-  -gp GFF_PROK          path to gff files for prokar yotic organism, must be a
-                        .gff file (default: )
+Example runs:
 
-required arguments (for eukaryotes):
-  -fe FASTA_EUK         fasta for Eukaryotic Refe rence (default: None)
-  -ge GFF_EUK           path to gff files for eukar yotic organism, must be a
-                        .gff file (default: )
-
-when selecting both kingodm runs, options that are required for both eukaryotes
-and prokaryotes run are required.
-
-Example run for Prokaryotes RNA seq:
-
-        runPiReT -d <workdir> -e <design file>  -gp <gff> -i <hisat2 index>
-        -k prokarya -m <edgeR/Deseq2> -fp <FASTA>
-
-Example run for Eukaryotes RNA seq:
-
-        runPiReT -d <workdir> -e <design file>  -ge <gff> -i <hisat2 index>
-        -k eukarya -m <edgeR/Deseq2> -fe <FASTA>
-
-Example run for Both (Eukaryotes and Prokaryotes) RNA seq:
-
-        runPiReT -d <workdir> -e <design file>  -gp <gff> -ge <gff> -i <hisat2 index>
-        -k both -m <edgeR/Deseq2> -fe <FASTA> -fp <FASTA>
+        piret -d <workdir> -e <design file>  -c <config file>
 ```
 
 ### 2.1 Experimental design file
@@ -149,20 +104,15 @@ An experimental design file consist of sample name (SampleID), full path to fast
   ```
   A sample of experimental design file can be found [here](https://raw.githubusercontent.com/mshakya/PyPiReT/master/examples/experimental_design.txt). 
 
-### 2.2 Option details
-`-m` Method to use for detecting differentially expressed genes, all of which are R packages. This option provides users with multiple tools to use which can be spcified using following keywords:
-  - `edgeR`: Uses edgeR.
-  - `Deseq2`: Uses Deseq2
-  - `ballgown`: Uses ballgown. Appropriate for eukaryotes.
-  - `DeEdge`: Uses both edgeR and Deseq2. 
-  - `Degown`: Uses Deseq2 and ballgown.
-  - `ballEdge`: Uses ballgown and edgeR.
-  - `all`: Uses all of the above methods.
+### 2.2 Config file
+All options are set in the config file.
 
 
 ## 3.0 OUTPUT
 
-All the outputs will be within the `working directory`.
+All the outputs will be within the `working directory`. The main output file is a concatenated JSON file called `out.json`.
+
+
 
 - `samp2`: The name of this directory corresponds to sample name. Within this folder there are two sub-folders:
 
@@ -209,7 +159,6 @@ For removal, since all dependencies that are not in your system are installed in
 
 ## 5.0 Contributions
 - Migun Shakya
-- Shihai Feng
 
 ## 6.0 Citations:
 If you use PiReT please cite following papers:
