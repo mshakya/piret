@@ -64,6 +64,13 @@ pair.comb <- function(exp_des){
     colnames(group_table) <- c("Files", "Group")
     group_table <- dplyr::select(group_table, Group)
     read_counts <- read_counts[, rownames(group_table)]
+    # count 0s
+    check_zero = apply(read_counts, 1, function(x) sum(x == 0))
+    check = all(lapply(check_zero, function(x) x > 0))
+    if (check[[1]]) {
+        warning("every gene contains at least one zero, cannot compute log geometric means")
+    } else{
+
     deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read_counts,
                                               colData = group_table,
                                               design = ~ Group,
@@ -77,11 +84,11 @@ pair.comb <- function(exp_des){
 #=============================================================================#
 #   fpkm table
     # count the number of 0s
-    check_zero = apply(read_counts, 1, function(x) sum(x == 0))
+    # check_zero = apply(read_counts, 1, function(x) sum(x == 0))
     check = all(lapply(check_zero, function(x) x > 0))
-    if (check[[1]]) {
-        warning("every gene contains at least one zero, cannot compute log geometric means")
-    } else {
+    # if (check[[1]]) {
+        # warning("every gene contains at least one zero, cannot compute log geometric means")
+    # } else {
 #=============================================================================#
         fpkm_results <- DESeq2::fpkm(deseq_ds, robust=TRUE)    
         out_fpkm <- base::file.path(out_dir,
@@ -261,6 +268,6 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
         write.csv(deseq_sig, out_table_sig)
 
     } 
-}
-
+# }
+    }
 #TODO: Need to make sure that all gff lines have IDs
