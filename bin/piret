@@ -23,8 +23,8 @@ os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
 from piret.checks import CheckDesign, CheckDependencies
 from piret.checks.Dependencies import check_depen
-from piret.Runs import Map, srna
-from piret.Workflows import DualSeq, SingleSeq
+from piret.novel import srna
+from piret.workflows import DualSeq, SingleSeq
 from piret.checks.GFF3 import CheckGFF
 from piret.checks.aligner import check_aligner
 from piret.checks.config import parse_config, check_input
@@ -194,7 +194,7 @@ def main():
     #     if check_method(args.METHOD, args.EXPDSN) is True:
     #         run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
     #                  local_scheduler=args.scheduler)
-    #     dual_seq = Workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
+    #     dual_seq = workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
     #                                  aligner=args.ALIGNER,
     #                                  hisat_index=db,
     #                                  workdir=workdir,

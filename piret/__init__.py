@@ -15,5 +15,5 @@ os.environ["PATH"] += ":" + script_dir
 # from Runs import srna
 # from Runs import Map
 # from Runs import Summ
-# from Workflows import SingleSeq
+# from workflows import SingleSeq
 # from initialize import Initialize

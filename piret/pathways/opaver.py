@@ -63,11 +63,12 @@ class RunOpaver(luigi.Task):
             os.makedirs(opaver_outdir)
         dge_dir = os.path.join(self.workdir, "processes", method,
                                self.kingdom, "CDS")
-        dge_files = [f for f in glob.glob(dge_dir + "**/*et.csv", recursive=True)]
+        dge_files = [f for f in glob.glob(dge_dir + "**/*et.csv",
+                     recursive=True)]
         emapper_file = os.path.join(self.workdir, "processes", "emapper",
                                     "emapper.emapper.annotations")
         # read in the emapper file.
-        emap = pd.read_csv(emapper_file, sep='\t', skiprows=[0,1,2],
+        emap = pd.read_csv(emapper_file, sep='\t', skiprows=[0, 1, 2],
                                    skipinitialspace=True, skipfooter=3,
                                    header=None, engine='python')
         emap1 = emap.reset_index()

@@ -17,6 +17,8 @@ sys.path.insert(0, script_dir)
 import logging
 import json
 import Bio
+import re
+from functools import reduce
 
 
 class conversions(luigi.Task):
@@ -69,7 +71,6 @@ class conversions(luigi.Task):
                         logger.info(gage_cmd)
                         gage_cmd()
         self.summ_summ()
-
 
 class conver2json(luigi.Task):
     """ Summarizes and converts all the results to one big JSON file."""
@@ -135,7 +136,7 @@ class conver2json(luigi.Task):
             ballgown_gene_pm = self.pm_summary_ballgown()
         else:
             ballgown_gene_pm = {}
-
+        stringtie_tpms = self.stringtie_tpm()
         read_summ_cds = self.read_summary("CDS")
         read_summ_gene = self.read_summary("gene")
         read_summ_rRNA = self.read_summary("rRNA")
@@ -238,7 +239,12 @@ class conver2json(luigi.Task):
                         feat_dic["ballgown_values"] = ballgown_gene_pm[feat_obj.id]
                     except KeyError:
                         feat_dic["ballgown_values"] = None
-
+                    
+                    # assign stringtie
+                    try:
+                        feat_dic["stringtie_values"] = stringtie_tpms[feat_obj.id]
+                    except KeyError:
+                        feat_dic["stringtie_values"] = None
                     # assign dge information
                     self.assign_dges(feat_type="gene", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
@@ -376,6 +382,27 @@ class conver2json(luigi.Task):
                                                       "gene_id", "gene_name"],
                                                       axis=1).to_dict(orient="index")
         return pm_dict
+
+    def stringtie_tpm(self):
+        """get TPMs from stringtie."""
+        stie_dir = os.path.join(self.workdir, "processes", "stringtie")
+        print(stie_dir)
+        stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab",
+                      recursive=True)]
+        dflist = []
+        for f in stie_files:
+            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Reference", "Strand",
+                                               "Start", "End"], axis=1)
+            
+            samp_name = os.path.basename(f)
+            samp = re.sub("_.*", "", samp_name)
+            df.columns = ["GeneID", samp + "_cov",
+                          samp + "_FPKM", samp + "_TPM"]
+            dflist.append(df)
+            
+        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on='GeneID'), dflist)    
+        finaldic = finaldf.set_index('GeneID').to_dict(orient="index")
+        return finaldic
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""

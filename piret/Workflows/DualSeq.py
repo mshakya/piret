@@ -9,7 +9,7 @@ bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
 from piret.checks.Design import CheckDesign
-from piret.Runs import Map, srna
+from novel import srna
 from luigi.interface import build
 
 

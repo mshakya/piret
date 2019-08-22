@@ -10,7 +10,6 @@ sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
 from piret.checks.Design import CheckDesign
 from piret.summary import summarize
-from piret.Runs import Map, srna
 from piret.qc import FaQC
 from piret.maps import hisat2
 from piret.maps import star
@@ -19,8 +18,9 @@ from piret.dge import DESeq2
 from piret.dge import ballgown
 from piret.counts import stringtie
 from piret.counts import featurecounts
-from piret.Runs.function import RunEmapper, GetAAs
-from piret.Runs.opaver import RunOpaver
+from piret.novel import srna
+from piret.functions.function import RunEmapper, GetAAs
+from piret.pathways.opaver import RunOpaver
 from luigi.interface import build
 
 
