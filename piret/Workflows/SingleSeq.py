@@ -9,7 +9,7 @@ bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
 from piret.checks.Design import CheckDesign
-from piret.Runs.conversions import conversions, conver2json
+from piret.summary import summarize
 from piret.Runs import Map, srna
 from piret.qc import FaQC
 from piret.maps import hisat2
@@ -241,10 +241,12 @@ class SingleSeq:
                          method=method)],
               local_scheduler=self.local_scheduler, workers=1)
 
-    def summ_json(self, new_gff):
-        build([conver2json(gff_file=new_gff,
-                           fasta_file=self.ref_fasta,
-                           pathway=self.pathway,
-                           workdir=self.workdir,
-                           kingdom=self.kingdom)],
+    def summ_json(self, new_gff, method, NovelRegions):
+        build([summarize.conver2json(gff_file=new_gff,
+                                     fasta_file=self.ref_fasta,
+                                     pathway=self.pathway,
+                                     workdir=self.workdir,
+                                     kingdom=self.kingdom,
+                                     method=method,
+                                     NovelRegions=NovelRegions)],
               local_scheduler=self.local_scheduler, workers=1)

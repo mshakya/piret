@@ -87,7 +87,6 @@ if (feature_name %in% c("gene", "CDS", "transcript")){
         filename_sig <- paste(unique(df$group)[1], unique(df$group)[2], feature_name, "sig.csv", sep = "__")
         df$group <- as.factor(df$group)
         bg <- create.bg(bg_folder = bg_folder, exp_df = df)
-        print(bg)
         diff_genes <- stattest(bg, feature = feature_name,
                                 meas = "FPKM", covariate = "group", getFC=TRUE)
         sig_genes <- subset(diff_genes, pval < pcutoff)
@@ -98,6 +97,9 @@ if (feature_name %in% c("gene", "CDS", "transcript")){
         print(out_table)
         write.csv(diff_genes, out_table)
         write.csv(sig_genes, out_table_sig)
+        summ_table <- base::file.path(out_dir, "summpary_PMs.csv")
+        transcript_data_frame = texpr(bg, meas="all")
+        write.csv(transcript_data_frame, summ_table)
     }
     
 }

@@ -21,17 +21,15 @@ sys.path.append(lib_path)
 sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
-from piret.Checks import CheckDesign, CheckDependencies
-from piret.Checks.Dependencies import check_depen
-from piret.Runs import FaQC, Map, Summ, DGE, srna
+from piret.checks import CheckDesign, CheckDependencies
+from piret.checks.Dependencies import check_depen
+from piret.Runs import Map, srna
 from piret.Workflows import DualSeq, SingleSeq
-from piret.Checks.GFF3 import CheckGFF
-from piret.Checks.aligner import check_aligner
-from piret.Checks.config import parse_config, check_input
+from piret.checks.GFF3 import CheckGFF
+from piret.checks.aligner import check_aligner
+from piret.checks.config import parse_config, check_input
 from piret.logger import create_logger
 from luigi.interface import build
-
-
 
 
 def cmdline_parser():
@@ -160,9 +158,9 @@ def main():
             gff = os.path.join(workdir, "processes", "novel", "updated.gff")  # update gff
         # step 6, run read counts
         single_seq.feature_count(new_gff=gff)
+        single_seq.merge_stringtie(new_gff=gff)
 
-        # run emapper
-        single_seq.run_emapper(new_gff=gff)
+
 
         # find diff expressed gene using edgeR
         if "edgeR" in paras["method"]:
@@ -170,20 +168,23 @@ def main():
         # use DESeq2
         if "DESeq2" in paras["method"]:
             single_seq.run_deseq2()
-        elif "ballgown" in paras["method"]:
-            single_seq.merge_stringtie()
-            single_seq.restringtie(gff=gff)
-            single_seq.run_ballgown(gff=gff)
+        if "ballgown" in paras["method"]:
+            print("migungown")
+            single_seq.restringtie()
+            single_seq.run_ballgown()
 
         # run opaver pathway analysis
         if paras["pathway"] is True:
-            if "edgeR" in paras["method"]:
-                single_seq.run_opaver(method="edgeR")
-            if "DESeq2" in paras["method"]:
-                single_seq.run_opaver(method="DESeq2")
+            # run emapper
+            single_seq.run_emapper(new_gff=gff)
+            # if "edgeR" in paras["method"]:
+            #     single_seq.run_opaver(method="edgeR")
+            # if "DESeq2" in paras["method"]:
+            #     single_seq.run_opaver(method="DESeq2")
 
         # summarize all results into one big json file.
-        single_seq.summ_json(new_gff=gff)
+        single_seq.summ_json(new_gff=gff, method=paras["method"],
+                             NovelRegions=paras["novel"])
 
     # if args.TEST_KINGDOM == 'both' and args.qsub is False:
     #     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)

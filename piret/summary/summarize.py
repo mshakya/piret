@@ -6,7 +6,6 @@ import sys
 import luigi
 import shutil
 from luigi import LocalTarget
-from piret.Runs import Summ
 from luigi.util import inherits, requires
 import pandas as pd
 import gffutils
@@ -76,9 +75,11 @@ class conver2json(luigi.Task):
     """ Summarizes and converts all the results to one big JSON file."""
     gff_file = luigi.Parameter()
     fasta_file = luigi.Parameter()
-    pathway = luigi.Parameter()
+    pathway = luigi.BoolParameter()
     kingdom = luigi.Parameter()
     workdir = luigi.Parameter()
+    method = luigi.ListParameter()
+    NovelRegions = luigi.BoolParameter()
 
     def output(self):
         """Expected output JSON."""
@@ -92,7 +93,8 @@ class conver2json(luigi.Task):
 
     def gff2json(self, out_json):
         """A function that converts a gff file to JSON file."""
-
+        print(self.method)
+        print("murhsula")
         # read in the gff file to a database
         if os.path.exists(os.path.join(self.workdir, "processes",
                                        "databases")) is False:
@@ -109,20 +111,39 @@ class conver2json(luigi.Task):
             # read db if its already present
             db = gffutils.FeatureDB(db_out, keep_order=True)
 
-        edger_summ_cds = self.pm_summary("CDS", "edgeR")
-        deseq_summ_cds = self.pm_summary("CDS", "DESeq2")
-        edger_summ_genes = self.pm_summary("gene", "edgeR")
-        deseq_summ_genes = self.pm_summary("gene", "DESeq2")
+        if "edgeR" in self.method:
+            edger_summ_cds = self.pm_summary("CDS", "edgeR")
+            edger_summ_genes = self.pm_summary("gene", "edgeR")
+            dge_edger_cds = self.dge_summary("CDS", "edgeR")
+            dge_edger_gene = self.dge_summary("gene", "edgeR")
+        else:
+            edger_summ_cds = ({}, {})
+            edger_summ_genes = ({}, {})
+            dge_edger_cds = {}
+            dge_edger_gene = {}
+        if "DESeq2" in self.method:
+            deseq_summ_cds = self.pm_summary("CDS", "DESeq2")
+            deseq_summ_genes = self.pm_summary("gene", "DESeq2")
+            dge_deseq_cds = self.dge_summary("CDS", "DESeq2")
+            dge_deseq_gene = self.dge_summary("gene", "DESeq2")
+        else:
+            deseq_summ_cds = ({}, {})
+            deseq_summ_genes = ({}, {})
+            dge_deseq_cds = {}
+            dge_deseq_gene = {}
+        if "ballgown" in self.method:
+            ballgown_gene_pm = self.pm_summary_ballgown()
+        else:
+            ballgown_gene_pm = {}
+
         read_summ_cds = self.read_summary("CDS")
         read_summ_gene = self.read_summary("gene")
         read_summ_rRNA = self.read_summary("rRNA")
         read_summ_tRNA = self.read_summary("tRNA")
-        read_summ_NovelRegion = self.read_summary("NovelRegion")
-        dge_edger_cds = self.dge_summary("CDS", "edgeR")
-        dge_edger_gene = self.dge_summary("gene", "edgeR")
-        dge_deseq_cds = self.dge_summary("CDS", "DESeq2")
-        dge_deseq_gene = self.dge_summary("gene", "DESeq2")
         read_summ_exon = self.read_summary("exon")
+        if self.NovelRegions is True:
+            read_summ_NovelRegion = self.read_summary("NovelRegion")
+
         emaps = self.get_emapper()
         with open(out_json, "w") as json_file:
             for feat_obj in db.all_features():
@@ -212,6 +233,12 @@ class conver2json(luigi.Task):
                         feat_dic["read_count"] = read_summ_gene[feat_obj.id]
                     except KeyError:
                         feat_dic["read_count"] = None
+                    # assign ballgown info
+                    try:
+                        feat_dic["ballgown_values"] = ballgown_gene_pm[feat_obj.id]
+                    except KeyError:
+                        feat_dic["ballgown_values"] = None
+
                     # assign dge information
                     self.assign_dges(feat_type="gene", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
@@ -244,6 +271,7 @@ class conver2json(luigi.Task):
             feat_dic["deseq_fpkm"] = None
 
     def get_emapper(self):
+        """get emapper result as a dataframe."""
         emapper_files = os.path.join(self.workdir, "processes", "emapper",
                                      "emapper.emapper.annotations")
         if os.path.exists(emapper_files) is True:
@@ -336,6 +364,18 @@ class conver2json(luigi.Task):
             rpkm_dict = pd.read_csv(rpkm_file, sep=",",
                                     index_col=0).to_dict(orient="index")
             return({}, rpkm_dict)
+
+    def pm_summary_ballgown(self):
+        pm_file = os.path.join(self.workdir, "processes", "ballgown",
+                               self.kingdom, "summpary_PMs.csv")
+        if os.path.exists(pm_file) is True:
+            pm_dict = pd.read_csv(pm_file, sep=",",
+                                  index_col=6).drop(["t_id", "chr", "strand",
+                                                      "start", "end",
+                                                      "num_exons", "length",
+                                                      "gene_id", "gene_name"],
+                                                      axis=1).to_dict(orient="index")
+        return pm_dict
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""

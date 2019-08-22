@@ -2,7 +2,6 @@
 
 """Check design."""
 import gffutils
-import simplejson
 import json
 from Bio.Seq import Seq
 from Bio import SeqIO
@@ -15,7 +14,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
 from plumbum.cmd import time
 from luigi.util import requires
-from piret.Runs import FaQC
+from piret.miscs import RefFile
 
 
 class GetAAs(luigi.Task):
@@ -29,7 +28,7 @@ class GetAAs(luigi.Task):
     def requires(self):
         """Check if those two files are present."""
         for f in [self.gff_file, self.fasta_file]:
-            return FaQC.RefFile(f)
+            return RefFile(f)
 
     def gff2faa(self, gff_file, fasta):
         """reads in gff file and fasta to output proteome."""

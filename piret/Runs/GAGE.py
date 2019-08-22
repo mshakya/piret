@@ -3,7 +3,7 @@
 """Check design."""
 import luigi
 from luigi import LocalTarget
-from pypiret import Summ, DGE
+from pypiret import Summ
 from luigi.util import inherits, requires
 import pandas as pd
 from plumbum.cmd import Rscript

@@ -27,7 +27,8 @@ class ballgown(luigi.Task):
 
     def output(self):
         """Expected output of DGE using edgeR."""
-        bg_rdir = os.path.join(self.workdir, "processes", "ballgown", self.kingdom, "migun")
+        bg_rdir = os.path.join(self.workdir, "processes", "ballgown",
+                               self.kingdom, "summpary_PMs.csv" )
         return LocalTarget(bg_rdir)
 
     def run(self):
@@ -46,17 +47,22 @@ class ballgown(luigi.Task):
             logger.info(bg_cmd)
             bg_cmd()
 
-        # self.summ_summ()
 
-    # def summ_summ(self):
-    #     """Summarize the summary table to be displayed in edge"""
-    #     deseq2_dir = self.workdir + "/DESeq2/" + self.kingdom
-    #     all_files = os.listdir(deseq2_dir)
-    #     out_file = os.path.join(deseq2_dir, "summary_updown.csv")
-    #     summ_files = [pd.read_csv(os.path.join(deseq2_dir, file),
-    #                               index_col=0) for file in all_files if "summary.csv" in file ]
-    #     summ_df = pd.concat(summ_files)
-    #     summ_df.to_csv(out_file)
+    def summ_summ(self):
+        """Summarize the summary table to be displayed in edge"""
+        edger_dir = os.path.join(self.workdir, "processes", "ballgown", self.kingdom)
+        all_dirs = os.listdir(edger_dir)
+        if all_dirs:
+            out_file = os.path.join(edger_dir, "summary_updown.csv")
+            summ_files = []
+            for root, dirs, files in os.walk(edger_dir):
+                for file in files:
+                    if "summary.csv" in file:
+                        summ_files.append(os.path.join(root, file))
+            summ_df = [pd.read_csv(file, index_col=0) for file in summ_files]
+            summ_df_ccat = pd.concat(summ_df)
+            summ_df_ccat.to_csv(out_file)
+
 
     # def program_environment(self):
     #     """Environmental variables for this program."""
