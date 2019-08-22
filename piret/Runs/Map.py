@@ -395,12 +395,6 @@ class Split2ProkEukW(luigi.WrapperTask):
 
     def requires(self):
         """A pipeline that runs from mapping to count for euk and prok."""
-        splst = [self.workdir + "/" +
-                 f for f in os.listdir(self.workdir) if f.endswith('.splice')]
-        if len(splst) > 1:
-            splice_file = ','.join(splst)
-        else:
-            splice_file = splst[0]
         for samp, fastq in self.fastq_dic.items():
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             yield Split2ProkEuk(outsam=map_dir + "/" + samp + ".sam",
