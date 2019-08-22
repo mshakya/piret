@@ -9,7 +9,14 @@ bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
 from piret.checks.Design import CheckDesign
-from novel import srna
+from piret.maps import hisat2
+from piret.qc import FaQC
+from piret.Runs import Map
+from piret.novel import srna
+from piret.counts import featurecounts
+from piret.dge import edgeR
+from piret.dge import DESeq2
+from piret.counts import stringtie
 from luigi.interface import build
 
 
@@ -17,40 +24,63 @@ from luigi.interface import build
 class DualSeq:
     """Class that pieces luigi task for dual seq."""
 
-    def __init__(self, fastq_dic, prok_org_code, euk_org_code, ref_fastas, ref_gffs, num_cpus,
-                 local_scheduler, hisat_index, workdir, kingdom,
-                 no_of_jobs, exp_desn_file,
-                 p_value, stardb_dir, **kwargs):
+    def __init__(self, **kwargs):
+        self.qc = kwargs["qc"]
+        self.fastq_dic = kwargs["fastq_dic"]
+        self.workdir = kwargs["workdir"]
+        self.num_cpus = kwargs["num_cpus"]
         self.aligner = kwargs['aligner']
-        self.ref_fastas = ref_fastas
-        self.ref_gffs = ref_gffs
-        self.fastq_dic = fastq_dic
-        self.num_cpus = num_cpus
-        self.hisat_index = hisat_index
-        self.workdir = workdir
-        self.kingdom = kingdom
-        self.local_scheduler = local_scheduler
-        self.no_of_jobs = no_of_jobs
-        self.exp_desn_file = exp_desn_file
-        self.p_value = p_value
-        self.prok_org_code = prok_org_code
-        self.euk_org_code = euk_org_code
-        self.stardb_dir = stardb_dir
+        self.prok_fasta = kwargs['prok_fasta']
+        self.euk_fasta = kwargs['euk_fasta']
+        self.prok_gff = kwargs['prok_gff']
+        self.euk_gff = kwargs['euk_gff']
+        self.exp_desn_file = kwargs['exp_desn_file']
+        # self.ref_fasta = ref_fastas
+        # self.ref_gffs = ref_gffs
+        # self.fastq_dic = fastq_dic
+        # self.num_cpus = num_cpus
+        self.hisat_index = kwargs["hisat_index"]        
+        self.kingdom = kwargs["kingdom"]
+        self.local_scheduler = kwargs["local_scheduler"]
+        # self.no_of_jobs = no_of_jobs
+        # self.exp_desn_file = exp_desn_file
+        self.p_value = kwargs["p_value"]
+        # self.prok_org_code = prok_org_code
+        # self.euk_org_code = euk_org_code
+        # self.stardb_dir = stardb_dir
 
-    def create_db(self, gff):
+    def run_faqc(self):
+        """A function that calls the FaQC function.
+
+        it returns QCed files in respective directory
+        """
+        if self.qc is True:
+            build([FaQC.SummarizeQC(fastq_dic=self.fastq_dic,
+                                    num_cpus=self.num_cpus,
+                                    workdir=self.workdir)],
+                  local_scheduler=self.local_scheduler, workers=1)
+            qc_dic = {}
+            for samp, path in self.fastq_dic.items():
+                trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+                qc_dic[samp] = trim_dir + "/" + samp + ".1.trimmed.fastq" + ":" + \
+                               trim_dir + "/" + samp + ".2.trimmed.fastq"          
+            return qc_dic
+
+    def create_db(self):
         """Function to create hisat index."""
         if self.aligner == "hisat2":
-            build([Map.HisatIndex(fasta=self.ref_fastas,
-                                  hi_index=self.hisat_index,
-                                  num_cpus=self.num_cpus),
-                   Map.SAMindex(fasta=self.ref_fastas, workdir=self.workdir),
-                   Map.CreateSplice(gff_file=self.ref_gffs.split(",")[1],
-                            workdir=self.workdir),
-                   Map.GetChromName(prok_ref=self.ref_fastas.split(",")[0],
-                            euk_ref=self.ref_fastas.split(",")[1],
-                            workdir=self.workdir)],
+            ref_fastas = self.prok_fasta + "," + self.euk_fasta
+            build([hisat2.HisatIndex(fasta=ref_fastas,
+                                     hi_index=self.hisat_index,
+                                     num_cpus=self.num_cpus),
+                   Map.SAMindex(fasta=ref_fastas, workdir=self.workdir)],
+                #    Map.CreateSplice(gff_file=self.ref_gffs.split(",")[1],
+                            # workdir=self.workdir),
+                #    Map.GetChromName(prok_ref=self.ref_fastas.split(",")[0],
+                            # euk_ref=self.ref_fastas.split(",")[1],
+                            # workdir=self.workdir)],
                           local_scheduler=self.local_scheduler,
-                          workers=self.no_of_jobs)
+                          workers=1)
         elif self.aligner == "STAR":
             build([Map.STARindex(fasta=self.ref_fastas,
                              num_cpus=self.num_cpus,
@@ -64,11 +94,11 @@ class DualSeq:
                             euk_ref=self.ref_fastas.split(",")[1],
                             workdir=self.workdir)],
                             local_scheduler=self.local_scheduler)
-            
+
     def map_reads(self):
         """Function to map reads."""
         if self.aligner == "hisat2":
-            build([Map.HisatMapW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+            build([hisat2.HisatMapW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                                  indexfile=self.hisat_index, workdir=self.workdir)],
               local_scheduler=self.local_scheduler)
         elif self.aligner == "STAR":
@@ -79,7 +109,7 @@ class DualSeq:
     def map_summarize(self):
         """Summarize mapped reads into a table."""
         if self.aligner == "hisat2":
-            build([Map.SummarizeHisatMap(fastq_dic=self.fastq_dic,
+            build([hisat2.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,
                                     num_cpus=self.num_cpus)],
@@ -94,9 +124,9 @@ class DualSeq:
     def split_prokeuk(self):
         build([Map.Split2ProkEukW(fastq_dic=self.fastq_dic,
                                 workdir=self.workdir,
-                                  ref_file=self.ref_fastas)],
+                                  ref_file=self.prok_fasta + "," + self.euk_fasta)],
                           local_scheduler=self.local_scheduler,
-                          workers=self.no_of_jobs)
+                          workers=1)
 
     def summarize_map(self):
         """Summarize mapped reads into a table."""
@@ -113,7 +143,6 @@ class DualSeq:
                                     num_cpus=self.num_cpus)],
             local_scheduler=self.local_scheduler, workers=1)
 
-
     def extract_pp(self):
         """Extract properly paired reads."""
         build([srna.ExtractPPW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
@@ -121,35 +150,34 @@ class DualSeq:
                                  kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
 
-    def NovelRegions(self, gff):
+    def NovelRegions(self):
         """Find novel regions."""
         build([srna.FindNovelRegionsW(fastq_dic=self.fastq_dic,
                                   workdir=self.workdir,
-                                 kingdom=self.kingdom, 
-                                 gff_file=gff)],
+                                 kingdom=self.kingdom,
+                                 gff_file=self.prok_gff + "," + self.euk_gff)],
               local_scheduler=self.local_scheduler)
-    
-    def create_new_gff(self, gff):
+
+    def create_new_gff(self):
         build([srna.CompileGFF(fastq_dic=self.fastq_dic,
                                kingdom=self.kingdom,
                                workdir=self.workdir,
-                               gff_file=gff)],
-          local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
+                               gff_file=self.prok_gff + "," + self.euk_gff)],
+          local_scheduler=self.local_scheduler, workers=1)
 
     def merge_stringties(self):
         build([stringtie.MergeStringTies(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                                 indexfile=self.hisat_index, workdir=self.workdir,
                                 gff_file=self.ref_gffs,
                                 kingdom="both")],
-           local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
+           local_scheduler=self.local_scheduler, workers=1)
     
     def restringtie(self):
         build([stringtie.ReStringTieScoresW(fastq_dic=self.fastq_dic,
                                        num_cpus=self.num_cpus,
                                        workdir=self.workdir,
                                        kingdom=self.kingdom)],
-           local_scheduler=self.local_scheduler, workers=self.no_of_jobs
-           )
+           local_scheduler=self.local_scheduler, workers=1)
 
     def run_ballgown(self):
         build([ballgown.ballgown(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
@@ -159,71 +187,27 @@ class DualSeq:
                             p_value=self.p_value)],
                local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
 
-    def feature_counts(self):
-        build([featurecount.FeatureCounts(fastq_dic=self.fastq_dic,
-                                  num_cpus=self.num_cpus,
-                                  gff_file=os.path.join(self.workdir, "prok_updated.gff"),
-                                  indexfile=self.hisat_index,
-                                  kingdom='prokarya',
-                                  workdir=self.workdir,
-                                  ref_file=self.ref_fastas.split(",")[0]),
-          featurecounts.FeatureCounts(fastq_dic=self.fastq_dic,
-                             num_cpus=self.num_cpus,
-                             gff_file=os.path.join(self.workdir, "euk_updated.gff"),
-                             indexfile=self.hisat_index,
-                             kingdom='eukarya',
-                             workdir=self.workdir,
-                             ref_file=self.ref_fastas.split(",")[1])],
-          local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
+    def feature_counts(self, new_gff, kingdom):
+        build([featurecounts.FeatureCounts(fastq_dic=self.fastq_dic,
+                                           num_cpus=self.num_cpus,
+                                           gff_file=new_gff,
+                                           indexfile=self.hisat_index,
+                                           kingdom=kingdom,
+                                           workdir=self.workdir,
+                                           ref_file=self.prok_fasta + "," + self.euk_fasta)],
+          local_scheduler=self.local_scheduler, workers=1)
+
+    def run_edger(self, kingdom):
+        build([edgeR.edgeR(workdir=self.workdir,
+                           kingdom=kingdom,
+                           exp_design=self.exp_desn_file,
+                           p_value=self.p_value)], local_scheduler=self.local_scheduler,
+                           workers=1)
 
 
-    def run_edger(self):
-        build([edgeR.edgeR(fastq_dic=self.fastq_dic,
-                   num_cpus=self.num_cpus,
-                   indexfile=self.hisat_index,
-                   workdir=self.workdir,
-                   ref_file=self.ref_fastas.split(",")[0],
-                   kingdom='prokarya',
-                   gff_file=os.path.join(self.workdir, "prok_updated.gff"),
-                   exp_design=self.exp_desn_file,
-                   p_value=self.p_value,
-                   prok_org_code=self.prok_org_code,
-                   euk_org_code=None),
-               DGE.edgeR(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
-                    indexfile=self.hisat_index,
-                    workdir=self.workdir,
-                    ref_file=self.ref_fastas.split(",")[1],
-                    kingdom='eukarya',
-                    gff_file=os.path.join(self.workdir, "euk_updated.gff"),
-                    exp_design=self.exp_desn_file,
-                    p_value=self.p_value,
-                    euk_org_code=self.euk_org_code,
-                    prok_org_code=None)], local_scheduler=self.local_scheduler,
-                          workers=self.no_of_jobs)
-
-    def run_deseq2(self):
-        build([DESeq2.DESeq2(fastq_dic=self.fastq_dic,
-                          num_cpus=self.num_cpus,
-                          indexfile=self.hisat_index,
-                          workdir=self.workdir,
-                          ref_file=self.ref_fastas.split(",")[0],
-                          kingdom='prokarya',
-                          gff_file=os.path.join(self.workdir, "prok_updated.gff"),
-                          exp_design=self.exp_desn_file,
-                          p_value=self.p_value,
-                          prok_org_code=self.prok_org_code,
-                          euk_org_code=None),
-                DESeq2.DESeq2(fastq_dic=self.fastq_dic,
-                            num_cpus=self.num_cpus,
-                            indexfile=self.hisat_index,
-                            workdir=self.workdir,
-                            ref_file=self.ref_fastas.split(",")[1],
-                            kingdom='eukarya',
-                            gff_file=os.path.join(self.workdir, "euk_updated.gff"),
-                            exp_design=self.exp_desn_file,
-                            p_value=self.p_value,
-                            euk_org_code=self.euk_org_code,
-                            prok_org_code=None)],
-                local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
-
-
+    def run_deseq2(self, kingdom):
+        build([DESeq2.DESeq2(workdir=self.workdir,
+                             kingdom=kingdom,
+                             exp_design=self.exp_desn_file,
+                             p_value=self.p_value)],
+        local_scheduler=self.local_scheduler, workers=1)
