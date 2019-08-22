@@ -160,8 +160,6 @@ def main():
         single_seq.feature_count(new_gff=gff)
         single_seq.merge_stringtie(new_gff=gff)
 
-
-
         # find diff expressed gene using edgeR
         if "edgeR" in paras["method"]:
             single_seq.run_edger()
@@ -169,7 +167,6 @@ def main():
         if "DESeq2" in paras["method"]:
             single_seq.run_deseq2()
         if "ballgown" in paras["method"]:
-            print("migungown")
             single_seq.restringtie()
             single_seq.run_ballgown()
 
@@ -186,6 +183,77 @@ def main():
         single_seq.summ_json(new_gff=gff, method=paras["method"],
                              NovelRegions=paras["novel"])
 
+    elif paras["kingdom"] == "both":
+        euk_fasta = paras["fasta_euk"]
+        euk_gff = paras["gff_euk"]
+        prok_fasta = paras["fasta_prok"]
+        prok_gff = paras["gff_prok"]
+
+        dual_seq = DualSeq(qc=paras["qc"],
+                           fastq_dic=samp_dic, 
+                          kingdom=paras["kingdom"],
+                            aligner=paras["aligner"],
+                            euk_fasta=paras["fasta_euk"],
+                            prok_fasta=paras["fasta_prok"],
+                            prok_gff = paras["gff_prok"],
+                            euk_gff = paras["gff_euk"],
+                            workdir=workdir,
+                            p_value=paras["q_value"],
+                            exp_desn_file=args.EXPDSN,
+                            hisat_index=db,
+                            local_scheduler=True,
+                            num_cpus=paras["threads"])
+                            # 
+                            # hisat_index=db,
+                            # 
+                            
+                            # no_of_jobs=no_of_jobs,
+                            
+                            # exp_desn_file=args.EXPDSN,
+                            # stardb_dir=db,
+                            # gff_file=euk_gff,
+                            # pathway=paras["pathway"])
+        
+        # step 1, run qc
+        qc_dic = dual_seq.run_faqc()
+        
+        # step 2, create database, hisat2 or stardb
+        dual_seq.create_db()
+
+        # step 3, map reads, hisat2 or stardb
+        dual_seq.map_reads()
+
+        # step 4, summarize the mapped reads
+        dual_seq.map_summarize()
+        dual_seq.split_prokeuk()
+
+        
+        # step 5, if needed
+        if paras["novel"] is True:  # if novel regions are to be reported
+            dual_seq.extract_pp()  # extract properly paired reads
+            dual_seq.NovelRegions()  # find novel regions
+            dual_seq.create_new_gff()  # create a new GFF file that has novel region info
+            euk_gff = os.path.join(workdir, "euk_updated.gff")  # update gff
+            prok_gff = os.path.join(workdir, "prok_updated.gff")  # update gff
+    
+        # step 6, run read counts
+        dual_seq.feature_counts(new_gff=euk_gff, kingdom="eukarya")
+        dual_seq.feature_counts(new_gff=prok_gff, kingdom="prokarya")
+        dual_seq.merge_stringtie(new_gff=euk_gff)
+
+        # find diff expressed gene using edgeR
+        if "edgeR" in paras["method"]:
+            dual_seq.run_edger(kingdom="eukarya")
+            dual_seq.run_edger(kingdom="prokarya")
+        # use DESeq2
+        if "DESeq2" in paras["method"]:
+            dual_seq.run_deseq2(kingdom="eukarya")
+            dual_seq.run_deseq2(kingdom="prokarya")
+        if "ballgown" in paras["method"]:
+            dual_seq.restringtie()
+            dual_seq.run_ballgown()
+
+        # single_seq.merge_stringtie(new_gff=gff)
     # if args.TEST_KINGDOM == 'both' and args.qsub is False:
     #     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
     #     check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
