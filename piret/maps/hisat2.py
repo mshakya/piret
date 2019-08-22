@@ -66,7 +66,6 @@ class Hisat(luigi.Task):
 
     fastqs = ListParameter()
     indexfile = Parameter()
-    spliceFile = Parameter()
     outsam = Parameter()
     map_dir = Parameter()
     workdir = Parameter()
@@ -101,17 +100,18 @@ class Hisat(luigi.Task):
                                       "2>", os.path.join(self.map_dir,
                                                          "mapping.log")]
             hisat2_cmd = hisat2[hisat2_nosplice_option]
-            print(hisat2_cmd)
             hisat2_cmd()
             self.sam2bam()
-            self.sort_bam()
+            self.sort_bam()        
         else:
-            h2_splice_option = ["--known-splicesite-infile", self.spliceFile,
-                                "-p", self.num_cpus,
+            h2_splice_option = ["-p", self.num_cpus,
                                 "-x", self.indexfile,
                                 "-1", self.fastqs[0],
                                 "-2", self.fastqs[1],
                                 "-S", self.outsam,
+                                "--min-intronlen", self.min_introlen,
+                                "--max-intronlen", self.max_introlen,
+                                "--rna-strandness", self.rna_strandness,
                                 "--no-unal",
                                 "--un-conc",
                                 os.path.join(self.map_dir,
@@ -119,6 +119,7 @@ class Hisat(luigi.Task):
                                 "2>", os.path.join(self.map_dir,
                                                    "mapping.log")]
             hisat2_cmd = hisat2[h2_splice_option]
+            print(hisat2_cmd)
             hisat2_cmd()
             self.sam2bam()
             self.sort_bam()
@@ -169,7 +170,6 @@ class HisatMapW(luigi.WrapperTask):
                         kingdom=self.kingdom,
                         num_cpus=self.num_cpus,
                         indexfile=self.indexfile,
-                        spliceFile=splice_file,
                         outsam=map_dir + "/" + samp + ".sam",
                         map_dir=map_dir,
                         sample=samp,
