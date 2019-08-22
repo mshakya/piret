@@ -27,7 +27,7 @@ class edgeR(luigi.Task):
     p_value = luigi.FloatParameter()
     # GAGE = luigi.BoolParameter()
     # pathway = luigi.BoolParameter()
-    gff_file = luigi.Parameter()
+    # gff_file = luigi.Parameter()
 
     def output(self):
         """Expected output of DGE using edgeR."""
