@@ -187,7 +187,7 @@ class SingleSeq:
     def run_edger(self):
         build([edgeR.edgeR(kingdom=self.kingdom,
                          workdir=self.workdir,
-                         gff_file=self.gff_file,
+                        #  gff_file=self.gff_file,
                         #  pathway=pathway,
                         #  GAGE=GAGE,
                          exp_design=self.exp_desn_file,
@@ -197,7 +197,7 @@ class SingleSeq:
     def run_deseq2(self):
         build([DESeq2.DESeq2(workdir=self.workdir,
                           kingdom=self.kingdom,
-                          gff_file=self.gff_file,
+                        #   gff_file=self.gff_file,
                         #   pathway=pathway,
                         #   GAGE=GAGE,
                           exp_design=self.exp_desn_file,
