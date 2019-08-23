@@ -34,7 +34,6 @@ class GetAAs(luigi.Task):
         """reads in gff file and fasta to output proteome."""
         # get the list of CDS that past the threshold.
         imp_cds = self.get_imp_cds(self.ave_map)
-        print(imp_cds)
 
         # make directories for storing gff database and amino acids
         if os.path.exists(os.path.join(self.workdir, "processes", "databases",
@@ -54,7 +53,6 @@ class GetAAs(luigi.Task):
                 db = gffutils.FeatureDB(db_out, keep_order=True)
             for feat_obj in db.features_of_type("CDS"):
                 if feat_obj.id in imp_cds.Geneid.tolist():
-                    print(feat_obj)
                     nt_seqs = feat_obj.sequence(self.fasta_file)
                     prot_seqs = self.translate(nt_seqs, "CDS")
                     try:

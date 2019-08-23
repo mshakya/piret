@@ -241,12 +241,12 @@ class SingleSeq:
                          method=method)],
               local_scheduler=self.local_scheduler, workers=1)
 
-    def summ_json(self, new_gff, method, NovelRegions, kingdom):
+    def summ_json(self, new_gff, method, NovelRegions):
         build([summarize.conver2json(gff_file=new_gff,
                                      fasta_file=self.ref_fasta,
                                      pathway=self.pathway,
                                      workdir=self.workdir,
-                                     kingdom=kingdom,
+                                     kingdom=self.kingdom,
                                      method=method,
                                      NovelRegions=NovelRegions)],
               local_scheduler=self.local_scheduler, workers=1)

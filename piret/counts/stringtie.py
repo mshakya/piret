@@ -213,7 +213,6 @@ class ReStringTieScoresW(luigi.WrapperTask):
     def requires(self):
         """A wrapper for restringtie processes."""
         for samp, fastq in self.fastq_dic.items():
-            print(fastq)
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if self.kingdom in ['prokarya', 'eukarya']:
                 bg_dir = os.path.join(self.workdir, "processes", "ballgown", self.kingdom, samp)

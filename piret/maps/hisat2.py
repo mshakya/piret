@@ -119,7 +119,6 @@ class Hisat(luigi.Task):
                                 "2>", os.path.join(self.map_dir,
                                                    "mapping.log")]
             hisat2_cmd = hisat2[h2_splice_option]
-            print(hisat2_cmd)
             hisat2_cmd()
             self.sam2bam()
             self.sort_bam()

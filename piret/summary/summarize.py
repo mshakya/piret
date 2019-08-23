@@ -102,8 +102,6 @@ class conver2json(luigi.Task):
 
     def gff2json(self, out_json):
         """A function that converts a gff file to JSON file."""
-        print(self.method)
-        print("murhsula")
         # read in the gff file to a database
         if os.path.exists(os.path.join(self.workdir, "processes",
                                        "databases")) is False:
@@ -204,7 +202,6 @@ class conver2json(luigi.Task):
                                      method="DESeq2", dge_dict=dge_deseq_cds)
                     # assign EC#s, KOs, etc.
                     try:
-                        print(emaps)
                         feat_dic["emapper"] = emaps[feat_obj.id]
                     except KeyError:
                         feat_dic["emapper"] = None
@@ -392,12 +389,13 @@ class conver2json(luigi.Task):
                                                       "num_exons", "length",
                                                       "gene_id", "gene_name"],
                                                       axis=1).to_dict(orient="index")
-        return pm_dict
+            return pm_dict
+        else:
+            return {}
 
     def stringtie_tpm(self):
         """get TPMs from stringtie."""
         stie_dir = os.path.join(self.workdir, "processes", "stringtie")
-        print(stie_dir)
         stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab",
                       recursive=True)]
         dflist = []
