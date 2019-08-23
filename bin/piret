@@ -175,10 +175,10 @@ def main():
         if paras["pathway"] is True:
             # run emapper
             single_seq.run_emapper(new_gff=gff)
-            # if "edgeR" in paras["method"]:
-            #     single_seq.run_opaver(method="edgeR")
+            if "edgeR" in paras["method"]:
+                single_seq.run_opaver(method="edgeR")
             # if "DESeq2" in paras["method"]:
-            #     single_seq.run_opaver(method="DESeq2")
+                single_seq.run_opaver(method="DESeq2")
 
         # summarize all results into one big json file.
         single_seq.summ_json(new_gff=gff, method=paras["method"],
