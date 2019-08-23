@@ -224,8 +224,11 @@ def main():
             dual_seq.extract_pp()  # extract properly paired reads
             dual_seq.NovelRegions()  # find novel regions
             dual_seq.create_new_gff()  # create a new GFF file that has novel region info
-            euk_gff = os.path.join(workdir, "euk_updated.gff")  # update gff
-            prok_gff = os.path.join(workdir, "prok_updated.gff")  # update gff
+            euk_gff = os.path.join(workdir,
+                                   "processes", "novel",
+                                   "euk_updated.gff")  # update gff
+            prok_gff = os.path.join(workdir, "processes", "novel",
+                                    "prok_updated.gff")  # update gff
     
         # step 6, run read counts
         dual_seq.feature_counts(new_gff=euk_gff, kingdom="eukarya")
