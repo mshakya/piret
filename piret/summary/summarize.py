@@ -84,12 +84,20 @@ class conver2json(luigi.Task):
 
     def output(self):
         """Expected output JSON."""
-        jfile = os.path.join(self.workdir, "out.json")
-        return LocalTarget(jfile)
+        if self.kingdom == "prokarya":
+            jfile = os.path.join(self.workdir, "prokarya_out.json")
+            return LocalTarget(jfile)
+        elif self.kingdom == "eukarya":
+            jfile = os.path.join(self.workdir, "eukarya_out.json")
+            return LocalTarget(jfile)
 
     def run(self):
         """ Create JSON files."""
-        jfile = os.path.join(self.workdir, "out.json")
+        if self.kingdom == "prokarya":    
+            jfile = os.path.join(self.workdir, "prokarya_out.json")
+        elif self.kingdom == "eukarya":
+            jfile = os.path.join(self.workdir, "eukarya_out.json")
+
         self.gff2json(jfile)
 
     def gff2json(self, out_json):
@@ -102,6 +110,7 @@ class conver2json(luigi.Task):
             os.makedirs(os.path.join(self.workdir, "processes",
                                      "databases"))
         db_out = os.path.join(self.workdir, "processes", "databases",
+                              self.kingdom,
                               "piret.db")
         if os.path.exists(db_out) is False:
             # create db if not already present
@@ -195,6 +204,7 @@ class conver2json(luigi.Task):
                                      method="DESeq2", dge_dict=dge_deseq_cds)
                     # assign EC#s, KOs, etc.
                     try:
+                        print(emaps)
                         feat_dic["emapper"] = emaps[feat_obj.id]
                     except KeyError:
                         feat_dic["emapper"] = None
@@ -279,6 +289,7 @@ class conver2json(luigi.Task):
     def get_emapper(self):
         """get emapper result as a dataframe."""
         emapper_files = os.path.join(self.workdir, "processes", "emapper",
+                                     self.kingdom,
                                      "emapper.emapper.annotations")
         if os.path.exists(emapper_files) is True:
             emap = pd.read_csv(emapper_files, sep='\t', skiprows=[0,1,2],

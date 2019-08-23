@@ -16,7 +16,11 @@ from piret.novel import srna
 from piret.counts import featurecounts
 from piret.dge import edgeR
 from piret.dge import DESeq2
+from piret.dge import ballgown
 from piret.counts import stringtie
+from piret.summary import summarize
+from piret.functions import function
+from piret.pathways import opaver
 from luigi.interface import build
 
 
@@ -35,7 +39,7 @@ class DualSeq:
         self.prok_gff = kwargs['prok_gff']
         self.euk_gff = kwargs['euk_gff']
         self.exp_desn_file = kwargs['exp_desn_file']
-        # self.ref_fasta = ref_fastas
+        self.pathway = kwargs["pathway"]
         # self.ref_gffs = ref_gffs
         # self.fastq_dic = fastq_dic
         # self.num_cpus = num_cpus
@@ -165,11 +169,12 @@ class DualSeq:
                                gff_file=self.prok_gff + "," + self.euk_gff)],
           local_scheduler=self.local_scheduler, workers=1)
 
-    def merge_stringties(self):
-        build([stringtie.MergeStringTies(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
-                                indexfile=self.hisat_index, workdir=self.workdir,
-                                gff_file=self.ref_gffs,
-                                kingdom="both")],
+    def merge_stringtie(self, new_gff):
+        build([stringtie.MergeStringTies(fastq_dic=self.fastq_dic,
+                                         num_cpus=self.num_cpus,
+                                workdir=self.workdir,
+                                gff_file=new_gff,
+                                kingdom=self.kingdom)],
            local_scheduler=self.local_scheduler, workers=1)
     
     def restringtie(self):
@@ -180,12 +185,12 @@ class DualSeq:
            local_scheduler=self.local_scheduler, workers=1)
 
     def run_ballgown(self):
-        build([ballgown.ballgown(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+        build([ballgown.ballgown(
                             workdir=self.workdir,
                             kingdom="eukarya",
                             exp_design=self.exp_desn_file,
                             p_value=self.p_value)],
-               local_scheduler=self.local_scheduler, workers=self.no_of_jobs)
+               local_scheduler=self.local_scheduler, workers=1)
 
     def feature_counts(self, new_gff, kingdom):
         build([featurecounts.FeatureCounts(fastq_dic=self.fastq_dic,
@@ -204,10 +209,32 @@ class DualSeq:
                            p_value=self.p_value)], local_scheduler=self.local_scheduler,
                            workers=1)
 
-
     def run_deseq2(self, kingdom):
         build([DESeq2.DESeq2(workdir=self.workdir,
                              kingdom=kingdom,
                              exp_design=self.exp_desn_file,
                              p_value=self.p_value)],
         local_scheduler=self.local_scheduler, workers=1)
+
+    def run_emapper(self, new_gff, kingdom, fasta):
+        build([function.RunEmapper(workdir=self.workdir,
+                                   gff_file=new_gff,
+                                   fasta_file=fasta,
+                                   kingdom=kingdom)],
+              local_scheduler=self.local_scheduler, workers=1)
+
+    def run_opaver(self, method, kingdom):
+        build([opaver.RunOpaver(workdir=self.workdir,
+                         kingdom=kingdom,
+                         method=method)],
+              local_scheduler=self.local_scheduler, workers=1)
+
+    def summ_json(self, new_gff, method, NovelRegions, kingdom, fasta):
+        build([summarize.conver2json(gff_file=new_gff,
+                                     fasta_file=fasta,
+                                     pathway=self.pathway,
+                                     workdir=self.workdir,
+                                     kingdom=kingdom,
+                                     method=method,
+                                     NovelRegions=NovelRegions)],
+              local_scheduler=self.local_scheduler, workers=1)

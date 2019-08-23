@@ -34,12 +34,16 @@ class GetAAs(luigi.Task):
         """reads in gff file and fasta to output proteome."""
         # get the list of CDS that past the threshold.
         imp_cds = self.get_imp_cds(self.ave_map)
+        print(imp_cds)
 
-        # make directories
-        if os.path.exists(os.path.join(self.workdir, "processes", "databases")) is False:
-            os.makedirs(os.path.join(self.workdir, "processes", "databases"))
-        db_out = os.path.join(self.workdir, "processes", "databases", "piret.db")
-        with open(os.path.join(self.workdir, "processes", "databases", "aas.faa"), "w") as f:
+        # make directories for storing gff database and amino acids
+        if os.path.exists(os.path.join(self.workdir, "processes", "databases",
+                                       self.kingdom)) is False:
+            os.makedirs(os.path.join(self.workdir, "processes",
+                                     "databases", self.kingdom))
+        db_out = os.path.join(self.workdir, "processes", "databases",
+                              self.kingdom, "piret.db")
+        with open(os.path.join(self.workdir, "processes", "databases", self.kingdom, "aas.faa"), "w") as f:
             if os.path.exists(db_out) is False:
                 # create db if not already present
                 db = gffutils.create_db(gff_file, dbfn=db_out, force=True,
@@ -50,6 +54,7 @@ class GetAAs(luigi.Task):
                 db = gffutils.FeatureDB(db_out, keep_order=True)
             for feat_obj in db.features_of_type("CDS"):
                 if feat_obj.id in imp_cds.Geneid.tolist():
+                    print(feat_obj)
                     nt_seqs = feat_obj.sequence(self.fasta_file)
                     prot_seqs = self.translate(nt_seqs, "CDS")
                     try:
@@ -57,8 +62,8 @@ class GetAAs(luigi.Task):
                     except:
                         desc = "No annotation"
                     record = SeqRecord(Seq(prot_seqs, IUPAC.protein),
-                                   id=feat_obj.id,
-                                   description=desc)
+                                       id=feat_obj.id,
+                                       description=desc)
                     SeqIO.write(record, f, "fasta")
 
     def translate(self, nucleotide, type):
@@ -90,7 +95,7 @@ class GetAAs(luigi.Task):
     def output(self):
         """Expected amino acid output."""
         aa_file = os.path.join(self.workdir, "processes", "databases",
-                               "aas.faa")
+                               self.kingdom, "aas.faa")
         return luigi.LocalTarget(aa_file)
 
 
@@ -106,8 +111,8 @@ class RunEmapper(luigi.ExternalTask):
         """Using the amino acid fasta file, run emapper."""
 
         aa_file = os.path.join(self.workdir, "processes", "databases",
-                               "aas.faa")
-        egg_dir = os.path.join(self.workdir, "processes", "emapper", "emapper")
+                               self.kingdom , "aas.faa")
+        egg_dir = os.path.join(self.workdir, "processes", "emapper", self.kingdom, "emapper")
         if os.path.exists(egg_dir) is False:
             os.makedirs(egg_dir)
 
@@ -135,6 +140,6 @@ class RunEmapper(luigi.ExternalTask):
 
     def output(self):
         """Expected output JSON."""
-        jfile = os.path.join(self.workdir, "processes", "emapper",
+        jfile = os.path.join(self.workdir, "processes", "emapper", self.kingdom,
                              "emapper.emapper.annotations")
         return luigi.LocalTarget(jfile)

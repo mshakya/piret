@@ -109,7 +109,7 @@ class StringTieScoresW(luigi.WrapperTask):
                                       out_gtf=os.path.join(stng_dir, samp + "_euk_sTie.gtf"),
                                       out_cover=os.path.join(stng_dir, samp + "_euk_covered_sTie.gtf"),
                                       out_abun=os.path.join(stng_dir, samp + "_euk_sTie.tab"),
-                                      in_bam_file=map_dir + "/" + samp + "_srt_prok.bam")
+                                      in_bam_file=map_dir + "/" + samp + "_srt_euk.bam")
 
 @requires(StringTieScoresW)
 class MergeStringTies(luigi.Task):

@@ -29,6 +29,7 @@ from piret.checks.GFF3 import CheckGFF
 from piret.checks.aligner import check_aligner
 from piret.checks.config import parse_config, check_input
 from piret.logger import create_logger
+from piret.pathways import opaver
 from luigi.interface import build
 
 
@@ -195,24 +196,15 @@ def main():
                             aligner=paras["aligner"],
                             euk_fasta=paras["fasta_euk"],
                             prok_fasta=paras["fasta_prok"],
-                            prok_gff = paras["gff_prok"],
-                            euk_gff = paras["gff_euk"],
+                            prok_gff=paras["gff_prok"],
+                            euk_gff=paras["gff_euk"],
                             workdir=workdir,
                             p_value=paras["q_value"],
                             exp_desn_file=args.EXPDSN,
                             hisat_index=db,
                             local_scheduler=True,
+                            pathway=paras["pathway"],
                             num_cpus=paras["threads"])
-                            # 
-                            # hisat_index=db,
-                            # 
-                            
-                            # no_of_jobs=no_of_jobs,
-                            
-                            # exp_desn_file=args.EXPDSN,
-                            # stardb_dir=db,
-                            # gff_file=euk_gff,
-                            # pathway=paras["pathway"])
         
         # step 1, run qc
         qc_dic = dual_seq.run_faqc()
@@ -227,7 +219,6 @@ def main():
         dual_seq.map_summarize()
         dual_seq.split_prokeuk()
 
-        
         # step 5, if needed
         if paras["novel"] is True:  # if novel regions are to be reported
             dual_seq.extract_pp()  # extract properly paired reads
@@ -239,7 +230,7 @@ def main():
         # step 6, run read counts
         dual_seq.feature_counts(new_gff=euk_gff, kingdom="eukarya")
         dual_seq.feature_counts(new_gff=prok_gff, kingdom="prokarya")
-        dual_seq.merge_stringtie(new_gff=euk_gff)
+        dual_seq.merge_stringtie(new_gff=prok_gff + "," + euk_gff)
 
         # find diff expressed gene using edgeR
         if "edgeR" in paras["method"]:
@@ -253,63 +244,26 @@ def main():
             dual_seq.restringtie()
             dual_seq.run_ballgown()
 
-        # single_seq.merge_stringtie(new_gff=gff)
-    # if args.TEST_KINGDOM == 'both' and args.qsub is False:
-    #     check_ref(ref_gff=args.GFF_EUK, ref_fasta=args.FASTA_EUK)
-    #     check_ref(ref_gff=args.GFF_PROK, ref_fasta=args.FASTA_PROK)
-    #     fastas = ",".join([args.FASTA_PROK, args.FASTA_EUK])
-    #     gffs = ",".join([args.GFF_PROK, args.GFF_EUK])
-    #     if check_method(args.METHOD, args.EXPDSN) is True:
-    #         run_faqc(fastq_dic=samp_dic, num_cpus=args.CPU, workdir=workdir,
-    #                  local_scheduler=args.scheduler)
-    #     dual_seq = workflows.DualSeq(fastq_dic=samp_dic, ref_fastas=fastas,
-    #                                  aligner=args.ALIGNER,
-    #                                  hisat_index=db,
-    #                                  workdir=workdir,
-    #                                  kingdom=args.TEST_KINGDOM,
-    #                                  no_of_jobs=1,
-    #                                  local_scheduler=args.scheduler,
-    #                                  num_cpus=args.CPU,
-    #                                  exp_desn_file=args.EXPDSN,
-    #                                  p_value=args.P_VALUE,
-    #                                  ref_gffs=gffs,  # gff of both,
-    #                                  stardb_dir=db
-    #                                  )
+        if paras["pathway"] is True:
+            # run emapper
+            dual_seq.run_emapper(new_gff=prok_gff, kingdom="prokarya", fasta=prok_fasta)
+            dual_seq.run_emapper(new_gff=euk_gff, kingdom="eukarya", fasta=euk_fasta)
+            if "edgeR" in paras["method"]:
+                dual_seq.run_opaver(method="edgeR", kingdom="prokarya")
+                dual_seq.run_opaver(method="edgeR", kingdom="eukarya")
+            if "DESeq2" in paras["method"]:
+                dual_seq.run_opaver(method="DESeq2", kingdom="prokarya")
+                dual_seq.run_opaver(method="DESeq2", kingdom="eukarya")
 
-    #     dual_seq.create_db(gffs) # create database (star or hisat2 based on choice)
-    #     dual_seq.map_reads()
-    #     dual_seq.map_summarize()
-    #     dual_seq.split_prokeuk()
-    #     if args.NOVEL is True: # if novel regions are to be reported
-    #         dual_seq.extract_pp() # extract properly paired reads
-    #         dual_seq.NovelRegions() # find novel regions
-    #         dual_seq.create_new_gff() # create a new GFF file that has novel region info
-    #         gffs = ",".join([os.path.join(workdir, "prok_updated.gff"), os.path.join(workdir, "euk_updated.gff")]) # update gff
-    #     dual_seq.feature_counts()
-    #     if args.METHOD == "edgeR":
-    #         dual_seq.run_edger()
-    #     elif args.METHOD == "DESeq2":
-    #         dual_seq.run_deseq2()
-    #     elif args.METHOD == "ballgown":
-    #         dual_seq.merge_stringties()
-    #         dual_seq.restringtie()
-    #         dual_seq.run_ballgown()
-    #     elif args.METHOD == "DEedge":
-    #         dual_seq.run_edger()
-    #         dual_seq.run_deseq2()
-    #     elif args.METHOD == "DEgown":
-    #         dual_seq.run_deseq2()
-    #         dual_seq.restringtie()
-    #         dual_seq.run_ballgown()
-    #     elif args.METHOD == "balledgeR":
-    #         dual_seq.run_edger()
-    #         dual_seq.restringtie()
-    #         dual_seq.run_ballgown()
-    #     elif args.METHOD == "all":
-    #         dual_seq.run_edger()
-    #         dual_seq.run_deseq2()
-    #         dual_seq.restringtie()
-    #         dual_seq.run_ballgown()
+        # summarize all results into one big json file.
+        dual_seq.summ_json(new_gff=euk_gff, method=paras["method"],
+                           NovelRegions=paras["novel"],
+                           kingdom="eukarya",
+                           fasta=euk_fasta)
+        dual_seq.summ_json(new_gff=euk_gff, method=paras["method"],
+                           NovelRegions=paras["novel"],
+                           kingdom="prokarya",
+                           fasta=prok_fasta)
 
 
 def check_exp_design(exp_design_file):
