@@ -78,23 +78,25 @@ class SAMindex(luigi.Task):
         """Require reference fasta format file."""
         if ',' in self.fasta:
             fas = self.fasta.split(",")
-            return [LocalTarget(self.workdir + "/" + os.path.basename(fa) +
-                                ".bedfile") for fa in fas]
-        else:
-            return [LocalTarget(self.workdir + "/" +
-                                os.path.basename(self.fasta) +
-                                ".bedfile")]
+            return [LocalTarget(os.path.join(self.workdir, "processes",
+                                             "novel",
+                                             os.path.basename(fa) +
+                                             ".bedfile")) for fa in fas]
 
-    def make_index(self, ref, workdir):
+    def make_index(self, ref):
         """A function to make index from sam files."""
         index_options = ["faidx", ref]
-        mv_options = [ref + ".fai", workdir]
-        samtools_cmd = samtools[index_options]
-        mv_cmd = mv[mv_options]
+        novel_folder = os.path.join(self.workdir, "processes", "novel")
+        if os.path.exists(novel_folder) is False:
+            os.makedirs(novel_folder)
+        mv_options=[ref + ".fai", os.path.join(novel_folder)]
+        samtools_cmd=samtools[index_options]
+        mv_cmd=mv[mv_options]
         samtools_cmd()
         mv_cmd()
-        fa_name = os.path.basename(ref)
-        return os.path.abspath(self.workdir + "/" + fa_name + ".fai")
+        fa_name=os.path.basename(ref)
+        return os.path.join(self.workdir, "processes", "novel",
+                            fa_name + ".fai")
 
     def create_bedfile(self, index_file):
         """Makes bed file from the sam index file."""
@@ -117,7 +119,7 @@ class SAMindex(luigi.Task):
         if ',' in self.fasta:
             fas = self.fasta.split(",")
             for fa in fas:
-                ind_file = self.make_index(fa, self.workdir)
+                ind_file = self.make_index(fa)
                 self.create_bedfile(ind_file)
 
 
@@ -369,9 +371,11 @@ class Split2ProkEuk(luigi.Task):
         euk_out = bam_file.split(".bam")[0] + "_euk.bam"
         return [luigi.LocalTarget(prok_out), luigi.LocalTarget(euk_out)]
 
-    def split_aln_file(self, workdir, fasta, bam_file, out_bamfile):
+    def split_aln_file(self, fasta, bam_file, out_bamfile):
         """Split"""
-        bed_file = workdir + "/" + os.path.basename(fasta) + ".bedfile"
+        bed_file = os.path.join(self.workdir, "processes", "novel",
+                                os.path.basename(fasta) + ".bedfile")
+        # bed_file = workdir + "/" + os.path.basename(fasta) + ".bedfile"
         samtools_opt = ["view", "-b", "-L", bed_file, bam_file]
         samtools_cmd = (samtools[samtools_opt]) > out_bamfile
         samtools_cmd()
@@ -382,8 +386,8 @@ class Split2ProkEuk(luigi.Task):
         bam_file = self.outsam.split(".sam")[0] + "_srt.bam"
         prok_out = bam_file.split(".bam")[0] + "_prok.bam"
         euk_out = bam_file.split(".bam")[0] + "_euk.bam"
-        self.split_aln_file(self.workdir, fastas[0], bam_file, prok_out)
-        self.split_aln_file(self.workdir, fastas[1], bam_file, euk_out)
+        self.split_aln_file(fastas[0], bam_file, prok_out)
+        self.split_aln_file(fastas[1], bam_file, euk_out)
 
 
 #@inherits(HisatMapW)
