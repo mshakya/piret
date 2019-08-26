@@ -181,7 +181,8 @@ class SummarizeHisatMap(luigi.Task):
 
     def output(self):
         """Mapping Summary Output."""
-        out_file = self.workdir + "/" + "MapSummary.csv"
+        out_file = os.path.join(self.workdir, "processes", "mapping",
+        "MapSummary.csv")
         return luigi.LocalTarget(out_file)
 
     def run(self):
@@ -203,5 +204,6 @@ class SummarizeHisatMap(luigi.Task):
         summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
         summ_table.columns = ["Paired reads", "Concordantly unaligned",
                               "Concordantly aligned", "Multi aligned"]
-        out_file = self.workdir + "/" + "MapSummary.csv"
+        out_file = os.path.join(self.workdir, "processes", "mapping",
+                                "MapSummary.csv")
         summ_table.to_csv(out_file)
