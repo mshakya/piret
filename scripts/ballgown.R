@@ -72,7 +72,6 @@ subset.exp_des <- function(exp_df, pair_combs){
 # get groups
 groups <- pair.comb(group_file)
 list_of_eds <- subset.exp_des(exp_df, groups)
-print(list_of_eds)
 
 # list all the folders in ballgown folder
 dir_names <- list.dirs(path = opt$bg_folder, 
@@ -94,7 +93,6 @@ if (feature_name %in% c("gene", "CDS", "transcript")){
         out_table <- base::file.path(out_dir, filename)
         out_table_sig <- base::file.path(out_dir, filename_sig)
         # write the file
-        print(out_table)
         write.csv(diff_genes, out_table)
         write.csv(sig_genes, out_table_sig)
         summ_table <- base::file.path(out_dir, "summpary_PMs.csv")
