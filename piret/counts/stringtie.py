@@ -119,12 +119,15 @@ class MergeStringTies(luigi.Task):
         """Ouptut of string tie merge."""
         if self.kingdom in ['prokarya', 'eukarya']:
             return [RefFile(os.path.join(self.workdir, "processes",
-                                             "stringtie", "stringtie_merged_transcript.gtf"))]
+                                         "stringtie",
+                                         "stringtie_merged_transcript.gtf"))]
         elif self.kingdom == 'both':
-            return [RefFile(self.workdir + "/" +
-                                "prok_sTie_merged_transcript.gtf"),
-                    RefFile(self.workdir + "/" +
-                                "euk_sTie_merged_transcript.gtf")]
+            return [RefFile(os.path.join(self.workdir, "processes",
+                                         "stringtie",
+                                         "prok_sTie_merged_transcript.gtf")),
+                    RefFile(os.path.join(self.workdir, "processes",
+                                         "stringtie",
+                                         "euk_sTie_merged_transcript.gtf"))]
 
     def run(self):
         """Running stringtie merge."""
@@ -148,6 +151,12 @@ class MergeStringTies(luigi.Task):
         elif self.kingdom == 'both':
             prok_gff = self.gff_file.split(",")[0]
             euk_gff = self.gff_file.split(",")[1]
+            prok_gtf = os.path.join(self.workdir, "processes",
+                                    "stringtie",
+                                    "prok_sTie_merged_transcript.gtf")
+            euk_gtf = os.path.join(self.workdir, "processes",
+                                    "stringtie",
+                                    "euk_sTie_merged_transcript.gtf")
 
             prokout_gtf_list = [os.path.join(self.workdir, "processes",
                                              "stringtie", samp,
@@ -158,15 +167,11 @@ class MergeStringTies(luigi.Task):
                                             samp + "_euk_sTie.gtf")
                                for samp in samp_list]
             stie_cmd_euk_opt = ["--merge", "-G", euk_gff,
-                                "-o", self.workdir +
-                                "/" + "/euk_sTie_merged_transcript.gtf"] + eukout_gtf_list
+                                "-o", euk_gtf] + eukout_gtf_list
             stie_cmd_euk = stringtie[stie_cmd_euk_opt]
             stie_cmd_euk()
-
             stie_cmd_prok_opt = ["--merge", "-G", prok_gff,
-                                 "-o", self.workdir +
-                                 "/" +
-                                 "/prok_sTie_merged_transcript.gtf"] + prokout_gtf_list
+                                 "-o", prok_gtf] + prokout_gtf_list
             stie_cmd_prok = stringtie[stie_cmd_prok_opt]
             stie_cmd_prok()
 
@@ -231,9 +236,9 @@ class ReStringTieScoresW(luigi.WrapperTask):
                 if os.path.isdir(euk_bg_dir) is False:
                     os.makedirs(euk_bg_dir)
                     os.makedirs(prok_bg_dir)
-                prok_gtf = os.path.join(self.workdir,
+                prok_gtf = os.path.join(self.workdir, "processes", "stringtie",
                                         "prok_sTie_merged_transcript.gtf")
-                euk_gtf = os.path.join(self.workdir,
+                euk_gtf = os.path.join(self.workdir, "processes", "stringtie",
                                        "euk_sTie_merged_transcript.gtf")
                 yield ReStringTieScores(num_cpus=self.num_cpus,
                                         gtf=prok_gtf,
@@ -242,7 +247,8 @@ class ReStringTieScoresW(luigi.WrapperTask):
                                         out_abun=prok_bg_dir + "/" + samp + "_prok_sTie.tab",
                                         in_bam_file=os.path.join(map_dir, samp + "_srt_prok.bam"))
                 yield ReStringTieScores(num_cpus=self.num_cpus,
-                                        gtf=euk_gtf, out_gtf=euk_bg_dir + "/" + samp + "_euk_sTie.gtf",
+                                        gtf=euk_gtf,
+                                        out_gtf=euk_bg_dir + "/" + samp + "_euk_sTie.gtf",
                                         out_cover=euk_bg_dir + "/" + samp + "_euk_covered_sTie.gtf",
                                         out_abun=euk_bg_dir + "/" + samp + "_euk_sTie.tab",
                                         in_bam_file=os.path.join(map_dir, samp + "_srt_euk.bam"))
