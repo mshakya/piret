@@ -22,7 +22,9 @@ class CheckDependencies():
             # self.logger.info('%s package exist' % self.package)
             return True
         except:
-            exit_msg = """%s is not installed or not in your PATH! Please install. See README for instructions on how to install it."""
+            exit_msg = """%s is not installed or not in your PATH!
+                          Please install. 
+                          See README for instructions on how to install it."""
             sys.exit(exit_msg % self.package)
 
     def check_pypackage(self):
@@ -42,7 +44,6 @@ class CheckDependencies():
 
 thirdparty_tools = ["bamtools", "samtools", ]
 
-# CheckDependencies("bamtools")
 
 def check_depen(tool_list, logger):
     """A function that checks the list of tool are in path or not."""

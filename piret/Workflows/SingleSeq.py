@@ -8,7 +8,7 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from piret.checks.Design import CheckDesign
+from piret.checks.design import CheckDesign
 from piret.summary import summarize
 from piret.qc import FaQC
 from piret.maps import hisat2

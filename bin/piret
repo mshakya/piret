@@ -23,7 +23,7 @@ from piret.checks import CheckDesign, CheckDependencies
 from piret.checks.dependencies import check_depen
 from piret.novel import srna
 from piret.workflows import DualSeq, SingleSeq
-from piret.checks.GFF3 import CheckGFF
+from piret.checks.gff3 import CheckGFF
 from piret.checks.aligner import check_aligner
 from piret.checks.config import parse_config, check_input
 from piret.logger import create_logger
