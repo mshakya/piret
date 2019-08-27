@@ -63,18 +63,18 @@ We have provided test data set to check if the installation was successful or no
 For running tests on eukaryote datasets:
 
 ```
-$LUIGI_CONFIG_PATH="/Users/migunshakya/Projects/PiReT/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
 ```
 
 For running tests on prokarya datasets:
 
 ```
-$LUIGI_CONFIG_PATH="/Users/migunshakya/Projects/PiReT/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
 ```
 
 For running tests using `both` prokarya and eukarya datasets:
 ```
-$LUIGI_CONFIG_PATH="/Users/migunshakya/Projects/PiReT/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
 ```
 
 
