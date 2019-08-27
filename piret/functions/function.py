@@ -12,7 +12,7 @@ import pandas as pd
 from luigi.interface import build
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
-from plumbum.cmd import time
+from plumbum.cmd import python2.7
 from luigi.util import requires
 from piret.miscs import RefFile
 
