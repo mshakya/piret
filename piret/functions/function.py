@@ -120,7 +120,7 @@ class RunEmapper(luigi.ExternalTask):
                 "--query-cover", self.query_coverage,
                 "--subject-cover", self.subject_coverage,
                 "--temp_dir", egg_dir]
-        time[emap]()
+        python2.7[emap]()
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""
