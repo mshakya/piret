@@ -10,9 +10,7 @@ wrapper for running RNASeq pipeline
 import os
 import sys
 import argparse
-import luigi
 import logging
-import configparser
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
@@ -22,7 +20,7 @@ sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
 from piret.checks import CheckDesign, CheckDependencies
-from piret.checks.Dependencies import check_depen
+from piret.checks.dependencies import check_depen
 from piret.novel import srna
 from piret.workflows import DualSeq, SingleSeq
 from piret.checks.GFF3 import CheckGFF
