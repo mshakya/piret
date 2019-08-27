@@ -13,7 +13,7 @@ script_dir = os.path.abspath(os.path.join(DIR, "../../scripts"))
 os.environ["PATH"] += ":" + script_dir
 sys.path.insert(0, script_dir)
 from plumbum.cmd import Rscript, plot_pathway
-from plumbum.cmd import RDESeq2, gage_analysis, ballgown_analysis
+from plumbum.cmd import RDESeq2, gage_analysis
 import logging
 
 
