@@ -103,8 +103,8 @@ class RunEmapper(luigi.ExternalTask):
     """ Run emapper.
 
         Get KEGG# and other"""
-    query_coverage = luigi.FloatParameter()
-    subject_coverage = luigi.FloatParameter()
+    query_coverage = luigi.Parameter()
+    subject_coverage = luigi.Parameter()
 
     def run_emapper(self):
         """Using the amino acid fasta file, run emapper."""
@@ -115,13 +115,13 @@ class RunEmapper(luigi.ExternalTask):
         if os.path.exists(egg_dir) is False:
             os.makedirs(egg_dir)
 
-        emap = ["python2.7", "thirdparty/eggnog-mapper/emapper.py", "-i",
+        emap = ["python2.7", os.path.join("thirdparty", "eggnog-mapper", "emapper.py"), "-i",
                 aa_file, "-o", egg_dir, "--data_dir", "../eggnog-mapper/data/",
                 "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
                 "--query-cover", self.query_coverage,
                 "--subject-cover", self.subject_coverage,
                 "--temp_dir", egg_dir]
-        subprocess.call(emap, shell=True)
+        subprocess.call(emap)
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""
