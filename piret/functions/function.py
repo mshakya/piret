@@ -12,7 +12,8 @@ import pandas as pd
 from luigi.interface import build
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
-from plumbum.cmd import python2.7
+# from plumbum.cmd import python2.7
+import subprocess
 from luigi.util import requires
 from piret.miscs import RefFile
 
@@ -114,13 +115,13 @@ class RunEmapper(luigi.ExternalTask):
         if os.path.exists(egg_dir) is False:
             os.makedirs(egg_dir)
 
-        emap = ["thirdparty/eggnog-mapper/emapper.py", "-i",
+        emap = ["python2.7", "thirdparty/eggnog-mapper/emapper.py", "-i",
                 aa_file, "-o", egg_dir, "--data_dir", "../eggnog-mapper/data/",
                 "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
                 "--query-cover", self.query_coverage,
                 "--subject-cover", self.subject_coverage,
                 "--temp_dir", egg_dir]
-        python2.7[emap]()
+        subprocess.call(emap, shell=True)
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""
