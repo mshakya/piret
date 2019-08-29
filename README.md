@@ -24,7 +24,7 @@ For getting KO ids for genes, PiReT uses [emapper](https://github.com/eggnogdb/e
 <!-- PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log` -->
 
 ### 0.1 Dependencies
-PiReT requires following dependencies, all of which should be installed and in the PATH. All of the dependencies will be installed by `INSTALL.sh`.
+PiReT requires following dependencies, all of which should be installed and in the PATH.
 
 #### 0.1.0 Programming/Scripting languages
 - [Python >=v3.6.3](https://www.python.org/downloads/release/python-2712/)
@@ -35,38 +35,47 @@ PiReT requires following dependencies, all of which should be installed and in t
 #### 0.1.1 Installing dependencies
 - [conda v4.2.13](http://conda.pydata.org/docs/index.html)
     If conda is not installed, `INSTALL.sh` will download and install [miniconda](http://conda.pydata.org/miniconda.html), a "mini" version of `conda` that only installs handful of packages compared to [anaconda](https://docs.continuum.io/anaconda/pkg-docs)
-- [cpanm v1.7039](http://search.cpan.org/~miyagawa/Menlo-1.9005/script/cpanm-menlo), for installing perl packages.
 
 
 #### 0.1.2 Third party softwares/packages
-- [samtools (v1.6)](http://www.htslib.org)
-- [HiSat2 (v2.1.0)](https://ccb.jhu.edu/software/hisat/index.shtml)
-- [gffread (v0.9.12)](http://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_dl)
-- [featurecount (v1.6.3)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
-- [stringTie (v1.3.4d)](https://ccb.jhu.edu/software/stringtie/)
+- [samtools (>=v1.6)](http://www.htslib.org)
+- [HiSat2 (>=v2.1.0)](https://ccb.jhu.edu/software/hisat/index.shtml)
+- [featurecount (>=v1.6.3)](https://academic.oup.com/bioinformatics/article/30/7/923/232889/featureCounts-an-efficient-general-purpose-program)
+- [stringTie (>=v1.3.4d)](https://ccb.jhu.edu/software/stringtie/)
 
 #### 0.1.3 R packages
-- [edgeR (v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
-- [DEseq2 (v1.12.4)](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
-- [ballgown (v2.8.0)](https://bioconductor.org/packages/release/bioc/html/ballgown.html)
+- [edgeR (>=v3.14.0)](https://bioconductor.org/packages/release/bioc/html/edgeR.html)
+- [DEseq2 (>=v1.12.4)](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)
+- [ballgown (>=v2.8.0)](https://bioconductor.org/packages/release/bioc/html/ballgown.html)
 
 #### 0.1.4 Python packages
-- [luigi (v2.6.1)](https://github.com/spotify/luigi)
-- [pandas (v0.19.2)](http://pandas.pydata.org/)
-- [plumbum (v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
-- [Biopython (v1.68)](https://github.com/biopython/biopython.github.io/)
-- [gffread (v0.8.4rc1)](https://pythonhosted.org/gffutils/)
+- [luigi (>=v2.6.1)](https://github.com/spotify/luigi)
+- [pandas (>=v0.19.2)](http://pandas.pydata.org/)
+- [plumbum (>=v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
+- [Biopython (>=v1.68)](https://github.com/biopython/biopython.github.io/)
+- [gffread (>=v0.8.4rc1)](https://pythonhosted.org/gffutils/)
 
 
 ## 1.0 Test
-We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `PyPiReT` directory:
+We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
+
+
+For running tests on eukaryote datasets:
 
 ```
-# if you are in a LINUX system:
-sh ./tests/test_pipeline_linux.sh
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
+```
+
+For running tests on prokarya datasets:
 
 ```
-These shell script automatically creates `test_experimental_design.txt` and runs the pipeline.
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
+```
+
+For running tests using `both` prokarya and eukarya datasets:
+```
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
+```
 
 
 ## 2.0 Running PiReT

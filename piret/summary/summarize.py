@@ -17,6 +17,8 @@ sys.path.insert(0, script_dir)
 import logging
 import json
 import Bio
+import re
+from functools import reduce
 
 
 class conversions(luigi.Task):
@@ -70,7 +72,6 @@ class conversions(luigi.Task):
                         gage_cmd()
         self.summ_summ()
 
-
 class conver2json(luigi.Task):
     """ Summarizes and converts all the results to one big JSON file."""
     gff_file = luigi.Parameter()
@@ -83,24 +84,31 @@ class conver2json(luigi.Task):
 
     def output(self):
         """Expected output JSON."""
-        jfile = os.path.join(self.workdir, "out.json")
-        return LocalTarget(jfile)
+        if self.kingdom == "prokarya":
+            jfile = os.path.join(self.workdir, "prokarya_out.json")
+            return LocalTarget(jfile)
+        elif self.kingdom == "eukarya":
+            jfile = os.path.join(self.workdir, "eukarya_out.json")
+            return LocalTarget(jfile)
 
     def run(self):
         """ Create JSON files."""
-        jfile = os.path.join(self.workdir, "out.json")
+        if self.kingdom == "prokarya":    
+            jfile = os.path.join(self.workdir, "prokarya_out.json")
+        elif self.kingdom == "eukarya":
+            jfile = os.path.join(self.workdir, "eukarya_out.json")
+
         self.gff2json(jfile)
 
     def gff2json(self, out_json):
         """A function that converts a gff file to JSON file."""
-        print(self.method)
-        print("murhsula")
         # read in the gff file to a database
         if os.path.exists(os.path.join(self.workdir, "processes",
                                        "databases")) is False:
             os.makedirs(os.path.join(self.workdir, "processes",
                                      "databases"))
         db_out = os.path.join(self.workdir, "processes", "databases",
+                              self.kingdom,
                               "piret.db")
         if os.path.exists(db_out) is False:
             # create db if not already present
@@ -135,7 +143,7 @@ class conver2json(luigi.Task):
             ballgown_gene_pm = self.pm_summary_ballgown()
         else:
             ballgown_gene_pm = {}
-
+        stringtie_tpms = self.stringtie_tpm()
         read_summ_cds = self.read_summary("CDS")
         read_summ_gene = self.read_summary("gene")
         read_summ_rRNA = self.read_summary("rRNA")
@@ -146,6 +154,7 @@ class conver2json(luigi.Task):
 
         emaps = self.get_emapper()
         with open(out_json, "w") as json_file:
+            json_list = []
             for feat_obj in db.all_features():
                 feat_dic = {}  # an empty dictionary to append features
                 feat_dic['seqid'] = feat_obj.seqid
@@ -238,7 +247,12 @@ class conver2json(luigi.Task):
                         feat_dic["ballgown_values"] = ballgown_gene_pm[feat_obj.id]
                     except KeyError:
                         feat_dic["ballgown_values"] = None
-
+                    
+                    # assign stringtie
+                    try:
+                        feat_dic["stringtie_values"] = stringtie_tpms[feat_obj.id]
+                    except KeyError:
+                        feat_dic["stringtie_values"] = None
                     # assign dge information
                     self.assign_dges(feat_type="gene", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
@@ -249,7 +263,9 @@ class conver2json(luigi.Task):
                 else:
                     # print(feat_type)
                     pass
-                json.dump(feat_dic, json_file, indent=4)
+                # json.dump(feat_dic, json_file, indent=4)
+                json_list.append(feat_dic)
+            json.dump(json_list, json_file, indent=4)
 
     def assign_scores(self, feat_dic, edger_sdic, deseq_sdic, feat_id):
         """Assign scores from edger and deseq to summary dic."""
@@ -273,6 +289,7 @@ class conver2json(luigi.Task):
     def get_emapper(self):
         """get emapper result as a dataframe."""
         emapper_files = os.path.join(self.workdir, "processes", "emapper",
+                                     self.kingdom,
                                      "emapper.emapper.annotations")
         if os.path.exists(emapper_files) is True:
             emap = pd.read_csv(emapper_files, sep='\t', skiprows=[0,1,2],
@@ -375,7 +392,29 @@ class conver2json(luigi.Task):
                                                       "num_exons", "length",
                                                       "gene_id", "gene_name"],
                                                       axis=1).to_dict(orient="index")
-        return pm_dict
+            return pm_dict
+        else:
+            return {}
+
+    def stringtie_tpm(self):
+        """get TPMs from stringtie."""
+        stie_dir = os.path.join(self.workdir, "processes", "stringtie")
+        stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab",
+                      recursive=True)]
+        dflist = []
+        for f in stie_files:
+            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Reference", "Strand",
+                                               "Start", "End"], axis=1)
+            
+            samp_name = os.path.basename(f)
+            samp = re.sub("_.*", "", samp_name)
+            df.columns = ["GeneID", samp + "_cov",
+                          samp + "_FPKM", samp + "_TPM"]
+            dflist.append(df)
+            
+        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on='GeneID'), dflist)    
+        finaldic = finaldf.set_index('GeneID').to_dict(orient="index")
+        return finaldic
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""

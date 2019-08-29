@@ -8,9 +8,8 @@ lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
-from piret.checks.Design import CheckDesign
+from piret.checks.design import CheckDesign
 from piret.summary import summarize
-from piret.Runs import Map, srna
 from piret.qc import FaQC
 from piret.maps import hisat2
 from piret.maps import star
@@ -19,8 +18,9 @@ from piret.dge import DESeq2
 from piret.dge import ballgown
 from piret.counts import stringtie
 from piret.counts import featurecounts
-from piret.Runs.function import RunEmapper, GetAAs
-from piret.Runs.opaver import RunOpaver
+from piret.novel import srna
+from piret.functions.function import RunEmapper, GetAAs
+from piret.pathways.opaver import RunOpaver
 from luigi.interface import build
 
 
@@ -187,7 +187,7 @@ class SingleSeq:
     def run_edger(self):
         build([edgeR.edgeR(kingdom=self.kingdom,
                          workdir=self.workdir,
-                         gff_file=self.gff_file,
+                        #  gff_file=self.gff_file,
                         #  pathway=pathway,
                         #  GAGE=GAGE,
                          exp_design=self.exp_desn_file,
@@ -197,7 +197,7 @@ class SingleSeq:
     def run_deseq2(self):
         build([DESeq2.DESeq2(workdir=self.workdir,
                           kingdom=self.kingdom,
-                          gff_file=self.gff_file,
+                        #   gff_file=self.gff_file,
                         #   pathway=pathway,
                         #   GAGE=GAGE,
                           exp_design=self.exp_desn_file,

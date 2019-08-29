@@ -35,7 +35,6 @@ class RunOpaver(luigi.Task):
     def requires(self):
         """de."""
 
-
     def output(self):
         """Local target."""
         if self.method == "edgeR":
@@ -46,15 +45,14 @@ class RunOpaver(luigi.Task):
                                           self.kingdom, "DESeq2", "opaver.tsv")
         return LocalTarget(opaver_outfile)
 
-
     def run(self):
         """."""
         if self.method == "edgeR":
             self.prep_opaver(method="edgeR")
-            self.run_opaver(method="edgeR")
+            # self.run_opaver(method="edgeR")
         elif self.method == "DESeq2":
             self.prep_opaver(method="DESeq2")
-            self.run_opaver(method="DESeq2")
+            # self.run_opaver(method="DESeq2")
 
     def prep_opaver(self, method):
         opaver_outdir = os.path.join(self.workdir, "processes", "opaver",
@@ -63,18 +61,20 @@ class RunOpaver(luigi.Task):
             os.makedirs(opaver_outdir)
         dge_dir = os.path.join(self.workdir, "processes", method,
                                self.kingdom, "CDS")
-        dge_files = [f for f in glob.glob(dge_dir + "**/*et.csv", recursive=True)]
+        dge_files = [f for f in glob.glob(dge_dir + "**/*et.csv",
+                     recursive=True)]
         emapper_file = os.path.join(self.workdir, "processes", "emapper",
+                                    self.kingdom,
                                     "emapper.emapper.annotations")
         # read in the emapper file.
-        emap = pd.read_csv(emapper_file, sep='\t', skiprows=[0,1,2],
-                                   skipinitialspace=True, skipfooter=3,
-                                   header=None, engine='python')
+        emap = pd.read_csv(emapper_file, sep='\t', skiprows=[0, 1, 2],
+                           skipinitialspace=True, skipfooter=3, header=None,
+                           engine='python')
         emap1 = emap.reset_index()
         emap1.columns = emap1.iloc[0]
         emap2 = emap1.drop(0).set_index('#query_name')
         if os.path.exists(emapper_file) is False:
-            sys.exit("emapper file is not present")
+            sys.exit("emapper file is not present! No pathway analysis")
         else:
             for file in dge_files:
                 dge_df = pd.read_csv(file, sep=",", index_col=0)

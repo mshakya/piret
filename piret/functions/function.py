@@ -12,7 +12,8 @@ import pandas as pd
 from luigi.interface import build
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
-from plumbum.cmd import time
+# from plumbum.cmd import python2.7
+import subprocess
 from luigi.util import requires
 from piret.miscs import RefFile
 
@@ -35,11 +36,14 @@ class GetAAs(luigi.Task):
         # get the list of CDS that past the threshold.
         imp_cds = self.get_imp_cds(self.ave_map)
 
-        # make directories
-        if os.path.exists(os.path.join(self.workdir, "processes", "databases")) is False:
-            os.makedirs(os.path.join(self.workdir, "processes", "databases"))
-        db_out = os.path.join(self.workdir, "processes", "databases", "piret.db")
-        with open(os.path.join(self.workdir, "processes", "databases", "aas.faa"), "w") as f:
+        # make directories for storing gff database and amino acids
+        if os.path.exists(os.path.join(self.workdir, "processes", "databases",
+                                       self.kingdom)) is False:
+            os.makedirs(os.path.join(self.workdir, "processes",
+                                     "databases", self.kingdom))
+        db_out = os.path.join(self.workdir, "processes", "databases",
+                              self.kingdom, "piret.db")
+        with open(os.path.join(self.workdir, "processes", "databases", self.kingdom, "aas.faa"), "w") as f:
             if os.path.exists(db_out) is False:
                 # create db if not already present
                 db = gffutils.create_db(gff_file, dbfn=db_out, force=True,
@@ -57,8 +61,8 @@ class GetAAs(luigi.Task):
                     except:
                         desc = "No annotation"
                     record = SeqRecord(Seq(prot_seqs, IUPAC.protein),
-                                   id=feat_obj.id,
-                                   description=desc)
+                                       id=feat_obj.id,
+                                       description=desc)
                     SeqIO.write(record, f, "fasta")
 
     def translate(self, nucleotide, type):
@@ -90,7 +94,7 @@ class GetAAs(luigi.Task):
     def output(self):
         """Expected amino acid output."""
         aa_file = os.path.join(self.workdir, "processes", "databases",
-                               "aas.faa")
+                               self.kingdom, "aas.faa")
         return luigi.LocalTarget(aa_file)
 
 
@@ -99,25 +103,25 @@ class RunEmapper(luigi.ExternalTask):
     """ Run emapper.
 
         Get KEGG# and other"""
-    query_coverage = luigi.FloatParameter()
-    subject_coverage = luigi.FloatParameter()
+    query_coverage = luigi.Parameter()
+    subject_coverage = luigi.Parameter()
 
     def run_emapper(self):
         """Using the amino acid fasta file, run emapper."""
 
         aa_file = os.path.join(self.workdir, "processes", "databases",
-                               "aas.faa")
-        egg_dir = os.path.join(self.workdir, "processes", "emapper", "emapper")
+                               self.kingdom , "aas.faa")
+        egg_dir = os.path.join(self.workdir, "processes", "emapper", self.kingdom, "emapper")
         if os.path.exists(egg_dir) is False:
             os.makedirs(egg_dir)
 
-        emap = ["thirdparty/eggnog-mapper/emapper.py", "-i",
+        emap = ["python2.7", os.path.join("thirdparty", "eggnog-mapper", "emapper.py"), "-i",
                 aa_file, "-o", egg_dir, "--data_dir", "../eggnog-mapper/data/",
                 "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
                 "--query-cover", self.query_coverage,
                 "--subject-cover", self.subject_coverage,
                 "--temp_dir", egg_dir]
-        time[emap]()
+        subprocess.call(emap)
 
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""
@@ -135,6 +139,6 @@ class RunEmapper(luigi.ExternalTask):
 
     def output(self):
         """Expected output JSON."""
-        jfile = os.path.join(self.workdir, "processes", "emapper",
+        jfile = os.path.join(self.workdir, "processes", "emapper", self.kingdom,
                              "emapper.emapper.annotations")
         return luigi.LocalTarget(jfile)

@@ -7,7 +7,6 @@ library(dplyr)
 library(ggplot2)
 library(pheatmap)
 library(reshape2)
-library(gridExtra)
 
 
 option_list <- list(

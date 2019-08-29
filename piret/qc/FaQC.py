@@ -117,7 +117,8 @@ class SummarizeQC(luigi.Task):
 
     def output(self):
         """QC output."""
-        out_file = self.workdir + "/" + "QCsummary.csv"
+        out_file = os.path.join(self.workdir, "processes", "qc",
+                                "QCsummary.csv")
         return LocalTarget(out_file)
 
     def run(self):
@@ -137,5 +138,6 @@ class SummarizeQC(luigi.Task):
                                   reads_aft_trim]
         summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
         summ_table.columns = ["Read Length", "Raw reads", "Reads after QC"]
-        out_file = self.workdir + "/" + "QCsummary.csv"
+        out_file = os.path.join(self.workdir, "processes", "qc",
+                                "QCsummary.csv")
         summ_table.to_csv(out_file)

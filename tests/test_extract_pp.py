@@ -7,8 +7,8 @@ from plumbum.cmd import rm
 DIR = os.path.dirname(os.path.realpath(__file__))
 LIB = os.path.abspath(os.path.join(DIR, '..'))
 sys.path.append(LIB)
-from pypiret.Runs.srna import ExtractPP
-from pypiret.Runs.srna import FindNovelRegions, CompileGFF
+from piret.novel.srna import ExtractPP
+from piret.novel.srna import FindNovelRegions, CompileGFF
 
 
 class TestPP(unittest.TestCase):
