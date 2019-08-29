@@ -154,6 +154,7 @@ class conver2json(luigi.Task):
 
         emaps = self.get_emapper()
         with open(out_json, "w") as json_file:
+            json_list = []
             for feat_obj in db.all_features():
                 feat_dic = {}  # an empty dictionary to append features
                 feat_dic['seqid'] = feat_obj.seqid
@@ -262,7 +263,9 @@ class conver2json(luigi.Task):
                 else:
                     # print(feat_type)
                     pass
-                json.dump(feat_dic, json_file, indent=4)
+                # json.dump(feat_dic, json_file, indent=4)
+                json_list.append(feat_dic)
+            json.dump(json_list, json_file, indent=4)
 
     def assign_scores(self, feat_dic, edger_sdic, deseq_sdic, feat_id):
         """Assign scores from edger and deseq to summary dic."""
