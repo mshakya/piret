@@ -6,7 +6,6 @@ library(dplyr)
 library(ggplot2)
 library(pheatmap)
 library(GenomicRanges)
-library(rpiret)
 
 option_list <- list(
   make_option(c("-r", "--reads_table"), action = "store",
@@ -36,7 +35,7 @@ out_dir <- file.path(opt$out_dir, feature_name)
 #==============================================================================#
 # create the output directory
 ifelse(!dir.exists(out_dir), dir.create(out_dir), print("already exist"))
-#==============================================================================#
+#=============================================================================#
 # Create pairwise comparisons to find DGEs
 pair.comb <- function(exp_des){
         # get all pariwise combination from experimental design file
@@ -47,6 +46,37 @@ pair.comb <- function(exp_des){
         pairs <- subset(expand.grid(rep(list(categories),2), stringsAsFactors = F), Var1 != Var2)
         return(pairs)
     }
+#=============================================================================#
+
+DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
+
+    if (missing(alpha)) {
+        alpha <- if (is.null(S4Vectors::metadata(object)$alpha)) {
+            0.1
+        }
+        else {
+            S4Vectors::metadata(object)$alpha
+        }
+    }
+
+    base::ifelse(!base::dir.exists(outdir),
+                 base::dir.create(outdir),
+                 print("already exist"))
+    notallzero <- sum(object$baseMean > 0)
+    up <- sum(object$padj < alpha & object$log2FoldChange > 0,
+              na.rm = TRUE)
+    down <- sum(object$padj < alpha & object$log2FoldChange <
+                    0, na.rm = TRUE)
+    not_sig = notallzero - up - down
+    summ_table <- data.frame(Down = down,
+                             NotSig = not_sig, Up = up)
+    summ_file <- file.path(outdir, paste(pair1, pair2, feature_name,
+                                         "summary.csv", sep = "__"))
+    write.csv(summ_table, summ_file, row.names = c(paste(pair1, pair2,
+                                                         feature_name, sep="+")) )
+    return(summ_table)
+}
+
 #=============================================================================#
     read_counts <- utils::read.table(reads_file, sep = "\t", header = TRUE,
                                      row.names = 1)
@@ -255,7 +285,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
         plotMA(deseq_diff)
         dev.off()
 
-        rpiret::DESeq2_summary(object = deseq_diff, alpha = as.numeric(pcutoff),
+        DESeq2_summary(object = deseq_diff, alpha = as.numeric(pcutoff),
                     pair1 = pair1, pair2 = pair2, feature_name = feature_name,
                     outdir = DE_dir)
 
