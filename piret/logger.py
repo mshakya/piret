@@ -7,6 +7,7 @@ Create log instance and files.
 log files
 """
 import logging
+import time
 
 
 def create_logger(workdir):
@@ -16,7 +17,8 @@ def create_logger(workdir):
     also creates WORKDIR/process.log
 
     """
-    log_file = os.path.join(workdir, "piret.log")
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    log_file = os.path.join(workdir, "piret_" + timestr + "_.log")
     if os.path.exists(workdir) is False:
         os.makedirs(workdir)
     open(log_file, 'a').close()
