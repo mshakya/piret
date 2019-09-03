@@ -1,0 +1,10 @@
+*.pyc
+.#*
+.*~
+*#
+*~
+*.emapper.*
+*.swp
+emappertmp*
+data/*
+!.gitkeep

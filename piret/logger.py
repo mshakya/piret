@@ -18,7 +18,7 @@ def create_logger(workdir):
 
     """
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    log_file = os.path.join(workdir, "piret_" + timestr + "_.log")
+    log_file = os.path.join(workdir, "piret_" + timestr + ".log")
     if os.path.exists(workdir) is False:
         os.makedirs(workdir)
     open(log_file, 'a').close()
