@@ -19,7 +19,7 @@ from luigi import LocalTarget
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
 import subprocess
-from plumbum.cmd import gffread, hisat2
+from plumbum.cmd import hisat2
 from plumbum.cmd import samtools, stringtie, mv, awk
 from plumbum.cmd import STAR
 import pandas as pd
