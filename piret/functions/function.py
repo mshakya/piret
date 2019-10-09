@@ -141,4 +141,4 @@ class RunEmapper(luigi.ExternalTask):
         """Expected output JSON."""
         jfile = os.path.join(self.workdir, "processes", "emapper",
                              self.kingdom, "emapper.emapper.annotations")
-        return RefFile(jfile)
+        return luigi.LocalTarget((jfile))

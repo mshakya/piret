@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     scripts=['bin/piret', 'scripts/EdgeR', "scripts/plot_pathway",
              "scripts/RDESeq2", "scripts/gage_analysis",
-             "scripts/ballgown_analysis"],
+             "scripts/ballgown.R"],
     license="Apache License 2.0",
     platforms="Posix; MacOS X",
     classifiers=[

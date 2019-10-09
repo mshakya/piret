@@ -21,7 +21,7 @@ class GAGE(luigi.Task):
         """ Expected output of GAGE analysis."""
 
     def run(self):
-        if se
+        # if se
         edger_dir =  os.path.join(self.workdir, "edgeR", self.kingdom)
 
 

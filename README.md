@@ -56,6 +56,14 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [gffread (>=v0.8.4rc1)](https://pythonhosted.org/gffutils/)
 
 
+## Installtion
+
+```
+  conda create -n piret_env python=3.6.6
+  conda install -c bioconda faqcs star samtools bamtools hisat2 subread -n piret_env
+  conda install -c r r -n piret_env
+
+```
 ## 1.0 Test
 We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
 
