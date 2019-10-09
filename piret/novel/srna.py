@@ -240,6 +240,8 @@ class FindNovelRegions(luigi.Task):
             with open(in_gff, 'r') as gff:
                 for line in gff:
                     if not line.startswith("#"):
+                        print(len(line.split("\t")))
+                        print(line.split("\t"))
                         if line.split("\t")[2] != "region":
                             o.write(line)
 
