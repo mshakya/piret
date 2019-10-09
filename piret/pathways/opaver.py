@@ -82,9 +82,10 @@ class RunOpaver(luigi.Task):
                 dge_df = dge_df.drop(["Chr", "Start", "End",
                                       "Strand", "Length", "logCPM"],
                                        axis=1)
+                print(dge_df)
                 # merge the two file.
                 opaver_df = pd.merge(dge_df, emap2, left_on="Geneid",
-                                     right_on='#query_name',
+                                     right_index=True,
                                      how="inner").loc[:, ['Geneid', 'KEGG_ko',
                                                           'logFC',
                                                           'PValue']]
@@ -95,7 +96,7 @@ class RunOpaver(luigi.Task):
                 dge_df = dge_df.drop(["baseMean", "lfcSE",
                                       "stat"], axis=1)
                 opaver_df = pd.merge(dge_df, emap2, left_index=True,
-                                     right_on='#query_name',
+                                     right_index=True,
                                      how="inner").loc[:, ['KEGG_ko',
                                                           'log2FoldChange',
                                                           'pvalue', 'padj']]

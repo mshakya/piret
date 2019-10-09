@@ -314,6 +314,15 @@ class conver2json(luigi.Task):
                                         "Strand", "Length"], axis=1).to_dict(orient="index")
         else:
             read_dict = {}
+        for feat, count_dic in read_dict.items():
+            int_read = {}
+            feat_read = {}
+            for samp, count in count_dic.items():
+                int_read[samp] = int(count)
+            feat_read[feat] = int_read
+            # print(feat_read)
+            read_dict.update(feat_read)
+            # print(read_dict)
         return read_dict
 
     def dge_summary(self, feat_type, method):
