@@ -242,6 +242,7 @@ class FindNovelRegions(luigi.Task):
                     if not line.startswith("#"):
                         if len(line.split("\t")) < 3:
                             print(len(line.split("\t")))
+                            print(line)
                         if line.split("\t")[2] != "region":
                             o.write(line)
 
