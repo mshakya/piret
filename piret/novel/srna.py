@@ -239,18 +239,17 @@ class FindNovelRegions(luigi.Task):
         with open(out_gff, 'w') as o:
             with open(in_gff, 'r') as gff:
                 for line in gff:
-                    if not line.startswith("#"):
-                        if len(line.split("\t")) < 3:
-                            print(len(line.split("\t")))
-                            print(line)
-                        if line.split("\t")[2] != "region":
-                            o.write(line)
+                    if not line.startswith(("#", ">")):
+                        if len(line.split("\t")) > 3:
+                            if line.split("\t")[2] != "region":
+                                o.write(line)
 
     def NovelRegions(self, gff, gcov, novels):
         """Get regions that are novel, not found in gff"""
         (bedtools["subtract", "-A", "-a", gcov, "-b", gff] | bedtools["merge"] >
          novels)()
 
+#migun shakya is best
 
 class FindNovelRegionsW(luigi.WrapperTask):
     fastq_dic = luigi.DictParameter()

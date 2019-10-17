@@ -229,6 +229,7 @@ def main():
                                     "prok_updated.gff")  # update gff
     
         # step 6, run read counts
+        print("Counting eukaryotes")
         dual_seq.feature_counts(new_gff=euk_gff, kingdom="eukarya")
         dual_seq.feature_counts(new_gff=prok_gff, kingdom="prokarya")
         dual_seq.merge_stringtie(new_gff=prok_gff + "," + euk_gff)

@@ -410,18 +410,24 @@ class conver2json(luigi.Task):
         stie_dir = os.path.join(self.workdir, "processes", "stringtie")
         stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab",
                       recursive=True)]
+        print(stie_files)
         dflist = []
         for f in stie_files:
             df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Reference", "Strand",
                                                "Start", "End"], axis=1)
-            
+            print(df.head())
             samp_name = os.path.basename(f)
-            samp = re.sub("_.*", "", samp_name)
+            print(samp_name)
+            samp = re.sub("_sTie.tab", "", samp_name)
+            print(samp + "\n")
             df.columns = ["GeneID", samp + "_cov",
                           samp + "_FPKM", samp + "_TPM"]
+            print(df.head())
             dflist.append(df)
             
-        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on='GeneID'), dflist)    
+        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on='GeneID'), dflist).drop_duplicates()
+        finaldf.to_csv("~/test.txt")
+        print(finaldf.drop_duplicates())
         finaldic = finaldf.set_index('GeneID').to_dict(orient="index")
         return finaldic
 

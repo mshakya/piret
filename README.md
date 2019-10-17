@@ -27,9 +27,45 @@ Note that this doesnt -->
 
 Coming soon!
 
-### 0.0.2
+### 0.0.2 Installing dependencies separately using conda
 
-Installing separatelyt
+
+```
+conda create -n piret_env python=3.6.6 --yes
+conda install -c bioconda faqcs -n piret_env --yes
+conda install -c bioconda star hisat2 subread -n piret_env --yes
+conda install -c bioconda subread -n piret_env --yes
+conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
+conda install -c r r -n piret_env --yes
+conda install -c bioconda r-optparse -n piret_env --yes
+source activate piret_env
+git clone https://github.com/mshakya/piret.git
+cd piret
+python setup.py install
+```
+
+
+## 1.0 Test
+We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
+
+
+For running tests on eukaryote datasets:
+
+```
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
+```
+
+For running tests on prokarya datasets:
+
+```
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
+```
+
+For running tests using `both` prokarya and eukarya datasets:
+```
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
+```
+
 
 For getting KO ids for genes, PiReT uses [emapper](https://github.com/eggnogdb/eggnog-mapper). The conda install of PiReT also includes emapper. However, its database need to be downloaed following instruction [here](https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2). Briefly,
 
@@ -66,36 +102,6 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [plumbum (>=v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
 - [Biopython (>=v1.68)](https://github.com/biopython/biopython.github.io/)
 - [gffread (>=v0.8.4rc1)](https://pythonhosted.org/gffutils/)
-
-
-## Installtion
-
-```
-  conda create -n piret_env python=3.6.6
-  conda install -c bioconda faqcs star samtools bamtools hisat2 subread -n piret_env
-  conda install -c r r -n piret_env
-
-```
-## 1.0 Test
-We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
-
-
-For running tests on eukaryote datasets:
-
-```
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
-```
-
-For running tests on prokarya datasets:
-
-```
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
-```
-
-For running tests using `both` prokarya and eukarya datasets:
-```
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
-```
 
 
 ## 2.0 Running PiReT
