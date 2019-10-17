@@ -15,10 +15,22 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-PiReT can be installed using conda:
+### 0.0.1 Installing directly from conda
+
+
+<!-- PiReT can be installed using conda:
 ```
 conda install piret
 ```
+
+Note that this doesnt -->
+
+Coming soon!
+
+### 0.0.2
+
+Installing separatelyt
+
 For getting KO ids for genes, PiReT uses [emapper](https://github.com/eggnogdb/eggnog-mapper). The conda install of PiReT also includes emapper. However, its database need to be downloaed following instruction [here](https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2). Briefly,
 
 <!-- PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log` -->
