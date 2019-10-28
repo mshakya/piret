@@ -38,6 +38,8 @@ conda install -c bioconda subread -n piret_env --yes
 conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
 conda install -c r r -n piret_env --yes
 conda install -c bioconda r-optparse -n piret_env --yes
+conda install -c bioconda bioconductor-deseq2 -n piret_env --yes
+conda install -c bioconda bioconductor-edger -n piret_env --yes
 source activate piret_env
 git clone https://github.com/mshakya/piret.git
 cd piret
@@ -52,6 +54,7 @@ We have provided test data set to check if the installation was successful or no
 For running tests on eukaryote datasets:
 
 ```
+LUIGI_CONFIG_PATH="/panfs/biopan01/scratch-311300/ecoli_usda/ecoli.cfg" bin/piret -c ecoli.cfg -d ecoli_piret -e exp_desn.txt
 $LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
 ```
 

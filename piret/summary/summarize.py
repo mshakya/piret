@@ -266,6 +266,12 @@ class conver2json(luigi.Task):
                 # json.dump(feat_dic, json_file, indent=4)
                 json_list.append(feat_dic)
             json.dump(json_list, json_file, indent=4)
+            meta_list = ["seqid", "id", "source", "featuretype", "start",
+                         "end", "length", "strand", "frame", "locus_tag",
+                         "extra"]
+            df = pd.io.json.json_normalize(json_list, errors="ignore")
+            df.to_csv("~/test_df.txt", index=False)
+
 
     def assign_scores(self, feat_dic, edger_sdic, deseq_sdic, feat_id):
         """Assign scores from edger and deseq to summary dic."""
@@ -410,25 +416,18 @@ class conver2json(luigi.Task):
         stie_dir = os.path.join(self.workdir, "processes", "stringtie")
         stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab",
                       recursive=True)]
-        print(stie_files)
         dflist = []
         for f in stie_files:
-            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Reference", "Strand",
+            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Strand",
                                                "Start", "End"], axis=1)
-            print(df.head())
             samp_name = os.path.basename(f)
-            print(samp_name)
             samp = re.sub("_sTie.tab", "", samp_name)
-            print(samp + "\n")
-            df.columns = ["GeneID", samp + "_cov",
+            df.columns = ["GeneID", "Reference", samp + "_cov",
                           samp + "_FPKM", samp + "_TPM"]
-            print(df.head())
             dflist.append(df)
             
-        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on='GeneID'), dflist).drop_duplicates()
-        finaldf.to_csv("~/test.txt")
-        print(finaldf.drop_duplicates())
-        finaldic = finaldf.set_index('GeneID').to_dict(orient="index")
+        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on=['GeneID', 'Reference']), dflist).drop_duplicates()
+        finaldic = finaldf.set_index(['GeneID', 'Reference']).to_dict(orient="index")
         return finaldic
 
     def translate(self, nucleotide, type):
