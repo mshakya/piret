@@ -15,7 +15,7 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-### 0.0.1 Installing directly from conda
+### 0.0.1 Install directly from bioconda
 
 
 <!-- PiReT can be installed using conda:
@@ -27,34 +27,62 @@ Note that this doesnt -->
 
 Coming soon!
 
-### 0.0.2 Installing dependencies separately using conda
+### 0.0.2 Install dependencies separately using conda
 
+For installation to work, conda must be installed. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) for instructions on how to install conda. Use following commands to create conda environments and then install corresponding packages.
 
 ```
+
 conda create -n piret_env python=3.6.6 --yes
 conda install -c bioconda faqcs -n piret_env --yes
 conda install -c bioconda star hisat2 subread -n piret_env --yes
 conda install -c bioconda subread -n piret_env --yes
 conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
-conda install -c r r -n piret_env --yes
-conda install -c bioconda r-optparse -n piret_env --yes
-conda install -c bioconda bioconductor-deseq2 -n piret_env --yes
-conda install -c bioconda bioconductor-edger -n piret_env --yes
 source activate piret_env
+Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('edgeR')}";
+Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('DESeq2')}";
+Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('pathview')}";
+Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
+Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('ballgown')}";
 git clone https://github.com/mshakya/piret.git
 cd piret
 python setup.py install
 ```
 
+### 0.0.3 Install using provided bash script
 
-## 1.0 Test
+```
+$ git clone https://github.com/mshakya/piret.git
+$ cd piret
+$ installer.sh <conda_env>
+```
+
+For example:
+```
+$ git clone https://github.com/mshakya/piret.git
+$ cd piret
+$ installer.sh piret_env
+```
+
+### 0.0.4 Install using pip
+
+Coming soon!
+
+## 1.0 Testing Installation
 We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
 
 
 For running tests on eukaryote datasets:
 
 ```
-LUIGI_CONFIG_PATH="/panfs/biopan01/scratch-311300/ecoli_usda/ecoli.cfg" bin/piret -c ecoli.cfg -d ecoli_piret -e exp_desn.txt
+$ cd piret
+$ source activate piret_env
+
+$LUIGI_CONFIG_PATH="/panfs/biopan01/scratch-311300/ecoli_usda/ecoli.cfg" bin/piret -c ecoli.cfg -d ecoli_piret -e exp_desn.txt
 $LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
 ```
 
