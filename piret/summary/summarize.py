@@ -266,6 +266,12 @@ class conver2json(luigi.Task):
                 # json.dump(feat_dic, json_file, indent=4)
                 json_list.append(feat_dic)
             json.dump(json_list, json_file, indent=4)
+            meta_list = ["seqid", "id", "source", "featuretype", "start",
+                         "end", "length", "strand", "frame", "locus_tag",
+                         "extra"]
+            df = pd.io.json.json_normalize(json_list, errors="ignore")
+            df.to_csv("~/test_df.txt", index=False)
+
 
     def assign_scores(self, feat_dic, edger_sdic, deseq_sdic, feat_id):
         """Assign scores from edger and deseq to summary dic."""
@@ -314,6 +320,15 @@ class conver2json(luigi.Task):
                                         "Strand", "Length"], axis=1).to_dict(orient="index")
         else:
             read_dict = {}
+        for feat, count_dic in read_dict.items():
+            int_read = {}
+            feat_read = {}
+            for samp, count in count_dic.items():
+                int_read[samp] = int(count)
+            feat_read[feat] = int_read
+            # print(feat_read)
+            read_dict.update(feat_read)
+            # print(read_dict)
         return read_dict
 
     def dge_summary(self, feat_type, method):
@@ -403,17 +418,16 @@ class conver2json(luigi.Task):
                       recursive=True)]
         dflist = []
         for f in stie_files:
-            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Reference", "Strand",
+            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Strand",
                                                "Start", "End"], axis=1)
-            
             samp_name = os.path.basename(f)
-            samp = re.sub("_.*", "", samp_name)
-            df.columns = ["GeneID", samp + "_cov",
+            samp = re.sub("_sTie.tab", "", samp_name)
+            df.columns = ["GeneID", "Reference", samp + "_cov",
                           samp + "_FPKM", samp + "_TPM"]
             dflist.append(df)
             
-        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on='GeneID'), dflist)    
-        finaldic = finaldf.set_index('GeneID').to_dict(orient="index")
+        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on=['GeneID', 'Reference']), dflist).drop_duplicates()
+        finaldic = finaldf.set_index(['GeneID', 'Reference']).to_dict(orient="index")
         return finaldic
 
     def translate(self, nucleotide, type):

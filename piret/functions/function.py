@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 """Check design."""
+import sys
 import gffutils
 import json
 from Bio.Seq import Seq
@@ -12,10 +13,17 @@ import pandas as pd
 from luigi.interface import build
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
-# from plumbum.cmd import python2.7
 import subprocess
 from luigi.util import requires
 from piret.miscs import RefFile
+dir_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(dir_path, '..', '..'))
+emapper_path = os.path.join(lib_path, "thirdparty", "eggnog-mapper",
+                            "emapper.py")
+emapper_dir = os.path.join(lib_path, "thirdparty", "eggnog-mapper", "data")
+sys.path.append(emapper_path)
+os.environ["PATH"] += os.pathsep + emapper_path
+
 
 
 class GetAAs(luigi.Task):
@@ -115,12 +123,13 @@ class RunEmapper(luigi.ExternalTask):
         if os.path.exists(egg_dir) is False:
             os.makedirs(egg_dir)
 
-        emap = ["python2.7", os.path.join("thirdparty", "eggnog-mapper", "emapper.py"), "-i",
-                aa_file, "-o", egg_dir, "--data_dir", "../eggnog-mapper/data/",
+        emap = ["python2.7", emapper_path, "-i",
+                aa_file, "-o", egg_dir, "--data_dir", emapper_dir,
                 "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
                 "--query-cover", self.query_coverage,
                 "--subject-cover", self.subject_coverage,
                 "--temp_dir", egg_dir]
+        print(emap)
         subprocess.call(emap)
 
     def translate(self, nucleotide, type):
@@ -139,6 +148,6 @@ class RunEmapper(luigi.ExternalTask):
 
     def output(self):
         """Expected output JSON."""
-        jfile = os.path.join(self.workdir, "processes", "emapper", self.kingdom,
-                             "emapper.emapper.annotations")
-        return luigi.LocalTarget(jfile)
+        jfile = os.path.join(self.workdir, "processes", "emapper",
+                             self.kingdom, "emapper.emapper.annotations")
+        return luigi.LocalTarget((jfile))

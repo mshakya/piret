@@ -21,7 +21,7 @@ os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
 from piret.checks import CheckDesign, CheckDependencies
 from piret.checks.dependencies import check_depen
-from piret.novel import srna
+# from piret.novel import srna
 from piret.workflows import DualSeq, SingleSeq
 from piret.checks.gff3 import CheckGFF
 from piret.checks.aligner import check_aligner
@@ -229,6 +229,7 @@ def main():
                                     "prok_updated.gff")  # update gff
     
         # step 6, run read counts
+        print("Counting eukaryotes")
         dual_seq.feature_counts(new_gff=euk_gff, kingdom="eukarya")
         dual_seq.feature_counts(new_gff=prok_gff, kingdom="prokarya")
         dual_seq.merge_stringtie(new_gff=prok_gff + "," + euk_gff)

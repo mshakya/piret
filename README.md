@@ -15,10 +15,89 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-PiReT can be installed using conda:
+### 0.0.1 Install directly from bioconda
+
+
+<!-- PiReT can be installed using conda:
 ```
 conda install piret
 ```
+
+Note that this doesnt -->
+
+Coming soon!
+
+### 0.0.2 Install dependencies separately using conda
+
+For installation to work, conda must be installed. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) for instructions on how to install conda. Use following commands to create conda environments and then install corresponding packages.
+
+```
+
+conda create -n piret_env python=3.6.6 --yes
+conda install -c bioconda faqcs -n piret_env --yes
+conda install -c bioconda star hisat2 subread -n piret_env --yes
+conda install -c bioconda subread -n piret_env --yes
+conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
+source activate piret_env
+Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}";
+Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('edgeR')}";
+Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('DESeq2')}";
+Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('pathview')}";
+Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
+Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('ballgown')}";
+git clone https://github.com/mshakya/piret.git
+cd piret
+python setup.py install
+```
+
+### 0.0.3 Install using provided bash script
+
+```
+$ git clone https://github.com/mshakya/piret.git
+$ cd piret
+$ installer.sh <conda_env>
+```
+
+For example:
+```
+$ git clone https://github.com/mshakya/piret.git
+$ cd piret
+$ installer.sh piret_env
+```
+
+### 0.0.4 Install using pip
+
+Coming soon!
+
+## 1.0 Testing Installation
+We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
+
+
+For running tests on eukaryote datasets:
+
+```
+$ cd piret
+$ source activate piret_env
+
+$LUIGI_CONFIG_PATH="/panfs/biopan01/scratch-311300/ecoli_usda/ecoli.cfg" bin/piret -c ecoli.cfg -d ecoli_piret -e exp_desn.txt
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
+```
+
+For running tests on prokarya datasets:
+
+```
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
+```
+
+For running tests using `both` prokarya and eukarya datasets:
+```
+$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
+```
+
+
 For getting KO ids for genes, PiReT uses [emapper](https://github.com/eggnogdb/eggnog-mapper). The conda install of PiReT also includes emapper. However, its database need to be downloaed following instruction [here](https://github.com/eggnogdb/eggnog-mapper/wiki/eggNOG-mapper-v2). Briefly,
 
 <!-- PiReT uses bioinformatic tools, many of which are available in [bioconda](https://bioconda.github.io). For installing `PiReT` we have provided a script `INSTALL.sh` that checks for required dependencies (including their versions) are installed and in your path, and installs it in directories within `PiReT` if not found. Additionally, `sudo` privileges are not needed for installation. A log of all installation can be found in `install.log` -->
@@ -54,28 +133,6 @@ PiReT requires following dependencies, all of which should be installed and in t
 - [plumbum (>=v1.6.3)](https://plumbum.readthedocs.io/en/latest/)
 - [Biopython (>=v1.68)](https://github.com/biopython/biopython.github.io/)
 - [gffread (>=v0.8.4rc1)](https://pythonhosted.org/gffutils/)
-
-
-## 1.0 Test
-We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
-
-
-For running tests on eukaryote datasets:
-
-```
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
-```
-
-For running tests on prokarya datasets:
-
-```
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_prok.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_prok.txt
-```
-
-For running tests using `both` prokarya and eukarya datasets:
-```
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_both.cfg" bin/piret -c tests/test_prok.cfg -d tests/test_prok -e tests/test_both.txt
-```
 
 
 ## 2.0 Running PiReT
