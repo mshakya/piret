@@ -12,7 +12,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 script_dir = os.path.abspath(os.path.join(DIR, "../../scripts"))
 os.environ["PATH"] += ":" + script_dir
 sys.path.insert(0, script_dir)
-from plumbum.cmd import Rscript, plot_pathway
+from plumbum.cmd import Rscript, plot_pathway, EdgeR
 from plumbum.cmd import RDESeq2, gage_analysis
 import logging
 
@@ -44,13 +44,13 @@ class edgeR(luigi.Task):
         for file in os.listdir(fcount_dir):
             if file.endswith("tsv"):
                 name  = file.split("_")[-2]
-                edger_list = [os.path.join(script_dir, "EdgeR"), "-r",
+                edger_list = ["-r",
                               os.path.join(fcount_dir, file),
                             "-e", self.exp_design,
                             "-p", self.p_value,
                             "-n", name,
                             "-o", edger_dir]
-                edger_cmd = Rscript[edger_list]
+                edger_cmd = EdgeR[edger_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(edger_cmd)
                 edger_cmd()
