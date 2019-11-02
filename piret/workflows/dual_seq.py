@@ -220,7 +220,8 @@ class DualSeq:
         build([function.RunEmapper(workdir=self.workdir,
                                    gff_file=new_gff,
                                    fasta_file=fasta,
-                                   kingdom=kingdom)],
+                                   kingdom=kingdom,
+                                   emapper_dir=self.emap_dir)],
               local_scheduler=self.local_scheduler, workers=1)
 
     def run_opaver(self, method, kingdom):
