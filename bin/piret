@@ -134,6 +134,7 @@ def main():
                             p_value=paras["q_value"],
                             exp_desn_file=args.EXPDSN,
                             stardb_dir=db,
+                            emap_dir=paras["emap_db"],
                             gff_file=gff,
                             pathway=paras["pathway"])
 
