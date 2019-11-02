@@ -45,12 +45,11 @@ class DESeq2(luigi.Task):
                 feat_name = file.split("_")[-2]
                 # only run deseq on gene and CDS
                 if any(feat == feat_name for feat in ["CDS", "gene", "rRNA", "tRNA", "exon", "transcript"]) is True:
-                    deseq2_list = [os.path.join(script_dir, "RDESeq2"),
-                                  "-r", os.path.join(fcount_dir, file),
+                    deseq2_list = ["-r", os.path.join(fcount_dir, file),
                                   "-e", self.exp_design, "-p", self.p_value,
                                   "-n", feat_name,
                                "-o", DESeq2_dir]
-                    deseq2_cmd = Rscript[deseq2_list]
+                    deseq2_cmd = RDESeq2[deseq2_list]
                     logger = logging.getLogger('luigi-interface')
                     logger.info(deseq2_cmd)
                     deseq2_cmd()
