@@ -110,9 +110,10 @@ class GetAAs(luigi.Task):
 class RunEmapper(luigi.ExternalTask):
     """ Run emapper.
 
-        Get KEGG# and other"""
+        Gets KEGG ids, EC #s, GO#s"""
     query_coverage = luigi.Parameter()
     subject_coverage = luigi.Parameter()
+    emapper_dir = luigi.Parameter()
 
     def run_emapper(self):
         """Using the amino acid fasta file, run emapper."""
@@ -123,8 +124,8 @@ class RunEmapper(luigi.ExternalTask):
         if os.path.exists(egg_dir) is False:
             os.makedirs(egg_dir)
 
-        emap = ["python2.7", emapper_path, "-i",
-                aa_file, "-o", egg_dir, "--data_dir", emapper_dir,
+        emap = ["python", emapper_path, "-i",
+                aa_file, "-o", egg_dir, "--data_dir", self.emapper_dir,
                 "--dbtype", "seqdb", "-m", "diamond", "--target_orthologs", "one2one",
                 "--query-cover", self.query_coverage,
                 "--subject-cover", self.subject_coverage,
