@@ -1,3 +1,14 @@
+*.egg
+*.gif
+*.css
+*.js
+*.timepoint
+thirdparty/*
+piret.egg-info/*
+*.annotations
+*.seed_orthologs
+*.tmp
+*.txtr
 pypiret/.DS_Store
 .DS_Store
 Rplots.pdf
@@ -60,3 +71,4 @@ dist/pypiret-0.1.0-py3.6.egg
 chr*.txt
 SAindex
 aas.faa
+thirdparty/eggnog-mapper/emapper.py

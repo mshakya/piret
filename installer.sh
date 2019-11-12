@@ -58,6 +58,7 @@ python setup.py install
 echo "
 All done!
 Run
+source activate $env
 piret -h
 for usage.
 Read the README for more information!

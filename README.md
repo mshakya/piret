@@ -15,6 +15,8 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
+PiReT is installed using conda. So, please make sure that conda is installed and in your path.
+
 ### 0.0.1 Install directly from bioconda
 
 
@@ -51,6 +53,7 @@ Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == 
 git clone https://github.com/mshakya/piret.git
 cd piret
 python setup.py install
+
 ```
 
 ### 0.0.3 Install using provided bash script
@@ -65,8 +68,9 @@ For example:
 ```
 $ git clone https://github.com/mshakya/piret.git
 $ cd piret
-$ installer.sh piret_env
+$ ./installer.sh piret_env
 ```
+Make sure that the environment name (eg. piret_env) doesnt exist yet.
 
 ### 0.0.4 Install using pip
 
