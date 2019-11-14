@@ -20,7 +20,7 @@ sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
 from piret.checks import CheckDesign, CheckDependencies
-from piret.checks.dependencies import check_depen
+from piret.checks.dependencies import check_depen, check_pydepen
 # from piret.novel import srna
 from piret.workflows import DualSeq, SingleSeq
 from piret.checks.gff3 import CheckGFF
@@ -51,18 +51,23 @@ Example runs:\n
         piret -d <workdir> -e <design file>  -c <config file>
         """)
 
-    required_args = parser.add_argument_group('required arguments')
+    required_args = parser.add_mutually_exclusive_group()
 
     required_args.add_argument("-d", dest="WORKDIR", help="""working directory where all
-        output files will be processed and written""", required=True)
+        output files will be processed and written""")
 
     required_args.add_argument("-e", dest="EXPDSN", help="""tab delimited experimental
-        design file""", required=True, default=argparse.SUPPRESS)
+        design file""", default=argparse.SUPPRESS)
 
     required_args.add_argument("-c", "--config", help="""luigi config file for setting
-        parameters that control each step, see github repo for an example""", required=True, default=None)
+        parameters that control each step, see github repo for an example""", default=None)
 
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.3.4')
+    # A delete command
+    check_args = parser.add_mutually_exclusive_group(required=False)
+    check_args.add_argument('--check', help="""Check if all dependencies are
+                                        installed and in path""",
+                        action='store_true')
 
     return parser
 
@@ -76,8 +81,18 @@ def main():
     parser = cmdline_parser()
     args = parser.parse_args()
 
+    if args.check is True:
+        depen_list = ["samtools", "bamtools", "R", "featurecounts",
+                     "hisat2", "star", "faqcs", "stringtie",
+                     "bedtools"]
+        depen_list.sort()
+        check_depen(depen_list)
+        check_pydepen()
+        sys.exit()
+
     #TODO: figure out why this is not working
     os.environ["LUIGI_CONFIG_PATH"] = args.config
+
 
     # setting up logging files
     logger = create_logger(args.WORKDIR)
