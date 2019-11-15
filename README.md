@@ -15,7 +15,7 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-PiReT is installed using conda. So, please make sure that conda is installed and in your path.
+PiReT is installed using conda. So, please make sure that conda is installed and in your path. The installation can take upto 2 hours depending on your internet speed.
 
 ### 0.0.1 Install directly from bioconda
 
@@ -31,27 +31,44 @@ Coming soon!
 
 ### 0.0.2 Install dependencies separately using conda
 
-For installation to work, conda must be installed. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) for instructions on how to install conda. Use following commands to create conda environments and then install corresponding packages.
+For installation to work, conda must be installed. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) for instructions on how to install conda. Use following commands to create conda environments and then install corresponding packages. *Also make sure that there is not an environment by the name of piret_env before attempting the installation. Delete the environment if its already present.* I recommend that if you are python savvy, use this instruction as you will have control on every step of the installation, and if something fails, you wont have to start from the beginning.
 
 ```
-
+git clone https://github.com/mshakya/piret.git
+cd piret
 conda create -n piret_env python=3.6.6 --yes
 conda install -c bioconda faqcs -n piret_env --yes
 conda install -c bioconda star hisat2 subread -n piret_env --yes
-conda install -c bioconda subread -n piret_env --yes
+conda install -c bioconda subread stringtie -n piret_env --yes
 conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
+conda install -c bioconda diamond=0.9.24 -n piret_env --yes
 source activate piret_env
+cd thirdparty
+rm -rf eggnog-mapper
+git clone https://github.com/mshakya/eggnog-mapper.git
+cd eggnog-mapper
+python download_eggnog_data.py -y
+cd ..
+cd ..
+Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
+# install optparse
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
+# install tidyverse
 Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}";
+# install R reshape2 packages
 Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
+# install R pheatmap packages
 Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}";
-Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('edgeR')}";
-Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('DESeq2')}";
-Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('pathview')}";
-Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('gage')}";
-Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){source('https://bioconductor.org/biocLite.R');biocLite('ballgown')}";
-git clone https://github.com/mshakya/piret.git
-cd piret
+# install R edgeR packages
+Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}";
+# install R deseq2 packages
+Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}";
+# install R pathview package
+Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){BiocManager::install('pathview')}";
+# install R gage package
+Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}";
+# install R ballgown package
+Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
 python setup.py install
 
 ```
@@ -61,7 +78,7 @@ python setup.py install
 ```
 $ git clone https://github.com/mshakya/piret.git
 $ cd piret
-$ installer.sh <conda_env>
+$ ./installer.sh <conda_env>
 ```
 
 For example:
