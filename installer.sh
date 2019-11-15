@@ -23,7 +23,12 @@ conda install -c bioconda faqcs -n $env --yes
 conda install -c bioconda star hisat2 subread -n $env --yes
 conda install -c bioconda subread stringtie -n $env --yes
 conda install -c bioconda samtools bamtools bedtools -n $env --yes
+conda install -c bioconda diamond=0.9.24 -n $env --yes
 source activate $env
+cd thirdparty
+git clone https://github.com/mshakya/eggnog-mapper.git
+python download_eggnog_data.py 
+cd ..
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
 # install tidyverse
