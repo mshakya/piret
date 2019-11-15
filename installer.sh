@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ "$1" != "" ]; then
-    echo "Positional parameter 1 contains something"
+    echo "Environment name will be $1"
     env=$1
 else
     echo "Positional parameter 1 is empty"
@@ -24,12 +24,13 @@ conda install -c bioconda star hisat2 subread -n $env --yes
 conda install -c bioconda subread stringtie -n $env --yes
 conda install -c bioconda samtools bamtools bedtools -n $env --yes
 conda install -c bioconda diamond=0.9.24 -n $env --yes
+source ~/.bashrc
 source activate $env
 cd thirdparty
 rm -rf eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git
 cd eggnog-mapper
-python download_eggnog_data.py 
+python download_eggnog_data.py -y
 cd ..
 cd ..
 Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
