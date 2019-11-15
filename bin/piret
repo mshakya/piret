@@ -51,7 +51,7 @@ Example runs:\n
         piret -d <workdir> -e <design file>  -c <config file>
         """)
 
-    required_args = parser.add_mutually_exclusive_group()
+    required_args = parser.add_argument_group()
 
     required_args.add_argument("-d", dest="WORKDIR", help="""working directory where all
         output files will be processed and written""")
@@ -84,7 +84,7 @@ def main():
     if args.check is True:
         depen_list = ["samtools", "bamtools", "R", "featurecounts",
                      "hisat2", "star", "faqcs", "stringtie",
-                     "bedtools"]
+                     "bedtools", "diamond"]
         depen_list.sort()
         check_depen(depen_list)
         check_pydepen()
@@ -92,7 +92,6 @@ def main():
 
     #TODO: figure out why this is not working
     os.environ["LUIGI_CONFIG_PATH"] = args.config
-
 
     # setting up logging files
     logger = create_logger(args.WORKDIR)
@@ -102,12 +101,6 @@ def main():
 
     # check if correct options are selected
     check_input(paras, parser=parser)
-
-    # check if required third party tools are in path
-    if paras["aligner"] == "STAR":
-        check_depen(["STAR", "samtools"], logger)
-    elif paras["aligner"] == "hisat2":
-        check_depen(["hisat2", "samtools"], logger)
 
     # getting absolute path of workdir
     workdir = os.path.abspath(args.WORKDIR)
