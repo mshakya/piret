@@ -226,9 +226,9 @@ if(nrow(read_counts.non0) < 2 ){
                 ifelse(!dir.exists(DE_dir), dir.create(DE_dir), print("already exist"))
                 # filename strings for each comparisons
                 # r_fn <- strsplit(basename(reads_file), ".tsv")[[1]]
-                filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2],
+                filename <- paste(all_pairs[[n]][1], "over", all_pairs[[n]][2],
                                   feature_name, "et.csv", sep = "__")
-                filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2],
+                filename_sig <- paste(all_pairs[[n]][1], "over", all_pairs[[n]][2],
                                       feature_name,"sig.csv", sep = "__")
 
                 # sample matrix
@@ -243,7 +243,7 @@ if(nrow(read_counts.non0) < 2 ){
                        
                 # write summary table
                 print("Writing summary file")
-                out_file_summ <- file.path(DE_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
+                out_file_summ <- file.path(DE_dir, paste(all_pairs[[n]][1], "over", all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
                 summ_table <- summary(decideTests(edger_et))
                 colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
                 write.csv(t(summ_table), out_file_summ)
@@ -251,9 +251,9 @@ if(nrow(read_counts.non0) < 2 ){
                 md_plot_dir = file.path(DE_dir, "md_plots")
                 ifelse(!dir.exists(md_plot_dir), dir.create(md_plot_dir), print("already exist"))
                 out_md_pdf <- file.path(md_plot_dir, paste(
-                    all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
+                    all_pairs[[n]][1], "over", all_pairs[[n]][2], feature_name, "MD.pdf", sep = "__"))
                 out_md_png <- file.path(md_plot_dir, paste(
-                    all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MD.png", sep = "__"))
+                    all_pairs[[n]][1], "over", all_pairs[[n]][2], feature_name, "MD.png", sep = "__"))
                 pdf(out_md_pdf)
                 plotMD(edger_et)
                 dev.off()
