@@ -26,6 +26,7 @@ conda install -c bioconda samtools bamtools bedtools -n $env --yes
 conda install -c bioconda diamond=0.9.24 -n $env --yes
 source activate $env
 cd thirdparty
+rm -rf eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git
 cd eggnog-mapper
 python download_eggnog_data.py 
