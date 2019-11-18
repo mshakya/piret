@@ -70,7 +70,7 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
     not_sig = notallzero - up - down
     summ_table <- data.frame(Down = down,
                              NotSig = not_sig, Up = up)
-    summ_file <- file.path(outdir, paste(pair1, pair2, feature_name,
+    summ_file <- file.path(outdir, paste(pair1, "over", pair2, feature_name,
                                          "summary.csv", sep = "__"))
     write.csv(summ_table, summ_file, row.names = c(paste(pair1, pair2,
                                                          feature_name, sep="+")) )
@@ -257,9 +257,9 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
         f2 <- all_pairs[n, 2]
         print(f2)
         # filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
-        filename <- paste(f1, f2, feature_name, "et.csv", sep = "__")
+        filename <- paste(f1, "over", f2, feature_name, "et.csv", sep = "__")
         # filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "sig.csv", sep = "__")
-        filename_sig <- paste(f1, f2, feature_name, "sig.csv", sep = "__")        
+        filename_sig <- paste(f1, "over", f2, feature_name, "sig.csv", sep = "__")        
         # sample matrix
         # pair1 <- as.character(all_pairs[[n]][1])
         pair1 <- as.character(f1)
@@ -275,12 +275,12 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
 
         #plot
         # out_ma_pdf <- file.path(DE_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.pdf", sep = "__"))
-        out_ma_pdf <- file.path(DE_dir, paste(f1, f2, feature_name, "MA.pdf", sep = "__"))
+        out_ma_pdf <- file.path(DE_dir, paste(f1, "over", f2, feature_name, "MA.pdf", sep = "__"))
         pdf(out_ma_pdf)
         plotMA(deseq_diff)
         dev.off()
         # out_ma_png <- file.path(DE_dir, paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "MA.png", sep = "__"))
-        out_ma_png <- file.path(DE_dir, paste(f1, f2, feature_name, "MA.png", sep = "__"))
+        out_ma_png <- file.path(DE_dir, paste(f1, "over", f2, feature_name, "MA.png", sep = "__"))
         png(out_ma_png)
         plotMA(deseq_diff)
         dev.off()
