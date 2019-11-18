@@ -42,7 +42,8 @@ pair.comb <- function(exp_des){
     exp_desn <- read.table(exp_des, sep = "\t", header = TRUE, comment.char="",
                        )
     categories <- unique(exp_desn$Group)
-    pairs <- combn(categories, 2, simplify = FALSE)
+    # pairs <- combn(categories, 2, simplify = FALSE)
+    pairs <- subset(expand.grid(rep(list(categories),2), stringsAsFactors = F), Var1 != Var2)
     return(pairs)}
 #==============================================================================#
 # read the output of featureCounts
