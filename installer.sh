@@ -24,6 +24,8 @@ conda install -c bioconda star hisat2 subread -n $env --yes
 conda install -c bioconda subread stringtie -n $env --yes
 conda install -c bioconda samtools bamtools bedtools -n $env --yes
 conda install -c bioconda diamond=0.9.24 -n $env --yes
+conda install -c bioconda perl-lwp-protocol-https -n $env --yes
+conda install -c bioconda perl-json -n $env --yes
 source ~/.bashrc
 source activate $env
 cd thirdparty
