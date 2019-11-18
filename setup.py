@@ -13,7 +13,8 @@ setup(
     packages=find_packages(),
     scripts=['bin/piret', 'scripts/EdgeR', "scripts/plot_pathway",
              "scripts/RDESeq2", "scripts/gage_analysis",
-             "scripts/Rballgown"],
+             "scripts/Rballgown",
+             "thirdparty/omics-pathway-viewer/scripts/opaver.r"],
     data_files=[("thirdparty/eggnog-mapper/",
                  ["thirdparty/eggnog-mapper/emapper.py",]),(
                  "thirdparty/eggnog-mapper/eggnogmapper",
@@ -25,7 +26,11 @@ setup(
                  "thirdparty/eggnog-mapper/eggnogmapper/seqio.py",
                  "thirdparty/eggnog-mapper/eggnogmapper/utils.py",
                  "thirdparty/eggnog-mapper/eggnogmapper/vars.py",
-                 "thirdparty/eggnog-mapper/eggnogmapper/version.py"])],
+                 "thirdparty/eggnog-mapper/eggnogmapper/version.py"]),
+                 ("thirdparty/omics-pathway-viewer/scripts/", [
+                  "thirdparty/omics-pathway-viewer/scripts/opaver.pl"
+                 ])
+                 ],
     license="Apache License 2.0",
     platforms="Posix; MacOS X",
     classifiers=[
