@@ -3,7 +3,7 @@
 import os
 import pytest
 import luigi
-from pypiret.Runs import Summ
+from piret.Runs import Summ
 from plumbum.cmd import rm
 
 

@@ -3,7 +3,7 @@
 """
 PyPiReT testing suite.
 
-test suite for pypiret
+test suite for piret
 """
 
 import unittest

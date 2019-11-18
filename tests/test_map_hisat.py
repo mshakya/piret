@@ -17,8 +17,8 @@ sys.path.append(LIB)
 #os.environ["PATH"] += ":" + script_dir
 # 
 # print(shutil.which("EdgeR"))
-# from pypiret.Runs import FaQC
-from pypiret.Runs import Map
+# from piret.Runs import FaQC
+from piret.Runs import Map
 
 # class TestGFF2GTF(unittest.TestCase):
 #     """Unittest testcase."""

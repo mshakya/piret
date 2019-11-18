@@ -3,7 +3,7 @@
 import sys
 import unittest
 sys.path.append('../')
-from pypiret.checks import CheckDesign  # noqa
+from piret.checks import CheckDesign  # noqa
 
 test_exp_file = "tests/data/test_experimental_design.txt"
 test_exp_file_wp = "tests/data/test_experimental_design_wrong_path.txt"

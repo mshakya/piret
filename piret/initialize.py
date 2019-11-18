@@ -8,7 +8,7 @@ to check if files are correctly formatted
 
 import sys
 import os
-from pypiret import logger
+from piret import logger
 
 
 

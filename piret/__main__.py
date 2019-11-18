@@ -9,7 +9,7 @@ contains description
 
 
 import sys
-import pypiret
+import piret
 
 if __name__ == "__main__":
-    pypiret.description(sys.stdout)
+    piret.description(sys.stdout)
