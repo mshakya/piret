@@ -7,7 +7,7 @@ from plumbum.cmd import rm
 DIR = os.path.dirname(os.path.realpath(__file__))
 LIB = os.path.abspath(os.path.join(DIR, '..'))
 sys.path.append(LIB)
-from pypiret.checks.GFF3 import CheckGFF
+from piret.checks.GFF3 import CheckGFF
 
 
 def test_size():

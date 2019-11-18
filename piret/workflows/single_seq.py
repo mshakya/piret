@@ -4,7 +4,7 @@ import sys
 import argparse
 import luigi
 dir_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(dir_path, '..'))
+lib_path = os.path.abspath(os.path.join(dir_path, '..', '..'))
 bin_path = os.path.join(lib_path, 'bin')
 sys.path.append(lib_path)
 os.environ["PATH"] += os.pathsep + bin_path
@@ -29,7 +29,7 @@ class SingleSeq:
 
     def __init__(self, qc, fastq_dic, ref_fasta, num_cpus,
                  local_scheduler, hisat_index, stardb_dir, workdir, kingdom,
-                 no_of_jobs, exp_desn_file,
+                 no_of_jobs, exp_desn_file, emap_dir,
                  p_value, aligner, gff_file, pathway):
         self.qc = qc
         self.ref_fasta = ref_fasta
@@ -42,6 +42,7 @@ class SingleSeq:
         self.local_scheduler = local_scheduler
         self.no_of_jobs = no_of_jobs,
         self.exp_desn_file = exp_desn_file
+        self.emap_dir = emap_dir
         self.p_value = p_value
         self.aligner = aligner
         self.gff_file = gff_file
@@ -232,7 +233,8 @@ class SingleSeq:
         build([RunEmapper(workdir=self.workdir,
                           gff_file=new_gff,
                           fasta_file=self.ref_fasta,
-                          kingdom=self.kingdom)],
+                          kingdom=self.kingdom,
+                          emapper_dir=self.emap_dir)],
               local_scheduler=self.local_scheduler, workers=1)
 
     def run_opaver(self, method):

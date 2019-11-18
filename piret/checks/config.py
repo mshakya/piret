@@ -24,6 +24,7 @@ def parse_config(cfg_file):
     para_dic['gff_euk'] = config.get('DEFAULT', 'gff_euk')
     para_dic['fasta_prok'] = config.get('DEFAULT', 'fasta_prok')
     para_dic['gff_prok'] = config.get('DEFAULT', 'gff_prok')
+    para_dic['emap_db'] = config.get('DEFAULT', 'emap_db')
     if config.get('DEFAULT', 'pathway') == "True":
         para_dic['pathway'] = True
     else:

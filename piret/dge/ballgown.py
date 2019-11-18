@@ -12,7 +12,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 script_dir = os.path.abspath(os.path.join(DIR, "../../scripts"))
 os.environ["PATH"] += ":" + script_dir
 sys.path.insert(0, script_dir)
-from plumbum.cmd import Rscript, plot_pathway
+from plumbum.cmd import Rscript, plot_pathway, Rballgown
 import logging
 
 
@@ -39,10 +39,10 @@ class ballgown(luigi.Task):
             os.makedirs(bg_results)
 
         for name in ["gene", "transcript"]:
-            bg_list = [os.path.join(script_dir, "ballgown.R"), "-i", bg_dir, "-e", self.exp_design,
+            bg_list = [ "-i", bg_dir, "-e", self.exp_design,
                        "-n", name, "-p", self.p_value,
                        "-o", bg_results]
-            bg_cmd = Rscript[bg_list]
+            bg_cmd = Rballgown[bg_list]
             logger = logging.getLogger('luigi-interface')
             logger.info(bg_cmd)
             bg_cmd()

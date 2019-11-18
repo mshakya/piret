@@ -177,8 +177,11 @@ class conver2json(luigi.Task):
                     pass
                 feat_dic['extra'] = feat_obj.extra
                 if feat_type != "region":
-                    nt_seqs = feat_obj.sequence(self.fasta_file)
-                    feat_dic['nt_seq'] = nt_seqs
+                    try:
+                        nt_seqs = feat_obj.sequence(self.fasta_file)
+                        feat_dic['nt_seq'] = nt_seqs
+                    except KeyError:
+                        pass
 # ============================================================================#
                 if feat_type == "CDS":
                     # translate the CDS
@@ -266,11 +269,10 @@ class conver2json(luigi.Task):
                 # json.dump(feat_dic, json_file, indent=4)
                 json_list.append(feat_dic)
             json.dump(json_list, json_file, indent=4)
-            meta_list = ["seqid", "id", "source", "featuretype", "start",
-                         "end", "length", "strand", "frame", "locus_tag",
-                         "extra"]
-            df = pd.io.json.json_normalize(json_list, errors="ignore")
-            df.to_csv("~/test_df.txt", index=False)
+            # meta_list = ["seqid", "id", "source", "featuretype", "start",
+            #              "end", "length", "strand", "frame", "locus_tag",
+            #              "extra"]
+            # df = pd.io.json.json_normalize(json_list, errors="ignore")
 
 
     def assign_scores(self, feat_dic, edger_sdic, deseq_sdic, feat_id):
