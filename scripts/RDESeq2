@@ -94,6 +94,7 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
     colnames(group_table) <- c("Files", "Group")
     group_table <- dplyr::select(group_table, Group)
     read_counts <- read_counts[, rownames(group_table)]
+    read_counts$total <- rowSums(read_counts)
     read_counts.non0 <- dplyr::filter(read_counts, total > 0)
     # _all(read_counts, total(. != 0))
     read_counts$total <- NULL # remove total column
