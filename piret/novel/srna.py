@@ -7,7 +7,7 @@ from os.path import basename, isdir
 from os import makedirs, listdir
 import sys
 from plumbum.cmd import samtools, grep, sed, bedtools, cat, awk
-from piret.Runs import Map
+from piret.runs import Map
 from luigi.util import requires, inherits
 import luigi
 import logging

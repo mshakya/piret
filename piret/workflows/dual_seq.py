@@ -11,7 +11,7 @@ os.environ["PATH"] += os.pathsep + bin_path
 from piret.checks.design import CheckDesign
 from piret.maps import hisat2
 from piret.qc import FaQC
-from piret.Runs import Map
+from piret.runs import Map
 from piret.novel import srna
 from piret.counts import featurecounts
 from piret.dge import edgeR
