@@ -17,8 +17,8 @@ sys.path.append(LIB)
 #os.environ["PATH"] += ":" + script_dir
 # 
 # print(shutil.which("EdgeR"))
-# from piret.Runs import FaQC
-from piret.Runs import Map
+# from piret.runs import FaQC
+from piret.maps import hisat2
 
 # class TestGFF2GTF(unittest.TestCase):
 #     """Unittest testcase."""
@@ -107,16 +107,19 @@ class TestHisatMapping(unittest.TestCase):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
         luigi.interface.build([
-            Map.HisatIndex(fasta="tests/data/test_prok.fna",
+            hisat2.HisatIndex(fasta="tests/data/test_prok.fna",
                            hi_index="tests/test_hisatmapping/prok_index",
                            num_cpus=1),
-            Map.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
+            hisat2.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
                               "tests/data/BTT_test15_R2.1000.fastq"],
+                              min_introlen=500,
+                              max_introlen=5000,
+                              rna_strandness=0,
+                              kingdom="prokarya",
                       num_cpus=1,
                       sample="samp1",
                       map_dir="tests/test_hisatmapping/mapping_results",                      
                       indexfile="tests/test_hisatmapping/prok_index",
-                      spliceFile="",
                       outsam="tests/test_hisatmapping/samp1.sam",
                       workdir="tests/test_hisatmapping/")], local_scheduler=True)
 

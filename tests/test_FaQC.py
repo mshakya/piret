@@ -8,7 +8,7 @@ from luigi.interface import build
 DIR = os.path.dirname(os.path.realpath(__file__))
 LIB = os.path.abspath(os.path.join(DIR, '..'))
 sys.path.append(LIB)
-from piret.Runs import FaQC
+from piret.qc import FaQC
 
 
 
