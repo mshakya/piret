@@ -19,7 +19,7 @@ def test_star():
                                               gff_file="tests/data/test_prok.gff",
                                               stardb_dir=star_dir,
                                               kingdom="prokarya"),
-                            star.map_star(fastqs=["tests/data/fastqs/samp5.1.trimmed.fastq", "tests/data/fastqs/samp5.2.trimmed.fastq"],
+                            star.map_star(fastqs=["tests/data/BTT_test15_R1.1000.fastq", "tests/data/BTT_test15_R2.1000.fastq"],
                                           stardb_dir=star_dir,
                                           map_dir=map_dir,
                                           sample="samp5",
