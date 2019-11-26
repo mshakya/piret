@@ -66,6 +66,7 @@ class STARindex(luigi.Task):
             ind_opt = ["--runMode", "genomeGenerate",
                        "--runThreadN", self.num_cpus,
                        "--genomeDir", self.stardb_dir,
+                       "--sjdbGTFfile", self.gff_file,
                        "--genomeFastaFiles", self.fasta.split(",")[0],
                        self.fasta.split(",")[1]]
 
@@ -125,11 +126,12 @@ class map_starW(luigi.WrapperTask):
     def requires(self):
         """A wrapper task for mapping using STAR."""
         for samp, fastq in self.fastq_dic.items():
+            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
-            yield map_star(fastqs=[fastq.split(":")[0],
-                                   fastq.split(":")[1]],
+            yield map_star(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
+                                trim_dir + "/" + samp + ".2.trimmed.fastq"],
                                    stardb_dir=self.stardb_dir, map_dir=map_dir,
                                    sample=samp, num_cpus=self.num_cpus)
 
