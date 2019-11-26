@@ -3,21 +3,22 @@
 import os
 import pytest
 import luigi
-from piret.Runs import Map
-from plumbum.cmd import rm
+from luigi.interface import build
+from piret.pathways import opaver
+from plumbum.cmd import rm, cp
 
 
+def test_opaver():
+    """Test deseq3."""
+    build([opaver.RunOpaver(workdir=os.path.join("tests", "data",
+                                                     "test_prok"),
+                         kingdom="prokarya",
+                         method="edgeR")], local_scheduler=True)
+    
+    assert os.stat(os.path.join("tests", "data", "test_prok", "processes",
+                                       "DESeq2", "prokarya", "gene",
+                                       "liver__over__spleen__gene__sig.csv" )).st_size > 1
 
-def test_star():
-        """Test star index creation, FaQC, and mapping."""
-        luigi.interface.build([Map.map_star(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
-                                                    "tests/data/BTT_test15_R2.1000.fastq"],
-                               num_cpus=1,
-                               stardb_dir="tests/test_star_mapping/index",
-                      map_dir="tests/test_star_mapping/mapping_results",
-                      sample="migun")], local_scheduler=True)
-        assert os.path.exists("tests/test_star_mapping/mapping_results/migun_Aligned.sortedByCoord.out.bam") is True
-
-        rm_cmd = rm["-rf", "tests/test_star_mapping"]
-        rm_cmd()
-
+    # rm_cmd = rm["-rf", "tests/data/test_prok/processes/DESeq2/prokarya/gene/spleen__over__liver__gene__sig.csv"]
+    # rm_cmd()
+    

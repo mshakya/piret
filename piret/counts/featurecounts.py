@@ -6,7 +6,7 @@ from __future__ import print_function
 import os
 from os.path import basename, splitext
 from plumbum.cmd import stringtie, featureCounts
-from piret.Runs import Map
+# from piret.runs import Map
 import pandas as pd
 from luigi.util import inherits, requires
 from luigi.contrib.external_program import ExternalProgramTask

@@ -69,6 +69,8 @@ class TestCov(unittest.TestCase):
         self.fn.genome_coverage("tests/data/samp5.fw_srt.bam",
                                 "samp5.fw_srt.bam.genome_size")
         assert os.path.exists("samp5.fw_srt.bam.genome_size")
+        rm_cmd1 = rm["-rf", "samp5.fw_srt.bam.genome_size"]
+        rm_cmd1()
 
     # def test_novel(self):
     #     FindNovelRegions.NovelRegions(self, "tests/data/test_prok.gff",

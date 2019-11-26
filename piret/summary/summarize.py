@@ -16,9 +16,11 @@ os.environ["PATH"] += ":" + script_dir
 sys.path.insert(0, script_dir)
 import logging
 import json
-import Bio
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
 import re
 from functools import reduce
+from piret.miscs  import RefFile
 
 
 class conversions(luigi.Task):
@@ -81,6 +83,20 @@ class conver2json(luigi.Task):
     workdir = luigi.Parameter()
     method = luigi.ListParameter()
     NovelRegions = luigi.BoolParameter()
+
+    def requires(self):
+        flist = []
+        if "edgeR" in self.method: 
+            cpm_file = os.path.join(self.workdir, "processes", "edgeR",
+                                    self.kingdom,  "gene",
+                                    "gene" + "_count_CPM.csv")
+            flist.append(cpm_file)
+        elif "DESeq2" in self.method:
+            fpm_file = os.path.join(self.workdir, "processes", "DESeq2",
+                                    self.kingdom,  "gene",
+                                    "gene" + "_count_FPKM.csv")
+            flist.append(fpm_file)
+        return [RefFile(f) for f in flist]
 
     def output(self):
         """Expected output JSON."""
@@ -179,13 +195,14 @@ class conver2json(luigi.Task):
                 if feat_type != "region":
                     try:
                         nt_seqs = feat_obj.sequence(self.fasta_file)
+                        nt_obj = Seq(nt_seqs, generic_dna)
                         feat_dic['nt_seq'] = nt_seqs
                     except KeyError:
                         pass
 # ============================================================================#
                 if feat_type == "CDS":
                     # translate the CDS
-                    feat_dic['aa_seqs'] = self.translate(nt_seqs, "CDS")
+                    feat_dic['aa_seqs'] = self.translate(nt_obj, "CDS")
 
                     # assign FPKMs and FPMs
                     self.assign_scores(feat_dic=feat_dic,
@@ -264,10 +281,13 @@ class conver2json(luigi.Task):
                                      feat_id=feat_obj.id,
                                      method="DESeq2", dge_dict=dge_deseq_gene)
                 else:
-                    # print(feat_type)
                     pass
-                # json.dump(feat_dic, json_file, indent=4)
-                json_list.append(feat_dic)
+                # just to make sure that keys are strings, else json dump fails
+                feat_dic_str = {}
+                for key, value in feat_dic.items():
+                    feat_dic_str[str(key)] = value
+
+                json_list.append(feat_dic_str)
             json.dump(json_list, json_file, indent=4)
             # meta_list = ["seqid", "id", "source", "featuretype", "start",
             #              "end", "length", "strand", "frame", "locus_tag",
@@ -305,7 +325,7 @@ class conver2json(luigi.Task):
                                header=None, engine='python')
             emap1 = emap.reset_index()
             emap1.columns = emap1.iloc[0]
-            emap2 = emap1.drop(0).set_index('#query_name').to_dict(orient="index")
+            emap2 = emap1.drop(0).drop([0], axis=1).set_index('#query_name').to_dict(orient="index")
             return emap2
         else:
             return None
@@ -435,9 +455,9 @@ class conver2json(luigi.Task):
     def translate(self, nucleotide, type):
         """Takes in a string of nucleotides and translate to AA."""
         if type == "CDS":
-            aa = Bio.Seq.translate(nucleotide, cds=False)
+            aa = nucleotide.translate()
         elif type == "exon":
-            aa = Bio.Seq.translate(nucleotide, cds=False)
+            aa = nucleotide.translate()
         else:
             aa = "not translated"
-        return aa
+        return str(aa)

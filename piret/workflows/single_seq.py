@@ -30,7 +30,7 @@ class SingleSeq:
     def __init__(self, qc, fastq_dic, ref_fasta, num_cpus,
                  local_scheduler, hisat_index, stardb_dir, workdir, kingdom,
                  no_of_jobs, exp_desn_file, emap_dir,
-                 p_value, aligner, gff_file, pathway):
+                 p_value, aligner, gff_file, pathway, **kwargs):
         self.qc = qc
         self.ref_fasta = ref_fasta
         self.fastq_dic = fastq_dic
@@ -48,15 +48,15 @@ class SingleSeq:
         self.gff_file = gff_file
         self.pathway = pathway
 
-    def run_faqc(self):
+    def run_faqc(self, **kwargs):
         """A function that calls the FaQC function.
 
         it returns QCed files in respective directory
         """
         if self.qc is True:
             build([FaQC.SummarizeQC(fastq_dic=self.fastq_dic,
-                                num_cpus=self.num_cpus,
-                                workdir=self.workdir)],
+                                    num_cpus=self.num_cpus,
+                                    workdir=self.workdir)],
                 local_scheduler=self.local_scheduler,
                 workers=1)
             qc_dic = {}
@@ -88,7 +88,8 @@ class SingleSeq:
         """Function to map reads."""
         if self.aligner == "hisat2":
             build([hisat2.HisatMapW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
-                                 indexfile=self.hisat_index, workdir=self.workdir)],
+                                 indexfile=self.hisat_index, workdir=self.workdir,
+                                 kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
         elif self.aligner in ["STAR", "star"]:
             build([star.map_starW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
@@ -101,7 +102,8 @@ class SingleSeq:
             build([hisat2.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,
-                                    num_cpus=self.num_cpus)],
+                                    num_cpus=self.num_cpus,
+                                    kingdom=self.kingdom)],
             local_scheduler=self.local_scheduler, workers=1)
         elif self.aligner in ["STAR", "star"]:
             build([star.SummarizeStarMap(fastq_dic=self.fastq_dic,

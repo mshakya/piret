@@ -85,31 +85,33 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
                                      perl = TRUE)
     names(read_counts) <- base::gsub("_srt.bam", "", names(read_counts), perl = TRUE)
     names(read_counts) <- base::gsub("^.*[.]", "", names(read_counts))
-    gene_info <- read_counts[, c(1:6)]
-#=============================================================================#
+    read_counts$total <- rowSums(read_counts[, -c(1:6)])
+    read_counts.non0 <- dplyr::filter(read_counts, total > 0)
+    gene_info <- read_counts.non0[, c(1:6)]
+    read_counts.non0$total <- NULL # remove total column
     #read in the table with group info
     group_table <- utils::read.table(group_file, colClasses = c("character"),
                                      comment.char = "#", row.names = 1,
                                      sep = "\t", header = FALSE)
     colnames(group_table) <- c("Files", "Group")
+    read_counts.non0 <- read_counts.non0[, rownames(group_table)]
     group_table <- dplyr::select(group_table, Group)
-    read_counts <- read_counts[, rownames(group_table)]
+    
     # count 0s
-    check_zero = apply(read_counts, 1, function(x) sum(x == 0))
+    check_zero = apply(read_counts.non0, 1, function(x) sum(x == 0))
     check = all(lapply(check_zero, function(x) x > 0))
     if (check[[1]]) {
         warning("every gene contains at least one zero, cannot compute log geometric means")
     } else{
 
-    deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read_counts,
+    deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read_counts.non0,
                                               colData = group_table,
                                               design = ~ Group,
                                               tidy = FALSE)
-
     featureData <- data.frame(basepairs = gene_info$Length)
     S4Vectors::mcols(deseq_ds) <- S4Vectors::DataFrame(S4Vectors::mcols(deseq_ds),
                                             featureData)
-      # remove genes without any counts
+    # remove genes without any counts
     deseq_ds <- deseq_ds[base::rowSums(DESeq2::counts(deseq_ds)) > 0, ]
 #=============================================================================#
 #   fpkm table
@@ -244,7 +246,6 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
     dds <- DESeq2::DESeq(deseq_ds)
     # get all possible pairs
     all_pairs <- pair.comb(group_file)
-#     print(all_pairs)
 
     for (n in 1:nrow(all_pairs) ) {
         # folders for each comparisons
@@ -253,9 +254,7 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
         ifelse(!dir.exists(DE_dir), dir.create(DE_dir), print("already exist"))
         # filename strings for each comparisons
         f1 <- all_pairs[n, 1]
-        print(f1)
         f2 <- all_pairs[n, 2]
-        print(f2)
         # filename <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "et.csv", sep = "__")
         filename <- paste(f1, "over", f2, feature_name, "et.csv", sep = "__")
         # filename_sig <- paste(all_pairs[[n]][1], all_pairs[[n]][2], feature_name, "sig.csv", sep = "__")
@@ -269,7 +268,6 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
         # exact test
         deseq_diff <- DESeq2::results(dds, contrast = c("Group", pair1, pair2))
         summ <- DESeq2::summary.DESeqResults(deseq_diff)
-        write.csv(summ, "test_summ.txt")
         deseq_diff <- deseq_diff[order(as.numeric(deseq_diff$pvalue)),]
         deseq_sig <- subset(deseq_diff, padj < as.numeric(pcutoff))
 
