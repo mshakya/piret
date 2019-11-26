@@ -27,7 +27,7 @@ import logging
 from collections import defaultdict as dd, Counter
 from os.path import basename, splitext
 from plumbum.cmd import stringtie, featureCounts
-from piret.runs import Map
+# from piret.runs import Map
 from piret.miscs import RefFile
 import luigi
 import logging
