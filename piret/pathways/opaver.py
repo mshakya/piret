@@ -41,7 +41,7 @@ class RunOpaver(luigi.Task):
         dge_files = [f for f in glob.glob(dge_dir + "**/*sig.csv",
                      recursive=True)]
         for file in dge_files:
-            cond_fdr = os.path.basename(file).split("__et.csv")[0]
+            cond_fdr = os.path.basename(file).split("__sig.csv")[0]
             opaver_outfile = os.path.join(self.workdir, "processes", "opaver",
                                                 self.kingdom, self.method,
                                                 cond_fdr, "opaver.tsv")
@@ -51,10 +51,10 @@ class RunOpaver(luigi.Task):
         """."""
         if self.method == "edgeR":
             opaver_files = self.prep_opaver(method="edgeR")
-            self.run_opaver(method="edgeR", opavers=opaver_files)
+            # self.run_opaver(method="edgeR", opavers=opaver_files)
         elif self.method == "DESeq2":
             opaver_files = self.prep_opaver(method="DESeq2")
-            self.run_opaver(method="DESeq2", opavers=opaver_files)
+            # self.run_opaver(method="DESeq2", opavers=opaver_files)
 
     def prep_opaver(self, method):
         out_files = []
@@ -98,7 +98,7 @@ class RunOpaver(luigi.Task):
                                      sep="\t", index=False)
                     out_files.append(os.path.join(opaver_outdir, "opaver.tsv"))
                 elif method == "DESeq2":
-                    cond_fdr = os.path.basename(file).split("__et.csv")[0]
+                    cond_fdr = os.path.basename(file).split("__sig.csv")[0]
                     opaver_outdir = os.path.join(self.workdir, "processes", "opaver",
                                             self.kingdom, method,
                                             cond_fdr)
