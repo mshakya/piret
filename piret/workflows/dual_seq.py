@@ -13,6 +13,7 @@ from piret.maps import hisat2
 from piret.qc import FaQC
 from piret.runs import Map
 from piret.novel import srna
+from piret.maps import star
 from piret.counts import featurecounts
 from piret.dge import edgeR
 from piret.dge import DESeq2
@@ -40,18 +41,11 @@ class DualSeq:
         self.euk_gff = kwargs['euk_gff']
         self.exp_desn_file = kwargs['exp_desn_file']
         self.pathway = kwargs["pathway"]
-        # self.ref_gffs = ref_gffs
-        # self.fastq_dic = fastq_dic
-        # self.num_cpus = num_cpus
         self.hisat_index = kwargs["hisat_index"]        
         self.kingdom = kwargs["kingdom"]
         self.local_scheduler = kwargs["local_scheduler"]
-        # self.no_of_jobs = no_of_jobs
-        # self.exp_desn_file = exp_desn_file
         self.p_value = kwargs["p_value"]
-        # self.prok_org_code = prok_org_code
-        # self.euk_org_code = euk_org_code
-        # self.stardb_dir = stardb_dir
+        self.stardb_dir = kwargs["stardb_dir"]
 
     def run_faqc(self):
         """A function that calls the FaQC function.
@@ -85,28 +79,31 @@ class DualSeq:
                             # workdir=self.workdir)],
                           local_scheduler=self.local_scheduler,
                           workers=1)
-        elif self.aligner == "STAR":
-            build([Map.STARindex(fasta=self.ref_fastas,
-                             num_cpus=self.num_cpus,
-                             gff_file=gff,
-                             stardb_dir = self.stardb_dir,
-                             kingdom=self.kingdom),
-                   Map.SAMindex(fasta=self.ref_fastas, workdir=self.workdir),
-                   Map.CreateSplice(gff_file=self.ref_gffs.split(",")[1],
-                            workdir=self.workdir),
-                   Map.GetChromName(prok_ref=self.ref_fastas.split(",")[0],
-                            euk_ref=self.ref_fastas.split(",")[1],
-                            workdir=self.workdir)],
+        elif self.aligner in ["STAR", "star"]:
+            ref_fastas = self.prok_fasta + "," + self.euk_fasta
+            build([star.STARindex(fasta=ref_fastas,
+                                num_cpus=self.num_cpus,
+                                gff_file=self.euk_gff,
+                                stardb_dir = self.stardb_dir,
+                                kingdom=self.kingdom),
+                   Map.SAMindex(fasta=ref_fastas, workdir=self.workdir)
+                #    Map.CreateSplice(gff_file=self.euk_gff,
+                #             workdir=self.workdir),
+                #    Map.GetChromName(prok_ref=self.prok_fasta,
+                #                     euk_ref=self.euk_fasta,
+                #             workdir=self.workdir)
+                            ],
                             local_scheduler=self.local_scheduler)
 
     def map_reads(self):
         """Function to map reads."""
         if self.aligner == "hisat2":
             build([hisat2.HisatMapW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
-                                 indexfile=self.hisat_index, workdir=self.workdir)],
+                                 indexfile=self.hisat_index, workdir=self.workdir,
+                                 kingdom=self.kingdom)],
               local_scheduler=self.local_scheduler)
-        elif self.aligner == "STAR":
-            build([Map.map_starW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+        elif self.aligner in ["STAR", "star"]:
+            build([star.map_starW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
                                  stardb_dir=self.stardb_dir, workdir=self.workdir)],
                   local_scheduler=self.local_scheduler)
 
@@ -116,10 +113,11 @@ class DualSeq:
             build([hisat2.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,
-                                    num_cpus=self.num_cpus)],
+                                    num_cpus=self.num_cpus,
+                                    kingdom=self.kingdom)],
             local_scheduler=self.local_scheduler, workers=1)
         elif self.aligner == "STAR":
-            build([Map.SummarizeStarMap(fastq_dic=self.fastq_dic,
+            build([star.SummarizeStarMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     stardb_dir=self.stardb_dir,
                                     num_cpus=self.num_cpus)],
