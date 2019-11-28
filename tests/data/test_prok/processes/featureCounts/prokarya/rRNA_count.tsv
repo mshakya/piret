@@ -1,0 +1,23 @@
+# Program:featureCounts v1.6.4; Command:"/Users/migunshakya/miniconda3/envs/piret_env/bin/featureCounts" "-a" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/novel/updated.gff" "-s" "0" "-B" "-p" "-P" "-C" "-g" "ID" "-t" "rRNA" "-T" "2" "-o" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/featureCounts/prokarya/rRNA_count.tsv" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp1/samp1_srt.bam" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp2/samp2_srt.bam" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp3/samp3_srt.bam" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp4/samp4_srt.bam" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp5/samp5_srt.bam" "/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp6/samp6_srt.bam" 
+Geneid	Chr	Start	End	Strand	Length	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp1/samp1_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp2/samp2_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp3/samp3_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp4/samp4_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp5/samp5_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp6/samp6_srt.bam
+rna0	AE017334.2	9335	10841	+	1507	0	0	0	0	0	0
+rna3	AE017334.2	11247	14154	+	2908	0	0	0	0	0	0
+rna4	AE017334.2	14203	14318	+	116	0	0	0	0	0	0
+rna6	AE017334.2	29129	30635	+	1507	0	1	0	0	0	1
+rna9	AE017334.2	31041	33948	+	2908	0	0	0	0	0	0
+rna10	AE017334.2	33997	34112	+	116	0	0	0	0	0	0
+rna13	AE017334.2	82451	83957	+	1507	0	0	0	0	0	0
+rna14	AE017334.2	84136	87043	+	2908	0	1	0	0	0	0
+rna15	AE017334.2	87093	87208	+	116	0	0	0	0	0	0
+rna16	AE017334.2	145515	147021	+	1507	0	3	0	0	0	0
+rna17	AE017334.2	147200	150107	+	2908	0	2	0	0	0	0
+rna18	AE017334.2	150194	150309	+	116	0	0	0	0	0	0
+rna39	AE017334.2	246235	247741	+	1507	0	0	0	0	0	1
+rna40	AE017334.2	247920	250827	+	2908	0	0	0	0	0	0
+rna41	AE017334.2	250877	250992	+	116	0	0	0	0	0	0
+rna44	AE017334.2	266814	268320	+	1507	0	0	0	0	0	0
+rna45	AE017334.2	268499	271406	+	2908	0	0	0	0	0	0
+rna46	AE017334.2	271456	271571	+	116	0	0	0	0	0	0
+rna54	AE017334.2	534140	537047	+	2908	0	0	0	0	0	2
+rna121	AE017334.2	4652251	4655158	-	2908	6	2	0	0	0	1
+rna122	AE017334.2	4655337	4656843	-	1507	0	1	0	0	0	0
