@@ -14,9 +14,9 @@ def test_featurecount():
     map_dir = os.path.join("tests/test_count", "processes", "mapping", "samp5")
     if os.path.exists(map_dir) is False:
         os.makedirs(map_dir)
-    cp_cmd = ["tests/data/samp5_srt.bam", map_dir]
+    cp_cmd = ["tests/data/test_prok/processes/mapping/samp5/samp5_srt.bam", map_dir]
     cp[cp_cmd]()
-    
+
     build([fc.FeatureCounts(fastq_dic={'samp5':''},
                             kingdom="prokarya",
                             gff_file="tests/data/test_prok.gff",
