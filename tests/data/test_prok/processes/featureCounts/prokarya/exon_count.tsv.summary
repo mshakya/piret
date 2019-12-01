@@ -1,0 +1,13 @@
+Status	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp1/samp1_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp2/samp2_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp3/samp3_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp4/samp4_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp5/samp5_srt.bam	/Users/migunshakya/Projects/PiReT/piret/tests/test_prok/processes/mapping/samp6/samp6_srt.bam
+Assigned	24	529	37	41	46	324
+Unassigned_Unmapped	68	55	37	26	25	53
+Unassigned_MappingQuality	0	0	0	0	0	0
+Unassigned_Chimera	0	11	0	0	2	2
+Unassigned_FragmentLength	6	33	12	22	43	31
+Unassigned_Duplicate	0	0	0	0	0	0
+Unassigned_MultiMapping	168	191	8	16	11	124
+Unassigned_Secondary	0	0	0	0	0	0
+Unassigned_NonSplit	0	0	0	0	0	0
+Unassigned_NoFeatures	2004	5202	1637	1628	1651	4752
+Unassigned_Overlapping_Length	0	0	0	0	0	0
+Unassigned_Ambiguity	0	0	0	0	0	0
