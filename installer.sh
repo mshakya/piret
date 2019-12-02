@@ -55,9 +55,6 @@ Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FAL
 # install R deseq2 packages
 Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2');}"  | awk '{print " - found DESeq2 "$2}'
 Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}";
-# # install R pathview package
-# Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == TRUE){packageVersion('pathview');}"  | awk '{print " - found pathview "$2}'
-# Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){BiocManager::install('pathview')}";
 
 # install R gage package
 Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage');}"  | awk '{print " - found gage "$2}'
