@@ -10,26 +10,29 @@ RUN apt-get -y update
 RUN apt-get -y install build-essential git-all wget
 RUN apt-get clean
 
+
+RUN git clone https://github.com/mshakya/piret.git
+WORKDIR "/piret/"
+RUN ./installer.sh
 # install all piret dependencies
+# RUN conda create -n piret_env python=3.6.6 --yes
+# RUN conda install -c bioconda faqcs -n piret_env --yes
+# RUN conda install -c bioconda star hisat2 subread -n piret_env --yes
+# RUN conda install -c bioconda subread stringtie -n piret_env --yes
+# RUN conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
+# RUN conda install -c bioconda diamond=0.9.24 -n piret_env --yes
+# RUN conda install -c bioconda perl-lwp-protocol-https -n piret_env --yes
+# RUN conda install -c bioconda perl-json -n piret_env --yes
+# RUN conda install -c conda-forge time -n piret_env --yes
+# RUN echo "source activate piret_env" > ~/.bashrc
+# ENV PATH /opt/conda/envs/piret_env/bin:$PATH
 # RUN git clone https://github.com/mshakya/piret.git
-# RUN cd piret
-RUN conda create -n piret_env python=3.6.6 --yes
-RUN conda install -c bioconda faqcs -n piret_env --yes
-RUN conda install -c bioconda star hisat2 subread -n piret_env --yes
-RUN conda install -c bioconda subread stringtie -n piret_env --yes
-RUN conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
-RUN conda install -c bioconda diamond=0.9.24 -n piret_env --yes
-RUN conda install -c bioconda perl-lwp-protocol-https -n piret_env --yes
-RUN conda install -c bioconda perl-json -n piret_env --yes
-# RUN source ~/.bashrc
-# RUN source activate piret_env
-# RUN cd thirdparty
-# RUN rm -rf eggnog-mapper
-# RUN git clone https://github.com/mshakya/eggnog-mapper.git
+# WORKDIR "/piret/"
+# RUN rm -rf thirdparty/eggnog-mapper
+# RUN git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
 # # RUN cd eggnog-mapper
 # # RUN python download_eggnog_data.py -y
-# RUN cd ..
-# RUN cd ..
+# # RUN cd ..
 # RUN Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
 # RUN Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
 # RUN Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
@@ -49,4 +52,4 @@ RUN conda install -c bioconda perl-json -n piret_env --yes
 # RUN Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}";
 # RUN Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
 # RUN Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
-# python setup.py install
+# RUN python setup.py install
