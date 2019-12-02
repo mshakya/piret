@@ -31,13 +31,14 @@ echo "source activate piret_env" > ~/.bashrc
 export PATH=/opt/conda/envs/piret_env/bin:$PATH
 source ~/.bashrc
 source activate $env
-cd thirdparty
-rm -rf eggnog-mapper
-git clone https://github.com/mshakya/eggnog-mapper.git
-cd eggnog-mapper
-python download_eggnog_data.py -y
-cd ..
-cd ..
+# cd thirdparty
+rm -rf thirdparty/eggnog-mapper
+git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
+# cd eggnog-mapper
+# python download_eggnog_data.py -y
+# cd ..
+# cd ..
+
 Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
 
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
