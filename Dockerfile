@@ -21,15 +21,10 @@ RUN conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
 RUN conda install -c bioconda diamond=0.9.24 -n piret_env --yes
 RUN conda install -c bioconda perl-lwp-protocol-https -n piret_env --yes
 RUN conda install -c bioconda perl-json -n piret_env --yes
-# RUN source ~/.bashrc
-# RUN source activate piret_env
 RUN cd thirdparty
 RUN rm -rf eggnog-mapper
 RUN git clone https://github.com/mshakya/eggnog-mapper.git
-# RUN cd eggnog-mapper
-# # RUN python download_eggnog_data.py -y
 RUN cd ..
-# RUN cd ..
 RUN Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
 RUN Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
 RUN Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
@@ -49,4 +44,4 @@ RUN Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == 
 RUN Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}";
 RUN Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
 RUN Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
-python setup.py install
+RUN python setup.py install
