@@ -31,14 +31,11 @@ echo "source activate piret_env" > ~/.bashrc
 export PATH=/opt/conda/envs/piret_env/bin:$PATH
 source ~/.bashrc
 source activate $env
-# cd thirdparty
 rm -rf thirdparty/eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
-# cd eggnog-mapper
-# python download_eggnog_data.py -y
-# cd ..
-# cd ..
 
+
+# R packages
 Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
 
 Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
@@ -58,9 +55,6 @@ Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FAL
 # install R deseq2 packages
 Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2');}"  | awk '{print " - found DESeq2 "$2}'
 Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}";
-# # install R pathview package
-# Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == TRUE){packageVersion('pathview');}"  | awk '{print " - found pathview "$2}'
-# Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){BiocManager::install('pathview')}";
 
 # install R gage package
 Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage');}"  | awk '{print " - found gage "$2}'
