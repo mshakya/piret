@@ -63,7 +63,7 @@ Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALS
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
 python setup.py install
-
+pytest --cov=piret tests/
 
 
 
