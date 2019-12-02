@@ -22,16 +22,16 @@ tests/test_prokold
 .pytest_cache/
 test_both/
 test_euk/
-test_prok/
+# test_prok/
 migun/
 *.out
 *.png
 *.pdf
-*.ctab
+# *.ctab
 *.bedfile
 *.tab
 *.log
-*.bam
+# *.bam
 *.gz
 *.fastq
 *.fa
@@ -71,4 +71,4 @@ dist/piret-0.1.0-py3.6.egg
 chr*.txt
 SAindex
 aas.faa
-thirdparty/eggnog-mapper/emapper.py
+# thirdparty/eggnog-mapper/emapper.py

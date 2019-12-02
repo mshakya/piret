@@ -21,7 +21,6 @@ os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
 from piret.checks import CheckDesign, CheckDependencies
 from piret.checks.dependencies import check_depen, check_pydepen
-# from piret.novel import srna
 from piret.workflows import DualSeq, SingleSeq
 from piret.checks.gff3 import CheckGFF
 from piret.checks.aligner import check_aligner
@@ -130,21 +129,21 @@ def main():
             fasta = paras["fasta_euk"]
             gff = paras["gff_euk"]
         single_seq = SingleSeq(qc=paras["qc"],
-                                fastq_dic=samp_dic,
-                            aligner=paras["aligner"],
-                            ref_fasta=fasta,
-                            num_cpus=paras["threads"],
-                            local_scheduler=True,
-                            hisat_index=db,
-                            workdir=workdir,
-                            kingdom=paras["kingdom"],
-                            no_of_jobs=no_of_jobs,
-                            p_value=paras["q_value"],
-                            exp_desn_file=args.EXPDSN,
-                            stardb_dir=db,
-                            emap_dir=paras["emap_db"],
-                            gff_file=gff,
-                            pathway=paras["pathway"])
+                               fastq_dic=samp_dic,
+                               aligner=paras["aligner"],
+                               ref_fasta=fasta,
+                               num_cpus=paras["threads"],
+                               local_scheduler=True,
+                               hisat_index=db,
+                               workdir=workdir,
+                               kingdom=paras["kingdom"],
+                               no_of_jobs=no_of_jobs,
+                               p_value=paras["q_value"],
+                               exp_desn_file=args.EXPDSN,
+                               stardb_dir=db,
+                               emap_dir=paras["emap_db"],
+                               gff_file=gff,
+                               pathway=paras["pathway"])
 
         # step 1, run qc
         qc_dic = single_seq.run_faqc()
@@ -199,19 +198,20 @@ def main():
 
         dual_seq = DualSeq(qc=paras["qc"],
                            fastq_dic=samp_dic, 
-                          kingdom=paras["kingdom"],
-                            aligner=paras["aligner"],
-                            euk_fasta=paras["fasta_euk"],
-                            prok_fasta=paras["fasta_prok"],
-                            prok_gff=paras["gff_prok"],
-                            euk_gff=paras["gff_euk"],
-                            workdir=workdir,
-                            p_value=paras["q_value"],
-                            exp_desn_file=args.EXPDSN,
-                            hisat_index=db,
-                            local_scheduler=True,
-                            pathway=paras["pathway"],
-                            num_cpus=paras["threads"])
+                           kingdom=paras["kingdom"],
+                           aligner=paras["aligner"],
+                           euk_fasta=paras["fasta_euk"],
+                           prok_fasta=paras["fasta_prok"],
+                           prok_gff=paras["gff_prok"],
+                           euk_gff=paras["gff_euk"],
+                           workdir=workdir,
+                           p_value=paras["q_value"],
+                           exp_desn_file=args.EXPDSN,
+                           hisat_index=db,
+                           local_scheduler=True,
+                           pathway=paras["pathway"],
+                           num_cpus=paras["threads"],
+                           stardb_dir = paras["star_index"])
         
         # step 1, run qc
         qc_dic = dual_seq.run_faqc()
@@ -304,57 +304,6 @@ def check_gff(gff_file):
         return True
     else:
         return False
-
-def check_index_file(indexfile):
-    """Check if index file is present."""
-    hisat_file = indexfile + '.6.ht2l'
-    if os.path.exists(hisat_file):
-        return True
-    else:
-        return False
-
-
-def check_star_aligner(method, kingdom):
-    """Only allow STAR aligner to work for eukarya only."""
-    if method in ('STAR') and kingdom == "prokarya":
-        sys.exit("STAR does not work well for prokaryotic genomes, pick hisat2!")
-    else:
-        return True
-
-def check_method(method, exp_design_file):
-    """Based on chosen method, if enough samples are present."""
-    exp_desn = CheckDesign(exp_design_file)
-    if method in ('DESeq2', 'all', 'DEgown', 'DEedge') and exp_desn.sample_suff(method='Deseq'):
-        return True
-    elif method in ('edgeR', 'ballgown', 'balledgeR'):
-        return True
-    else:
-        sys.exit("DESeq2 requires at least three replicates within a group!")
-
-
-def check_ref(ref_fasta=None, ref_gff=None):
-    """Check if references are present."""
-    if ',' in ref_fasta:
-        if all([os.path.exists(f) for f in ref_fasta.split(",")]) is True:
-            pass
-        else:
-            sys.exit("One of the reference fasta do not exist!")
-    if ',' in ref_gff:
-        if all([os.path.exists(f) for f in ref_gff.split(",")]) is True:
-            return True
-        else:
-            sys.exit("One of the reference gff do not exist!")
-    else:
-        if os.path.exists(ref_gff) and os.path.exists(ref_fasta):
-            if check_gff(ref_gff) is True:
-                return True
-        else:
-            if os.path.exists(ref_fasta) is False:
-                exit_message = ' '.join(("Reference FASTA", ref_fasta, "does not exist!"))
-                sys.exit(exit_message)
-            elif os.path.exists(ref_gff) is False:
-                exit_message = ' '.join(("Reference GFF", ref_gff, "does not exist!"))
-
 
 def summarize_run(aligner):
     """Prints summary information of runs."""

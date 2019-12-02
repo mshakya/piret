@@ -12,19 +12,21 @@ from plumbum.cmd import rm, cp
 
 def test_restringtie():
     """Test restringtie approach."""
+
     build([stringtie.ReStringTieScoresW(
                         fastq_dic={'samp1':"l",
                                    'samp2':['b'],
                                    'samp3':['b'],
                                    'samp4':['b'],
                                    'samp5':['b'],
-                                   'samp6':['b']},
+                                   'samp6':['tests/data/fastqs/BTT_test27_R1.fastq.gz',
+                                            "tests/data/fastqs/BTT_test27_R2.fastq.gz"]},
                         num_cpus=2,
-                        workdir="tests/data/test_prok/",
+                        workdir=os.path.join("tests", "data", "test_prok"),
                         kingdom="prokarya")], local_scheduler=True)
-assert os.stat(os.path.join("tests", "data", "test_prok", "processes",
+    assert os.stat(os.path.join("tests", "data", "test_prok", "processes",
                                        "ballgown", "prokarya", "samp6",
-                                       "e_data.ctab" )).st_size > 1    
+                                       "e_data.ctab" )).st_size > 1               
 
 
 def test_ballgown():
@@ -39,6 +41,8 @@ def test_ballgown():
                                        "ballgown", "prokarya",
                                        "liver__spleen__gene__sig.csv" )).st_size > 1
 
-    # rm_cmd = rm["-rf", "tests/data/test_prok/processes/DESeq2/prokarya/gene/spleen__over__liver__gene__sig.csv"]
-    # rm_cmd()
+    rm_cmd = rm["-rf", "tests/data/test_prok/processes/ballgown"]
+    rm_cmd()
+    rm_cmd = rm["-rf", "tests/data/test_prok/processes/DESeq2/prokarya/gene/spleen__over__liver__gene__sig.csv"]
+    rm_cmd()
     
