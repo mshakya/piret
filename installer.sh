@@ -28,7 +28,7 @@ conda install -c bioconda perl-lwp-protocol-https -n $env --yes
 conda install -c bioconda perl-json -n $env --yes
 conda install -c conda-forge time -n $env
 echo "source activate piret_env" > ~/.bashrc
-PATH /opt/conda/envs/piret_env/bin:$PATH
+export PATH=/opt/conda/envs/piret_env/bin:$PATH
 source ~/.bashrc
 source activate $env
 cd thirdparty
