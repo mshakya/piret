@@ -26,15 +26,13 @@ conda install -c bioconda samtools bamtools bedtools -n $env --yes
 conda install -c bioconda diamond=0.9.24 -n $env --yes
 conda install -c bioconda perl-lwp-protocol-https -n $env --yes
 conda install -c bioconda perl-json -n $env --yes
-conda install -c conda-forge time -n $env
+conda install -c conda-forge time -n $env --yes
 echo "source activate piret_env" > ~/.bashrc
 export PATH=/opt/conda/envs/piret_env/bin:$PATH
 source ~/.bashrc
 source activate $env
 rm -rf thirdparty/eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
-
-
 # R packages
 Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
 
@@ -63,7 +61,7 @@ Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALS
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
 Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
 python setup.py install
-
+pytest --cov=piret tests/
 
 
 
