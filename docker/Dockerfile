@@ -15,4 +15,3 @@ RUN git clone https://github.com/mshakya/piret.git
 WORKDIR "/piret/"
 RUN git checkout develop
 RUN ./installer.sh
-RUN pytest --cov=piret tests/
