@@ -1,7 +1,9 @@
-pandas==0.19.2
+pandas==0.25.3
 Biopython==1.68
 argparse==1.1
 luigi==2.8.2
 plumbum==1.6.3
 pytest-cov==2.7.0
 gffutils==0.9
+seaborn==0.9.0
+itables==0.2.1

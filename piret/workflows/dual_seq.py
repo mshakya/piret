@@ -46,6 +46,7 @@ class DualSeq:
         self.local_scheduler = kwargs["local_scheduler"]
         self.p_value = kwargs["p_value"]
         self.stardb_dir = kwargs["stardb_dir"]
+        self.emap_dir = kwargs["emap_dir"]
 
     def run_faqc(self):
         """A function that calls the FaQC function.
