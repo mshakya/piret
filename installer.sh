@@ -27,14 +27,12 @@ conda install -c bioconda diamond=0.9.24 -n $env --yes
 conda install -c bioconda perl-lwp-protocol-https -n $env --yes
 conda install -c bioconda perl-json -n $env --yes
 conda install -c conda-forge time -n $env --yes
-echo "source activate piret_env" > ~/.bashrc
 export PATH=/opt/conda/envs/piret_env/bin:$PATH
-source ~/.bashrc
 source activate $env
 rm -rf thirdparty/eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
 # R packages
-# echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
+echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
 echo "if('optparse' %in% rownames(installed.packages()) == TRUE) {packageVersion('optparse')}"  | Rscript -
 echo "if('optparse' %in% rownames(installed.packages()) == FALSE) {install.packages('optparse',repos='https://cran.r-project.org')}"  | Rscript -
 # install tidyverse
