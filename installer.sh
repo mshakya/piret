@@ -34,32 +34,30 @@ source activate $env
 rm -rf thirdparty/eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
 # R packages
-Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
-
-Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == TRUE){packageVersion('optparse');}"  | awk '{print " - found optparse "$2}'
-Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
+# echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
+echo "if('optparse' %in% rownames(installed.packages()) == TRUE) {packageVersion('optparse')}"  | Rscript -
+echo "if('optparse' %in% rownames(installed.packages()) == FALSE) {install.packages('optparse',repos='https://cran.r-project.org')}"  | Rscript -
 # install tidyverse
-Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == TRUE){packageVersion('tidyverse');}"  | awk '{print " - found tidyverse "$2}'
-Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}";
+echo "if('tidyverse' %in% rownames(installed.packages()) == TRUE){packageVersion('tidyverse')}"  | Rscript -
+echo "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}"  | Rscript -
 # install R reshape2 packages
-Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == TRUE){packageVersion('reshape2');}"  | awk '{print " - found reshape2 "$2}'
-Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
+echo "if('reshape2' %in% rownames(installed.packages()) == TRUE){packageVersion('reshape2')}"  | Rscript -
+echo "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}"  | Rscript -
 # install R pheatmap packages
-Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == TRUE){packageVersion('pheatmap');}"  | awk '{print " - found pheatmap "$2}'
-Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}";
+echo "if('pheatmap' %in% rownames(installed.packages()) == TRUE){packageVersion('pheatmap')}"  | Rscript -
+echo "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}"  | Rscript -
 # install R edgeR packages
-Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == TRUE){packageVersion('edgeR');}"  | awk '{print " - found edgeR "$2}'
-Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}";
+echo "if('edgeR' %in% rownames(installed.packages()) == TRUE){packageVersion('edgeR')}"  | Rscript -
+echo "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}"  | Rscript -
 # install R deseq2 packages
-Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2');}"  | awk '{print " - found DESeq2 "$2}'
-Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}";
-
+echo "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2')}"  | Rscript -
+echo "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}"  | Rscript -
 # install R gage package
-Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage');}"  | awk '{print " - found gage "$2}'
-Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}";
+echo "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage')}"  | Rscript -
+echo "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}"  | Rscript -
 # install R ballgown package
-Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown');}"  | awk '{print " - found ballgown "$2}'
-Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
+echo "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown')}"  | Rscript -
+echo "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}"  | Rscript -
 python setup.py install
 pytest --cov=piret tests/
 
