@@ -80,7 +80,6 @@ read_counts_sort$sum <- rowSums(read_counts_sort[7:col_len])
 read_counts_sort <- dplyr::arrange(read_counts_sort, desc(sum))
 read_counts_sort$sum <- NULL
 # read_counts_sort <- read_counts_sort[c(base::colnames(gene.info), base::row.names(group_table))]
-print(head(read_counts_non0))
 write.csv(read_counts_sort, file=outfile )
 #==============================================================================#
 # Reformat summary files for EDGE display
@@ -96,7 +95,6 @@ summary.counts.t <- as.data.frame(t(summary.counts))
 colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
 summary.counts.t = summary.counts.t[-1, ]
 write.csv(summary.counts.t, file = summary_outfile )
-write.csv(read_counts_non0, file = "~/Desktop/test.txt" )
 #==============================================================================#
 if(nrow(read_counts_non0) < 2 ){
     print("Nothing was mapped to the feature!")
