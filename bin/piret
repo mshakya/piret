@@ -211,8 +211,9 @@ def main():
                            local_scheduler=True,
                            pathway=paras["pathway"],
                            num_cpus=paras["threads"],
-                           stardb_dir = paras["star_index"])
-        
+                           stardb_dir = paras["star_index"],
+                           emap_dir=paras["emap_db"])
+
         # step 1, run qc
         qc_dic = dual_seq.run_faqc()
         

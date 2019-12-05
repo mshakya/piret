@@ -48,19 +48,23 @@ pair.comb <- function(exp_des){
 #==============================================================================#
 # read the output of featureCounts
 read_counts <- read.table(reads_file, sep = "\t", header = TRUE, comment.char = "#")
+# read_counts_only <- read_counts[, -c(1:6)]
+read_counts$total <- rowSums(read_counts[, -c(1:6)])
+read_counts_non0 <- dplyr::filter(read_counts, total > 0)
+read_counts_non0$total <- NULL
 #==============================================================================#
 # rename the column headers
-names(read_counts) <- gsub(".*mapping.", "", names(read_counts),
+names(read_counts_non0) <- gsub(".*mapping.", "", names(read_counts_non0),
                            perl = TRUE)
-names(read_counts) <- gsub("_srt.bam", "", names(read_counts), perl = TRUE)
+names(read_counts_non0) <- gsub("_srt.bam", "", names(read_counts_non0), perl = TRUE)
 
-names(read_counts) <- base::gsub("^.*[.]", "", names(read_counts))
+names(read_counts_non0) <- base::gsub("^.*[.]", "", names(read_counts_non0))
 #==============================================================================#
 # convert first column to row names
-row.names(read_counts) <- read_counts[, 1]
+row.names(read_counts_non0) <- read_counts_non0[, 1]
 #==============================================================================#
 # get gene information
-gene.info <- read_counts[, c(1:6)]
+gene.info <- read_counts_non0[, c(1:6)]
 #==============================================================================#
 # read the experimental design file
 group_table <- read.delim(group_file, colClasses=c("character"), comment.char="")
@@ -70,13 +74,13 @@ group_table <- select(group_table, Group)
 #TODO: move this piece of code to separate R code so that its done everytime
 #rearrange/clean the table and rewrite the column to display in EDGE
 outfile <- paste(strsplit(reads_file ,".tsv"), "_sorted.csv", sep="")
-read_counts.sort <- read_counts
-col_len <- ncol(read_counts.sort)
-read_counts.sort$sum <- rowSums(read_counts.sort[7:col_len])
-read_counts.sort <- dplyr::arrange(read_counts.sort, desc(sum))
-read_counts.sort$sum <- NULL
-read_counts.sort <- read_counts.sort[c(base::colnames(gene.info), base::row.names(group_table))]
-write.csv(read_counts.sort, file=outfile )
+read_counts_sort <- read_counts
+col_len <- ncol(read_counts_sort)
+read_counts_sort$sum <- rowSums(read_counts_sort[7:col_len])
+read_counts_sort <- dplyr::arrange(read_counts_sort, desc(sum))
+read_counts_sort$sum <- NULL
+# read_counts_sort <- read_counts_sort[c(base::colnames(gene.info), base::row.names(group_table))]
+write.csv(read_counts_sort, file=outfile )
 #==============================================================================#
 # Reformat summary files for EDGE display
 summary_file <- paste(reads_file, ".summary", sep="")
@@ -92,31 +96,12 @@ colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
 summary.counts.t = summary.counts.t[-1, ]
 write.csv(summary.counts.t, file = summary_outfile )
 #==============================================================================#
-# remove first six columns of featurecounts that have metadata
-read_counts <- read_counts[, -c(1:6)]
-read_counts$total <- rowSums(read_counts)
-read_counts.non0 <- dplyr::filter(read_counts, total > 0)
-# _all(read_counts, total(. != 0))
-read_counts$total <- NULL # remove total column
-#==============================================================================#
-
-if(nrow(read_counts.non0) < 2 ){
+if(nrow(read_counts_non0) < 2 ){
     print("Nothing was mapped to the feature!")
     } else {
 # if(dim(read_counts.non0)[[1]] > 2 ){
 
-#TODO: removing heatmaps of read data, its too big and doesnt say much
-    # out_hmap_pdf <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.pdf", sep=""))
-    # # A pdf and png image
-    # pdf(out_hmap_pdf)
-    # pheatmap(as.matrix(read_counts.non0), legend=TRUE)
-    # dev.off()
-    # out_hmap_png <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_heatmap.png", sep=""))
-    # png(out_hmap_png)
-    # pheatmap(as.matrix(read_counts.non0), legend=TRUE)
-    # dev.off()
-
-    edger_dge <- edgeR::DGEList(counts = read_counts, group = group_table$Group,
+    edger_dge <- edgeR::DGEList(counts = read_counts_non0[, -c(1:6)], group = group_table$Group,
                             remove.zeros = TRUE, genes = gene.info)
     
     # keep <- rowSums(cpm(edger_dge)>1) >= 2 # filtering genes that have cpm lower than 1 in 2 samples
@@ -179,8 +164,19 @@ if(nrow(read_counts.non0) < 2 ){
         ifelse(!dir.exists(heat_dir), dir.create(heat_dir), print("already exist"))
         out_rpkm_heatmap_pdf <- file.path(heat_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.pdf", sep=""))
         out_rpkm_heatmap_png <- file.path(heat_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.png", sep=""))
-        pheatmap(as.matrix(rpkm_results), legend=TRUE, filename=out_rpkm_heatmap_pdf)
-        pheatmap(as.matrix(rpkm_results), legend=TRUE, filename=out_rpkm_heatmap_png)
+        rpkm_results_sort <- rpkm_results
+        rpkm_results_sort$sum <- rowSums(rpkm_results_sort)
+        rpkm_results_sort <- dplyr::arrange(rpkm_results_sort, desc(sum))
+        rpkm_results_sort$sum <- NULL
+        if (nrow(rpkm_results_sort) > 99) {
+            pheatmap(as.matrix(head(rpkm_results_sort, 100)), legend=TRUE, filename=out_rpkm_heatmap_pdf)
+            pheatmap(as.matrix(head(rpkm_results_sort, 100)), legend=TRUE, filename=out_rpkm_heatmap_png)
+        }
+        else
+        {
+            pheatmap(as.matrix(rpkm_results_sort), legend=TRUE, filename=out_rpkm_heatmap_pdf)
+            pheatmap(as.matrix(rpkm_results_sort), legend=TRUE, filename=out_rpkm_heatmap_png)
+        }
         ################# boxplot of RPKM #############################################
         rpkm_data_boxplot <- merge(x=rpkm_data, y=group_table2)
         out_rpkm_violin_pdf <- file.path(violin_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_violin.pdf", sep=""))
