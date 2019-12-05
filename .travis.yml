@@ -10,5 +10,5 @@ services:
 script:
   - docker pull migun/piret:dev-latest
   - ci_env="bash <(curl -s https://codecov.io/env)"
-  - ci_post_cov="bash <(curl -s https://codecov.io/bash)"
+  - ci_post_cov="bash <(curl -s https://codecov.io/bash) -t 50a833ec-c750-400b-9e07-c8ada0f16473"
   - docker run migun/piret:dev-latest /bin/bash -c "$ci_env; source activate piret_env; cd /piret; pytest --cov=piret --cov-report=xml tests/ ;$ci_post_cov"
