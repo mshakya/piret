@@ -1,6 +1,6 @@
 <!-- [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](https://bioconda.github.io/recipes/viral-ngs/README.html) -->
 
-[![Build Status](https://travis-ci.org/mshakya/piret.svg?branch=master)](https://travis-ci.org/mshakya/piret)
+[![Build Status](https://travis-ci.com/mshakya/piret.svg?branch=master)](https://travis-ci.com/mshakya/piret)
 [![codecov](https://codecov.io/gh/mshakya/piret/branch/master/graph/badge.svg)](https://codecov.io/gh/mshakya/piret)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/piret/README.html)
 <!-- [![Coverage Status](https://coveralls.io/repos/github/mshakya/piret/badge.svg)](https://coveralls.io/github/mshakya/piret) -->
@@ -87,25 +87,22 @@ $ git clone https://github.com/mshakya/piret.git
 $ cd piret
 $ ./installer.sh piret_env
 ```
-Make sure that the environment name (eg. piret_env) doesnt exist yet.
+Make sure that the environment name (eg. piret_env) doesnt exist yet. If the environment already exists, either remove the environment by:
+
+```
+conda remove -n piret_env --all --yes
+
+```
+or just use a different name.
 
 ### 0.0.4 Install using pip
 
 Coming soon!
 
+
 ## 1.0 Testing Installation
-We have provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
+The installer script tests the installation automatically at the end. We have also provided test data set to check if the installation was successful or not. `fastq` files can be found in `tests/fastqs` and corresponding reference fasta files are found in `tests/data`. To run the test, from within `piret` directory:
 
-
-For running tests on eukaryote datasets:
-
-```
-$ cd piret
-$ source activate piret_env
-
-$LUIGI_CONFIG_PATH="/panfs/biopan01/scratch-311300/ecoli_usda/ecoli.cfg" bin/piret -c ecoli.cfg -d ecoli_piret -e exp_desn.txt
-$LUIGI_CONFIG_PATH="full_path_to/piret/tests/test_euk.cfg" bin/piret -c tests/test_euk.cfg -d tests/test_euk -e tests/test_euk.txt
-```
 
 For running tests on prokarya datasets:
 
