@@ -138,23 +138,34 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
                                             "_FPM.csv", sep=""))
         utils::write.csv(fpm_results, file = out_fpm, row.names = TRUE)
 #=============================================================================#
-        fpkm_df <- utils::read.csv(out_fpkm, row.names = 1)
+        fpkm_results <- utils::read.csv(out_fpkm, row.names = 1)
         fpkm_heatmap_pdf <- file.path(out_dir,
                                       paste(strsplit(basename(out_fpkm), ".csv")[[1]],
                                             "_heatmap.pdf", sep=""))
         fpkm_heatmap_png <- file.path(out_dir,
                                       paste(strsplit(basename(out_fpkm), ".csv")[[1]],
                                             "_heatmap.png", sep=""))
-        pheatmap::pheatmap(as.matrix(fpkm_df), legend=TRUE, filename = fpkm_heatmap_pdf)
-        pheatmap::pheatmap(as.matrix(fpkm_df), legend=TRUE, filename = fpkm_heatmap_png)
-        
+        if (nrow(fpkm_results) > 99 ) {
+            fpkm_results$means <- rowMeans(fpkm_results)
+            fpkm_results_sort <- dplyr::arrange(fpkm_results, desc(means))
+            fpkm_results_sort$means <- NULL
+            fpkm_results$means <- NULL
+            pheatmap::pheatmap(as.matrix(head(fpkm_results_sort, 100)), legend=TRUE, filename = fpkm_heatmap_pdf)
+            pheatmap::pheatmap(as.matrix(head(fpkm_results_sort, 100)), legend=TRUE, filename = fpkm_heatmap_png)
+
+        } 
+        else{
+            pheatmap::pheatmap(as.matrix(fpkm_results), legend=TRUE, filename = fpkm_heatmap_pdf)
+            pheatmap::pheatmap(as.matrix(fpkm_results), legend=TRUE, filename = fpkm_heatmap_png)
+        }
+
         violin_pdf <- file.path(out_dir,
                                paste(strsplit(basename(out_fpkm), ".csv")[[1]],
                                      "_violin.pdf", sep = ""))
         violin_png <- file.path(out_dir,
                                paste(strsplit(basename(out_fpkm), ".csv")[[1]],
                                      "_violin.png", sep = ""))
-        df_results <- dplyr::filter_all(as.data.frame(fpkm_df), dplyr::any_vars(. != 0))
+        df_results <- dplyr::filter_all(as.data.frame(fpkm_results), dplyr::any_vars(. != 0))
         f_data <- reshape2::melt(as.data.frame(df_results),
                              variable.name = "sample", value.name = "FPKM")
         group_table <- read.delim(group_file, row.names = 1)
@@ -167,15 +178,27 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
         ggplot2::ggsave(violin_pdf, f_violin, device = "pdf")
         ggplot2::ggsave(violin_png, f_violin, device = "png")
 #=============================================================================#
-        fpm_df <- utils::read.csv(out_fpm, row.names = 1)
+        fpm_results <- utils::read.csv(out_fpm, row.names = 1)
         fpm_heatmap_pdf <- file.path(out_dir,
                                       paste(strsplit(basename(out_fpm), ".csv")[[1]],
                                             "_heatmap.pdf", sep=""))
         fpm_heatmap_png <- file.path(out_dir,
                                       paste(strsplit(basename(out_fpm), ".csv")[[1]],
                                             "_heatmap.png", sep=""))
-        pheatmap::pheatmap(as.matrix(fpm_df), legend=TRUE, filename = fpm_heatmap_pdf)
-        pheatmap::pheatmap(as.matrix(fpm_df), legend=TRUE, filename = fpm_heatmap_png)
+         if (nrow(fpm_results) > 99 ) {
+            fpm_results$means <- rowMeans(fpm_results)
+            fpm_results_sort <- dplyr::arrange(fpm_results, desc(means))
+            fpm_results_sort$means <- NULL
+            fpm_results$means <- NULL
+            pheatmap::pheatmap(as.matrix(head(fpm_results_sort, 100)), legend=TRUE, filename = fpm_heatmap_pdf)
+            pheatmap::pheatmap(as.matrix(head(fpm_results_sort, 100)), legend=TRUE, filename = fpm_heatmap_png)
+
+        } 
+        else{
+            pheatmap::pheatmap(as.matrix(fpm_results), legend=TRUE, filename = fpm_heatmap_pdf)
+            pheatmap::pheatmap(as.matrix(fpm_results), legend=TRUE, filename = fpm_heatmap_png)
+        }
+
 
         violin_pdf <- file.path(out_dir,
                                paste(strsplit(basename(out_fpm), ".csv")[[1]],
@@ -183,7 +206,7 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
         violin_png <- file.path(out_dir,
                                paste(strsplit(basename(out_fpm), ".csv")[[1]],
                                      "_violin.png", sep = ""))
-        df_results <- dplyr::filter_all(as.data.frame(fpm_df), dplyr::any_vars(. != 0))
+        df_results <- dplyr::filter_all(as.data.frame(fpm_results), dplyr::any_vars(. != 0))
         f_data <- reshape2::melt(as.data.frame(df_results),
                              variable.name = "sample", value.name = "FPM")
         group_table <- read.delim(group_file, row.names = 1)
