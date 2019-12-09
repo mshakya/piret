@@ -101,8 +101,7 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
     check_zero = apply(read_counts.non0, 1, function(x) sum(x == 0))
     check = all(lapply(check_zero, function(x) x > 0))
     if (check[[1]]) {
-        warning("every gene contains at least one zero, cannot compute log geometric means, exiting!!")
-        quit(save="no", status="1")
+        warning("every gene contains at least one zero, cannot compute log geometric means, wont calculate metrices.")
     } else{
 
     deseq_ds <- DESeq2::DESeqDataSetFromMatrix(countData = read_counts.non0,
@@ -265,6 +264,10 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
     }
 
 if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
+    if (check[[1]]) {
+        warning("every gene contains at least one zero, cannot compute log geometric means, wont calculate metrices.")
+    } 
+    else {
 
     # calculate size factors
     dds <- DESeq2::DESeq(deseq_ds)
@@ -322,4 +325,5 @@ if (feature_name %in% c("CDS", "gene", "transcript", "exon", "NovelRegion")){
     } 
 # }
     }
+}
 #TODO: Need to make sure that all gff lines have IDs
