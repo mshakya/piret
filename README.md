@@ -15,7 +15,7 @@ Pipeline for Reference based Transcriptomics.
 
 ## 0.0 Installing PiReT
 
-PiReT is installed using conda. So, please make sure that conda is installed and in your path. The installation can take upto 2 hours depending on your internet speed.
+PiReT is installed using conda. So, please make sure that conda is installed and in your path. The overall installation can take upto 2 hours depending on your internet speed.
 
 ### 0.0.1 Install directly from bioconda
 
@@ -36,13 +36,26 @@ For installation to work, conda must be installed. See [here](https://docs.conda
 ```
 git clone https://github.com/mshakya/piret.git
 cd piret
+
 conda create -n piret_env python=3.6.6 --yes
 conda install -c bioconda faqcs -n piret_env --yes
 conda install -c bioconda star hisat2 subread -n piret_env --yes
 conda install -c bioconda subread stringtie -n piret_env --yes
 conda install -c bioconda samtools bamtools bedtools -n piret_env --yes
 conda install -c bioconda diamond=0.9.24 -n piret_env --yes
+conda install -c bioconda perl-lwp-protocol-https -n piret_env --yes
+conda install -c bioconda perl-json -n piret_env --yes
+conda install -c conda-forge time -n piret_env --yes
 source activate piret_env
+echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
+echo "if('optparse' %in% rownames(installed.packages()) == FALSE) {install.packages('optparse',repos='https://cran.r-project.org')}"  | Rscript -
+echo "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}"  | Rscript -
+echo "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}"  | Rscript -
+echo "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}"  | Rscript -
+echo "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}"  | Rscript -
+echo "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}"  | Rscript -
+echo "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}"  | Rscript -
+echo "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}"  | Rscript -
 cd thirdparty
 rm -rf eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git
@@ -50,27 +63,8 @@ cd eggnog-mapper
 python download_eggnog_data.py -y
 cd ..
 cd ..
-Rscript --no-init-file -e "if('BiocManager' %in% rownames(installed.packages()) == FALSE){install.packages('BiocManager',repos='https://cran.r-project.org')}";
-# install optparse
-Rscript --no-init-file -e "if('optparse' %in% rownames(installed.packages()) == FALSE){install.packages('optparse',repos='https://cran.r-project.org')}";
-# install tidyverse
-Rscript --no-init-file -e "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}";
-# install R reshape2 packages
-Rscript --no-init-file -e "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}";
-# install R pheatmap packages
-Rscript --no-init-file -e "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}";
-# install R edgeR packages
-Rscript --no-init-file -e "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}";
-# install R deseq2 packages
-Rscript --no-init-file -e "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}";
-# install R pathview package
-Rscript --no-init-file -e "if('pathview' %in% rownames(installed.packages()) == FALSE){BiocManager::install('pathview')}";
-# install R gage package
-Rscript --no-init-file -e "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}";
-# install R ballgown package
-Rscript --no-init-file -e "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}";
 python setup.py install
-
+pytest --cov=piret tests/
 ```
 
 ### 0.0.3 Install using provided bash script

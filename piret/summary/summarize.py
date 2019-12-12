@@ -338,8 +338,11 @@ class conver2json(luigi.Task):
         if os.path.exists(read_file) is True:
             read_data = pd.read_csv(read_file, sep=",",
                                     index_col="Geneid")
+            # use regular expression to get rid of the whole path
+            read_data.columns = [x.split(".mapping.")[-1].split(".")[0] for x in read_data.columns]
             read_dict = read_data.drop(["Unnamed: 0", "Chr", "Start", "End",
-                                        "Strand", "Length"], axis=1).to_dict(orient="index")
+                                        "Strand", "Length", "total"], axis=1).to_dict(orient="index")
+            
         else:
             read_dict = {}
         for feat, count_dic in read_dict.items():
@@ -348,9 +351,7 @@ class conver2json(luigi.Task):
             for samp, count in count_dic.items():
                 int_read[samp] = int(count)
             feat_read[feat] = int_read
-            # print(feat_read)
-            read_dict.update(feat_read)
-            # print(read_dict)
+            read_dict.update(feat_read)# print(read_dict)
         return read_dict
 
     def dge_summary(self, feat_type, method):
@@ -405,17 +406,17 @@ class conver2json(luigi.Task):
         if all([os.path.exists(cpm_file), os.path.exists(rpkm_file)]) is False:
             return ({}, {})
         elif all([os.path.exists(cpm_file), os.path.exists(rpkm_file)]) is True:
-            cpm_dict = pd.read_csv(cpm_file, sep=",",
+            cpm_dict = pd.read_csv(cpm_file, sep=",", engine='python',
                                    index_col=0).to_dict(orient="index")
-            rpkm_dict = pd.read_csv(rpkm_file, sep=",",
-                                    index_col=0).to_dict(orient="index")          
+            rpkm_dict = pd.read_csv(rpkm_file, sep=",", engine='python',
+                                    index_col=0).to_dict(orient="index")
             return(cpm_dict, rpkm_dict)
         elif os.path.exists(cpm_file) is True and os.path.exists(rpkm_file) is False:
-            cpm_dict = pd.read_csv(cpm_file, sep=",",
+            cpm_dict = pd.read_csv(cpm_file, sep=",", engine='python',
                                    index_col=0).to_dict(orient="index")
             return(cpm_dict, {})
         elif os.path.exists(rpkm_file) is True and os.path.exists(rpkm_file) is False:
-            rpkm_dict = pd.read_csv(rpkm_file, sep=",",
+            rpkm_dict = pd.read_csv(rpkm_file, sep=",", engine='python',
                                     index_col=0).to_dict(orient="index")
             return({}, rpkm_dict)
 

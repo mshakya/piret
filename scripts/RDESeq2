@@ -78,8 +78,7 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
 }
 
 #=============================================================================#
-    read_counts <- utils::read.table(reads_file, sep = "\t", header = TRUE,
-                                     row.names = 1)
+    read_counts <- utils::read.table(reads_file, sep = "\t", header = TRUE)
     names(read_counts) <- base::gsub(".*mapping.", "",
                                      names(read_counts),
                                      perl = TRUE)
@@ -89,6 +88,8 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
     read_counts.non0 <- dplyr::filter(read_counts, total > 0)
     gene_info <- read_counts.non0[, c(1:6)]
     read_counts.non0$total <- NULL # remove total column
+    # convert first column to row names
+    row.names(read_counts.non0) <- read_counts.non0[, 1]
     #read in the table with group info
     group_table <- utils::read.table(group_file, colClasses = c("character"),
                                      comment.char = "#", row.names = 1,
@@ -122,7 +123,8 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
         # warning("every gene contains at least one zero, cannot compute log geometric means")
     # } else {
 #=============================================================================#
-        fpkm_results <- DESeq2::fpkm(deseq_ds, robust=TRUE)    
+        fpkm_results <- DESeq2::fpkm(deseq_ds, robust=TRUE)
+        print(head(fpkm_results))
         out_fpkm <- base::file.path(out_dir,
                                 base::paste(base::strsplit(base::basename(reads_file),
                                                            ".tsv")[[1]],
