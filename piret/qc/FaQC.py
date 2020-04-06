@@ -8,7 +8,8 @@ import luigi
 import glob
 from luigi import ExternalTask
 from luigi import LocalTarget
-from luigi import Parameter, DictParameter, ListParameter, IntParameter
+from luigi import Parameter, DictParameter, ListParameter
+from luigi import IntParameter
 from luigi.util import inherits, requires
 from itertools import chain
 from plumbum.cmd import FaQCs, cat
@@ -34,6 +35,7 @@ class PairedRunQC(luigi.Task):
     num_cpus = IntParameter()
     qc_outdir = Parameter()
     faqc_min_L = IntParameter()
+    avg_q = IntParameter()
     n_cutoff = IntParameter()
 
     def requires(self):
@@ -56,6 +58,7 @@ class PairedRunQC(luigi.Task):
         faqc_options = ["-min_L", self.faqc_min_L,
                         "-n", self.n_cutoff,
                         "-t", self.num_cpus,
+                        "-avg_q", self.avg_q,
                         "-prefix", self.sample,
                         "-d", os.path.abspath(self.qc_outdir),
                         "-1", self.fastqs[0],
@@ -73,6 +76,7 @@ class RunAllQC(luigi.WrapperTask):
     workdir = Parameter()
     num_cpus = IntParameter()
     faqc_min_L = IntParameter()
+    avg_q = IntParameter()
     n_cutoff = IntParameter()
 
     def requires(self):
@@ -98,6 +102,7 @@ class RunAllQC(luigi.WrapperTask):
                                   num_cpus=self.num_cpus,
                                   qc_outdir=trim_dir,
                                   faqc_min_L=self.faqc_min_L,
+                                  avg_q=self.avg_q,
                                   n_cutoff=self.n_cutoff)
 
             else:
@@ -109,6 +114,7 @@ class RunAllQC(luigi.WrapperTask):
                                   num_cpus=self.num_cpus,
                                   qc_outdir=trim_dir,
                                   faqc_min_L=self.faqc_min_L,
+                                  avg_q=self.avg_q,
                                   n_cutoff=self.n_cutoff)
 
 @requires(RunAllQC)
