@@ -64,11 +64,12 @@ class CheckDesign():
             next(dfile)
             file_names = []
             for line in dfile:
-                file_names.append(line.split("\t")[1])
-            if len(file_names) == len(set(file_names)):
-                return True
-            else:
-                sys.exit('Input files must be unique!')
+                if not line.strip():
+                    file_names.append(line.split("\t")[1])
+                if len(file_names) == len(set(file_names)):
+                    return True
+                else:
+                    sys.exit('Input files must be unique!')
 
     def group_name(self):
         """Check if there are at least two groups."""
@@ -112,12 +113,13 @@ class CheckDesign():
             sample = []
             sample_fastqs = {}
             for line in dfile:
-                sample = line.split("\t")[0]
-                if ';' in line.split("\t")[1]:
-                    fastq_pairs = line.split("\t")[1].split(";")
-                else:
-                    fastq_pairs = line.split("\t")[1]
-                sample_fastqs[sample] = fastq_pairs
+                if line.strip() != '':
+                    sample = line.split("\t")[0]
+                    if ';' in line.split("\t")[1]:
+                        fastq_pairs = line.split("\t")[1].split(";")
+                    else:
+                        fastq_pairs = line.split("\t")[1]
+                    sample_fastqs[sample] = fastq_pairs
         return sample_fastqs
 
     def sample_suff(self, method):
