@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 
 """Luigi Tasks to perform various RNA seq functions
 
@@ -6,35 +5,30 @@ Mapping is done using hisat2 and counting is done using featurecounts
 and stringtie
 """
 
-from __future__ import print_function
 import os
-import luigi
 import sys
+import luigi
+import pandas as pd
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
 from luigi.contrib.external_program import ExternalProgramTask
-from luigi import ExternalTask
 from luigi import LocalTarget
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi.util import inherits, requires
-import subprocess
 from plumbum.cmd import hisat2
 from plumbum.cmd import samtools, stringtie, mv, awk
 from plumbum.cmd import STAR
-import pandas as pd
-from sys import stderr, exit
-import logging
-from collections import defaultdict as dd, Counter
+from collections import Counter
 from piret.miscs  import RefFile
 
 
 class HisatIndex(ExternalProgramTask):
     """Create Hisat Indices from given fasta file.
-    
+
     Note: Still using ExternalProgramtask as importing commands with - 
     creates error in plumbum
-    
+
     And, it automatically prints command in log file under INFO
     """
 
@@ -182,7 +176,7 @@ class SummarizeHisatMap(luigi.Task):
     def output(self):
         """Mapping Summary Output."""
         out_file = os.path.join(self.workdir, "processes", "mapping",
-        "MapSummary.csv")
+                                "MapSummary.csv")
         return luigi.LocalTarget(out_file)
 
     def run(self):
