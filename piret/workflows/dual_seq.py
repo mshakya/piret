@@ -61,7 +61,7 @@ class DualSeq:
             for samp, path in self.fastq_dic.items():
                 trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
                 qc_dic[samp] = trim_dir + "/" + samp + ".1.trimmed.fastq" + ":" + \
-                               trim_dir + "/" + samp + ".2.trimmed.fastq"          
+                               trim_dir + "/" + samp + ".2.trimmed.fastq"
             return qc_dic
 
     def create_db(self):
@@ -133,7 +133,7 @@ class DualSeq:
     def summarize_map(self):
         """Summarize mapped reads into a table."""
         if self.aligner == "hisat2":
-            build([Map.SummarizeHisatMap(fastq_dic=self.fastq_dic,
+            build([Map.hisat2.SummarizeHisatMap(fastq_dic=self.fastq_dic,
                                     workdir=self.workdir,
                                     indexfile=self.hisat_index,
                                     num_cpus=self.num_cpus)],
