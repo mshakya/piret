@@ -3,9 +3,10 @@
 """Check design."""
 from __future__ import print_function
 import os
-import sys
+import logging
 import luigi
-import glob
+import pandas as pd
+from itertools import chain
 from luigi import ExternalTask
 from luigi import LocalTarget
 from luigi import Parameter, DictParameter, ListParameter
@@ -13,15 +14,11 @@ from luigi import IntParameter
 from luigi.util import inherits, requires
 from itertools import chain
 from plumbum.cmd import FaQCs, cat
-import pandas as pd
-import logging
 
 
 class RefFile(ExternalTask):
-    """An ExternalTask like this."""
-
+    """An ExternalTask to check if file exist."""
     path = Parameter()
-
     def output(self):
         """Check."""
         return LocalTarget(os.path.abspath(self.path))
@@ -29,7 +26,6 @@ class RefFile(ExternalTask):
 
 class PairedRunQC(luigi.Task):
     """Running FaQCs."""
-
     fastqs = ListParameter()
     sample = Parameter()
     num_cpus = IntParameter()
