@@ -5,6 +5,7 @@ import os
 import sys
 import luigi
 import shutil
+import numpy as np
 from luigi import LocalTarget
 from luigi.util import inherits, requires
 import pandas as pd
@@ -43,7 +44,8 @@ class edgeR(luigi.Task):
             os.makedirs(edger_dir)
         for file in os.listdir(fcount_dir):
             if file.endswith("tsv"):
-                name  = file.split("_")[-2]
+                # self.gen_metrics(os.path.join(fcount_dir, file))
+                name = file.split("_")[-2]
                 edger_list = ["-r",
                               os.path.join(fcount_dir, file),
                             "-e", self.exp_design,
@@ -84,3 +86,50 @@ class edgeR(luigi.Task):
             summ_df = [pd.read_csv(file, index_col=0) for file in summ_files]
             summ_df_ccat = pd.concat(summ_df)
             summ_df_ccat.to_csv(out_file)
+    
+    # def gen_metrics(self, tsv):
+    #     df = pd.read_csv(tsv, sep="\t", comment = "#")
+    #     df.columns = [x.split("/")[-1].split("_srt.bam")[0] for x in df.columns.to_list()]
+    #     df['']
+
+
+
+
+
+
+def rpkm(count, lengths, total):
+    """Calculate reads per kilobase transcript per million reads.
+
+    RPKM = (10^9 * C) / (N * L)
+
+    Where:
+    C = Number of reads mapped to a gene
+    N = Total mapped reads in the experiment
+    L = Exon length in base pairs for a gene
+
+    Parameters
+    ----------
+    counts: array, shape (N_genes, N_samples)
+        RNAseq (or similar) count data where columns are individual samples
+        and rows are genes.
+    lengths: array, shape (N_genes,)
+        Gene lengths in base pairs in the same order
+        as the rows in counts.
+
+    Returns
+    -------
+    normed : array, shape (N_genes, N_samples)
+        The RPKM normalized counts matrix.
+    """
+    N = np.sum(counts, axis=0)  # sum each column to get total reads per sample
+    L = lengths
+    C = counts
+
+    normed = 1e9 * C / (N[np.newaxis, :] * L[:, np.newaxis])
+
+    return(normed)
+
+
+
+
+
