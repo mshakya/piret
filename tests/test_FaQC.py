@@ -26,13 +26,13 @@ class TestFaQC(unittest.TestCase):
     def test_faqc_function(self):
         """Test FaQC function."""
         dirpath = os.path.dirname(os.path.realpath(__file__))
-        bindir = os.path.abspath(os.path.join(dirpath, '..', 'bin'))
         build([FaQC.PairedRunQC(fastqs=["tests/data/fastqs/BTT_test15_R1.fastq.gz",
                                         "tests/data/fastqs/BTT_test15_R1.fastq.gz"],
                                 sample="samp1",
                                 num_cpus=1,
                                 qc_outdir="test_faqc",
                                 faqc_min_L=50,
+                                avg_q=20,
                                 n_cutoff=5)],
               local_scheduler=True, workers=1)
 
@@ -42,9 +42,9 @@ class TestFaQC(unittest.TestCase):
         assert(fq_lines) == 189508
 
     def test_output(self):
-        """Test if 5 files are generated as output"""
+        """Test if 4 files are generated as output"""
         filenames = [x[2] for x in os.walk("test_faqc")][0]
-        assert len(filenames) == 5
+        assert len(filenames) == 4
 
     @classmethod
     def tearDownClass(cls):
