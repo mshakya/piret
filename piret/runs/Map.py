@@ -7,25 +7,26 @@ and stringtie
 """
 
 from __future__ import print_function
+from collections import defaultdict as dd, Counter
+import logging
+from sys import stderr, exit
+import pandas as pd
+from plumbum.cmd import STAR
+from plumbum.cmd import samtools, stringtie, mv, awk
+from plumbum.cmd import hisat2
+import subprocess
+from luigi.util import inherits, requires
+from luigi import Parameter, IntParameter, DictParameter, ListParameter
+from luigi import LocalTarget
+from luigi import ExternalTask
+from luigi.contrib.external_program import ExternalProgramTask
 import os
 import luigi
 import sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
-from luigi.contrib.external_program import ExternalProgramTask
-from luigi import ExternalTask
-from luigi import LocalTarget
-from luigi import Parameter, IntParameter, DictParameter, ListParameter
-from luigi.util import inherits, requires
-import subprocess
-from plumbum.cmd import hisat2
-from plumbum.cmd import samtools, stringtie, mv, awk
-from plumbum.cmd import STAR
-import pandas as pd
-from sys import stderr, exit
-import logging
-from collections import defaultdict as dd, Counter
+
 
 class RefFile(ExternalTask):
     """An ExternalTask like this."""
@@ -89,12 +90,12 @@ class SAMindex(luigi.Task):
         novel_folder = os.path.join(self.workdir, "processes", "novel")
         if os.path.exists(novel_folder) is False:
             os.makedirs(novel_folder)
-        mv_options=[ref + ".fai", os.path.join(novel_folder)]
-        samtools_cmd=samtools[index_options]
-        mv_cmd=mv[mv_options]
+        mv_options = [ref + ".fai", os.path.join(novel_folder)]
+        samtools_cmd = samtools[index_options]
+        mv_cmd = mv[mv_options]
         samtools_cmd()
         mv_cmd()
-        fa_name=os.path.basename(ref)
+        fa_name = os.path.basename(ref)
         return os.path.join(self.workdir, "processes", "novel",
                             fa_name + ".fai")
 
@@ -354,9 +355,7 @@ class SAMindex(luigi.Task):
 #                            map_dir=map_dir)
 
 
-
-
-#@requires(Hisat)
+# @requires(Hisat)
 class Split2ProkEuk(luigi.Task):
     """ Split BAM file to prok and euk"""
 
@@ -390,7 +389,7 @@ class Split2ProkEuk(luigi.Task):
         self.split_aln_file(fastas[1], bam_file, euk_out)
 
 
-#@inherits(HisatMapW)
+# @inherits(HisatMapW)
 class Split2ProkEukW(luigi.WrapperTask):
     """Group chromosomes to prokaryotic and eukaryotic."""
     fastq_dic = DictParameter()
