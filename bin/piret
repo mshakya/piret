@@ -7,6 +7,15 @@ wrapper for running RNASeq pipeline
 
 """
 
+from luigi.interface import build
+from piret.pathways import opaver
+from piret.logger import create_logger
+from piret.checks.config import parse_config, check_input
+from piret.checks.aligner import check_aligner
+from piret.checks.gff3 import CheckGFF
+from piret.workflows import DualSeq, SingleSeq
+from piret.checks.dependencies import check_depen, check_pydepen
+from piret.checks import CheckDesign, CheckDependencies
 import os
 import sys
 import argparse
@@ -19,15 +28,6 @@ sys.path.append(lib_path)
 sys.path.append(script_path)
 os.environ["PATH"] += os.pathsep + bin_path
 os.environ["PATH"] += os.pathsep + script_path
-from piret.checks import CheckDesign, CheckDependencies
-from piret.checks.dependencies import check_depen, check_pydepen
-from piret.workflows import DualSeq, SingleSeq
-from piret.checks.gff3 import CheckGFF
-from piret.checks.aligner import check_aligner
-from piret.checks.config import parse_config, check_input
-from piret.logger import create_logger
-from piret.pathways import opaver
-from luigi.interface import build
 
 
 def cmdline_parser():
@@ -61,12 +61,13 @@ Example runs:\n
     required_args.add_argument("-c", "--config", help="""luigi config file for setting
         parameters that control each step, see github repo for an example""", default=None)
 
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.3.4')
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s 0.3.4')
     # A delete command
     check_args = parser.add_mutually_exclusive_group(required=False)
     check_args.add_argument('--check', help="""Check if all dependencies are
                                         installed and in path""",
-                        action='store_true')
+                            action='store_true')
 
     return parser
 
@@ -82,14 +83,14 @@ def main():
 
     if args.check is True:
         depen_list = ["samtools", "bamtools", "R", "featurecounts",
-                     "hisat2", "star", "faqcs", "stringtie",
-                     "bedtools", "diamond"]
+                      "hisat2", "star", "faqcs", "stringtie",
+                      "bedtools", "diamond"]
         depen_list.sort()
         check_depen(depen_list)
         check_pydepen()
         sys.exit()
 
-    #TODO: figure out why this is not working
+    # TODO: figure out why this is not working
     os.environ["LUIGI_CONFIG_PATH"] = args.config
 
     # setting up logging files
@@ -104,7 +105,8 @@ def main():
     # getting absolute path of workdir
     workdir = os.path.abspath(args.WORKDIR)
 
-    if check_exp_design(args.EXPDSN) is False:  # check if experimental design file is OK
+    # check if experimental design file is OK
+    if check_exp_design(args.EXPDSN) is False:
         sys.exit("Your experimental design file has formatting problems!")
 
     # convert exerimental design file to a dictionary object
@@ -154,7 +156,7 @@ def main():
         # step 3, map reads, hisat2 or stardb
         single_seq.map_reads(qc_dic=qc_dic)
 
-        # step 4, summarize the mapped reads
+        # # step 4, summarize the mapped reads
         single_seq.map_summarize()
 
         # step 5, if needed
@@ -162,7 +164,8 @@ def main():
             single_seq.extract_pp()  # extract properly paired reads
             single_seq.NovelRegions()  # find novel regions
             single_seq.create_new_gff()  # create a new GFF file that has novel region info
-            gff = os.path.join(workdir, "processes", "novel", "updated.gff")  # update gff
+            gff = os.path.join(workdir, "processes", "novel",
+                               "updated.gff")  # update gff
         # step 6, run read counts
         single_seq.feature_count(new_gff=gff)
         single_seq.merge_stringtie(new_gff=gff)
@@ -170,9 +173,9 @@ def main():
         # find diff expressed gene using edgeR
         if "edgeR" in paras["method"]:
             single_seq.run_edger()
-        # use DESeq2
-        if "DESeq2" in paras["method"]:
-            single_seq.run_deseq2()
+        # # use DESeq2
+        # if "DESeq2" in paras["method"]:
+        #     single_seq.run_deseq2()
         if "ballgown" in paras["method"]:
             single_seq.restringtie()
             single_seq.run_ballgown()
@@ -186,9 +189,9 @@ def main():
             if "DESeq2" in paras["method"]:
                 single_seq.run_opaver(method="DESeq2")
 
-        # summarize all results into one big json file.
-        single_seq.summ_json(new_gff=gff, method=paras["method"],
-                             NovelRegions=paras["novel"])
+        # # summarize all results into one big json file.
+        # single_seq.summ_json(new_gff=gff, method=paras["method"],
+        #                      NovelRegions=paras["novel"])
 
     elif paras["kingdom"] == "both":
         euk_fasta = paras["fasta_euk"]
@@ -197,7 +200,7 @@ def main():
         prok_gff = paras["gff_prok"]
 
         dual_seq = DualSeq(qc=paras["qc"],
-                           fastq_dic=samp_dic, 
+                           fastq_dic=samp_dic,
                            kingdom=paras["kingdom"],
                            aligner=paras["aligner"],
                            euk_fasta=paras["fasta_euk"],
@@ -211,12 +214,12 @@ def main():
                            local_scheduler=True,
                            pathway=paras["pathway"],
                            num_cpus=paras["threads"],
-                           stardb_dir = paras["star_index"],
+                           stardb_dir=paras["star_index"],
                            emap_dir=paras["emap_db"])
 
         # step 1, run qc
         qc_dic = dual_seq.run_faqc()
-        
+
         # step 2, create database, hisat2 or stardb
         dual_seq.create_db()
 
@@ -237,7 +240,7 @@ def main():
                                    "euk_updated.gff")  # update gff
             prok_gff = os.path.join(workdir, "processes", "novel",
                                     "prok_updated.gff")  # update gff
-    
+
         # step 6, run read counts
         print("Counting eukaryotes")
         dual_seq.feature_counts(new_gff=euk_gff, kingdom="eukarya")
@@ -257,8 +260,10 @@ def main():
 
         if paras["pathway"] is True:
             # run emapper
-            dual_seq.run_emapper(new_gff=prok_gff, kingdom="prokarya", fasta=prok_fasta)
-            dual_seq.run_emapper(new_gff=euk_gff, kingdom="eukarya", fasta=euk_fasta)
+            dual_seq.run_emapper(
+                new_gff=prok_gff, kingdom="prokarya", fasta=prok_fasta)
+            dual_seq.run_emapper(
+                new_gff=euk_gff, kingdom="eukarya", fasta=euk_fasta)
             if "edgeR" in paras["method"]:
                 dual_seq.run_opaver(method="edgeR", kingdom="prokarya")
                 dual_seq.run_opaver(method="edgeR", kingdom="eukarya")
@@ -306,9 +311,10 @@ def check_gff(gff_file):
     else:
         return False
 
+
 def summarize_run(aligner):
     """Prints summary information of runs."""
-    print("Alignment will be done using: %s" %aligner)
+    print("Alignment will be done using: %s" % aligner)
 
 
 if __name__ == '__main__':
