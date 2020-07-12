@@ -6,28 +6,26 @@ Mapping is done using hisat2 and counting is done using featurecounts
 and stringtie
 """
 
+from piret.miscs import RefFile
+from collections import defaultdict as dd, Counter
+import logging
+from sys import stderr, exit
+import pandas as pd
+from plumbum.cmd import STAR
+from plumbum.cmd import samtools, stringtie, mv, awk
+from plumbum.cmd import hisat2
+import subprocess
+from luigi.util import inherits, requires
+from luigi import Parameter, IntParameter, DictParameter, ListParameter
+from luigi import LocalTarget
+from luigi import ExternalTask
+from luigi.contrib.external_program import ExternalProgramTask
 import os
 import luigi
 import sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
-from luigi.contrib.external_program import ExternalProgramTask
-from luigi import ExternalTask
-from luigi import LocalTarget
-from luigi import Parameter, IntParameter, DictParameter, ListParameter
-from luigi.util import inherits, requires
-import subprocess
-from plumbum.cmd import hisat2
-from plumbum.cmd import samtools, stringtie, mv, awk
-from plumbum.cmd import STAR
-import pandas as pd
-from sys import stderr, exit
-import logging
-from collections import defaultdict as dd, Counter
-from piret.miscs  import RefFile
-
-
 
 
 class STARindex(luigi.Task):
@@ -35,7 +33,7 @@ class STARindex(luigi.Task):
     fasta = Parameter()
     num_cpus = IntParameter()
     gff_file = Parameter()
-    stardb_dir= Parameter()
+    stardb_dir = Parameter()
     kingdom = Parameter()
 
     def requires(self):
@@ -47,7 +45,7 @@ class STARindex(luigi.Task):
     def output(self):
         """Expected index output"""
         return LocalTarget(os.path.join(self.stardb_dir, "chrName.txt"))
-    
+
     def run(self):
         if os.path.exists(self.stardb_dir) is False:
             os.makedirs(self.stardb_dir)
@@ -102,15 +100,18 @@ class map_star(luigi.Task):
             os.makedirs(self.map_dir)
         star_option = ["--genomeDir", self.stardb_dir,
                        "--runThreadN", self.num_cpus,
-                       "--outFileNamePrefix", os.path.join(self.map_dir, self.sample + "_"),
+                       "--outFileNamePrefix", os.path.join(
+                           self.map_dir, self.sample + "_"),
                        "--outSAMtype", "BAM", "SortedByCoordinate",
                        "--alignIntronMax", self.align_intron_max,
                        "alignIntronMin", self.align_intron_min,
                        "--readFilesIn", self.fastqs[0], self.fastqs[1]]
         star_cmd = STAR[star_option]
         star_cmd()
-        bam_file = os.path.join(self.map_dir, self.sample) + "_Aligned.sortedByCoord.out.bam"
-        mv_list = [bam_file, os.path.join(self.map_dir, self.sample) + "_srt.bam"]
+        bam_file = os.path.join(self.map_dir, self.sample) + \
+            "_Aligned.sortedByCoord.out.bam"
+        mv_list = [bam_file, os.path.join(
+            self.map_dir, self.sample) + "_srt.bam"]
         mv_cmd = mv[mv_list]
         mv_cmd()
 
@@ -131,9 +132,10 @@ class map_starW(luigi.WrapperTask):
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
             yield map_star(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                trim_dir + "/" + samp + ".2.trimmed.fastq"],
-                                   stardb_dir=self.stardb_dir, map_dir=map_dir,
-                                   sample=samp, num_cpus=self.num_cpus)
+                                   trim_dir + "/" + samp + ".2.trimmed.fastq"],
+                           stardb_dir=self.stardb_dir, map_dir=map_dir,
+                           sample=samp, num_cpus=self.num_cpus)
+
 
 @requires(map_starW)
 class SummarizeStarMap(luigi.Task):
