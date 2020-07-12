@@ -9,6 +9,7 @@ from plumbum.cmd import rm, cp
 
 luigi.configuration.get_config().set('SummarizeQC', 'faqc_min_L', '50')
 luigi.configuration.get_config().set('SummarizeQC', 'n_cutoff', '4')
+luigi.configuration.get_config().set('SummarizeQC', 'avg_q', '20')
 luigi.configuration.get_config().set('Hisat', 'min_introlen', '20')
 luigi.configuration.get_config().set('Hisat', 'max_introlen', '500000')
 luigi.configuration.get_config().set('Hisat', 'rna_strandness', 'FR')
