@@ -66,10 +66,6 @@ class PairedRunQC(luigi.Task):
         faqc_cmd = FaQCs[faqc_options].run(retcode=None)
         logger = logging.getLogger('luigi-interface')
         logger.info(faqc_cmd)
-        ex_code = faqc_cmd[0]
-        print(ex_code)
-        if ex_code > 0:
-            quit()
 
 
 class RunAllQC(luigi.WrapperTask):
