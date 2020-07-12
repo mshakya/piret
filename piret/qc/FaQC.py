@@ -3,6 +3,7 @@
 """Check design."""
 from __future__ import print_function
 import os
+import sys
 import logging
 import luigi
 import pandas as pd
@@ -19,6 +20,7 @@ from plumbum.cmd import FaQCs, cat
 class RefFile(ExternalTask):
     """An ExternalTask to check if file exist."""
     path = Parameter()
+
     def output(self):
         """Check."""
         return LocalTarget(os.path.abspath(self.path))
@@ -29,7 +31,7 @@ class PairedRunQC(luigi.Task):
     fastqs = ListParameter()
     sample = Parameter()
     num_cpus = IntParameter()
-    qc_outdir = Parameter()
+    workdir = Parameter()
     faqc_min_L = IntParameter()
     avg_q = IntParameter()
     n_cutoff = IntParameter()
@@ -46,23 +48,28 @@ class PairedRunQC(luigi.Task):
 
     def output(self):
         """QC output."""
-        out_file = self.qc_outdir + "/" + self.sample + ".stats.txt"
+        trim_dir = os.path.join(self.workdir, "processes", "qc", self.sample)
+        out_file = trim_dir + "/" + self.sample + ".stats.txt"
         return LocalTarget(out_file)
 
     def run(self):
         """Run the FaQC script."""
+        trim_dir = os.path.join(self.workdir, "processes", "qc", self.sample)
         faqc_options = ["-min_L", self.faqc_min_L,
                         "-n", self.n_cutoff,
                         "-t", self.num_cpus,
                         "-avg_q", self.avg_q,
                         "-prefix", self.sample,
-                        "-d", os.path.abspath(self.qc_outdir),
+                        "-d", os.path.abspath(trim_dir),
                         "-1", self.fastqs[0],
                         "-2", self.fastqs[1]]
-        faqc_cmd = FaQCs[faqc_options]
+        faqc_cmd = FaQCs[faqc_options].run(retcode=None)
         logger = logging.getLogger('luigi-interface')
         logger.info(faqc_cmd)
-        faqc_cmd()
+        ex_code = faqc_cmd[0]
+        print(ex_code)
+        if ex_code > 0:
+            quit()
 
 
 class RunAllQC(luigi.WrapperTask):
@@ -96,7 +103,7 @@ class RunAllQC(luigi.WrapperTask):
                                           samp + "_R2.fastq"],
                                   sample=samp,
                                   num_cpus=self.num_cpus,
-                                  qc_outdir=trim_dir,
+                                  workdir=self.workdir,
                                   faqc_min_L=self.faqc_min_L,
                                   avg_q=self.avg_q,
                                   n_cutoff=self.n_cutoff)
@@ -108,10 +115,11 @@ class RunAllQC(luigi.WrapperTask):
                 yield PairedRunQC(fastqs=fqs,
                                   sample=samp,
                                   num_cpus=self.num_cpus,
-                                  qc_outdir=trim_dir,
+                                  workdir=self.workdir,
                                   faqc_min_L=self.faqc_min_L,
                                   avg_q=self.avg_q,
                                   n_cutoff=self.n_cutoff)
+
 
 @requires(RunAllQC)
 class SummarizeQC(luigi.Task):
