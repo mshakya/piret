@@ -6,8 +6,9 @@ RNA seq pipeline.
 wrapper for running RNASeq pipeline
 
 """
-
-from luigi.interface import build
+import os
+import sys
+import argparse
 from piret.pathways import opaver
 from piret.logger import create_logger
 from piret.checks.config import parse_config, check_input
@@ -16,10 +17,7 @@ from piret.checks.gff3 import CheckGFF
 from piret.workflows import DualSeq, SingleSeq
 from piret.checks.dependencies import check_depen, check_pydepen
 from piret.checks import CheckDesign, CheckDependencies
-import os
-import sys
-import argparse
-import logging
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 bin_path = os.path.join(lib_path, 'bin')
@@ -190,8 +188,8 @@ def main():
                 single_seq.run_opaver(method="DESeq2")
 
         # # summarize all results into one big json file.
-        # single_seq.summ_json(new_gff=gff, method=paras["method"],
-        #                      NovelRegions=paras["novel"])
+        single_seq.summ_json(new_gff=gff, method=paras["method"],
+                             NovelRegions=paras["novel"])
 
     elif paras["kingdom"] == "both":
         euk_fasta = paras["fasta_euk"]
