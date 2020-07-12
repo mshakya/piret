@@ -1,5 +1,5 @@
 pandas==0.25.3
-Biopython==1.68
+Biopython==1.77
 argparse==1.1
 luigi==2.8.2
 plumbum==1.6.3
