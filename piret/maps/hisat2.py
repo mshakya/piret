@@ -5,6 +5,16 @@ Mapping is done using hisat2 and counting is done using featurecounts
 and stringtie
 """
 
+from piret.miscs import RefFile
+from piret.qc import FaQC
+from collections import Counter
+from plumbum.cmd import STAR
+from plumbum.cmd import samtools, stringtie, mv, awk
+from plumbum.cmd import hisat2
+from luigi.util import inherits, requires
+from luigi import Parameter, IntParameter, DictParameter, ListParameter
+from luigi import LocalTarget
+from luigi.contrib.external_program import ExternalProgramTask
 import os
 import sys
 import luigi
@@ -12,15 +22,6 @@ import pandas as pd
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
-from luigi.contrib.external_program import ExternalProgramTask
-from luigi import LocalTarget
-from luigi import Parameter, IntParameter, DictParameter, ListParameter
-from luigi.util import inherits, requires
-from plumbum.cmd import hisat2
-from plumbum.cmd import samtools, stringtie, mv, awk
-from plumbum.cmd import STAR
-from collections import Counter
-from piret.miscs  import RefFile
 
 
 class HisatIndex(ExternalProgramTask):
@@ -70,6 +71,10 @@ class Hisat(luigi.Task):
     rna_strandness = luigi.Parameter()
     kingdom = luigi.Parameter()
 
+    def requires(self):
+        """Check if fastq exist"""
+        return [RefFile(os.path.abspath(self.fastqs[0]))]
+
     def output(self):
         """SAM file output of the mapping."""
         bam_file = self.outsam.split(".sam")[0] + ".bam"
@@ -96,7 +101,7 @@ class Hisat(luigi.Task):
             hisat2_cmd = hisat2[hisat2_nosplice_option]
             hisat2_cmd()
             self.sam2bam()
-            self.sort_bam()        
+            self.sort_bam()
         else:
             h2_splice_option = ["-p", self.num_cpus,
                                 "-x", self.indexfile,
@@ -133,6 +138,7 @@ class Hisat(luigi.Task):
                    "-o", sorted_bam_file]
         samtools_cmd = samtools[options]
         samtools_cmd()
+
 
 class HisatMapW(luigi.WrapperTask):
     """A wrapper task for mapping."""
