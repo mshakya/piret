@@ -22,7 +22,7 @@ tests/test_prokold
 .pytest_cache/
 test_both/
 test_euk/
-# test_prok/
+test_prok/
 migun/
 *.out
 *.png
@@ -31,7 +31,7 @@ migun/
 *.bedfile
 *.tab
 *.log
-# *.bam
+*.bam
 *.gz
 *.fastq
 *.fa
