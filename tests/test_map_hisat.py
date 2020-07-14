@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 """A suite to test file_exist."""
+
 import sys
 import os
 import unittest
@@ -7,125 +8,56 @@ import shutil
 import luigi
 from luigi.interface import build
 from plumbum.cmd import rm
+from piret.maps import hisat2
 DIR = os.path.dirname(os.path.realpath(__file__))
 LIB = os.path.abspath(os.path.join(DIR, '..'))
 sys.path.append(LIB)
 
-#script_dir = os.path.abspath(os.path.join(DIR, "../scripts"))
-#sys.path.insert(0, script_dir)
 
-#os.environ["PATH"] += ":" + script_dir
-# 
-# print(shutil.which("EdgeR"))
-# from piret.runs import FaQC
-from piret.maps import hisat2
+def test_hisat2_indexing():
+    """Test hisat2."""
+    hisat2_path = os.path.join("test_hisat2")
+    if os.path.exists(hisat2_path) is False:
+        os.makedirs(hisat2_path)
+    build([hisat2.HisatIndex(fasta="tests/data/test_prok.fna",
+                             hi_index="test_hisat2/prok_index",
+                             num_cpus=1)],
+          local_scheduler=True, workers=1)
 
-# class TestGFF2GTF(unittest.TestCase):
-#     """Unittest testcase."""
-
-#     def setUp(self):
-#         """Setting tup the directory."""
-#         if os.path.exists("tests/test_gff2gtf") is False:
-#             os.makedirs("tests/test_gff2gtf")
-
-#     def test_gtf_creation(self):
-#         """Test if GFF2GTF works."""
-#         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff",
-#                                            workdir="tests/test_gff2gtf")],
-#                               local_scheduler=True)
-
-#         self.assertTrue(os.path.exists("tests/test_gff2gtf/test_prok.gtf"))
-
-#     def test_gtfs_creation(self):
-#         """Test if GFF2GTF works for multiple gffs."""
-#         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff,tests/data/eukarya_test.gff3",
-#                                            workdir="tests/test_gff2gtf")],
-#                               local_scheduler=True)
-
-#         self.assertTrue(os.path.exists("tests/test_gff2gtf/test_prok.gtf"))
-#         self.assertTrue(os.path.exists("tests/test_gff2gtf/eukarya_test.gtf"))
-#         with open("tests/test_gff2gtf/test_prok.gtf") as pg:
-#             lines=pg.readlines()
-#         self.assertEqual(lines[5].split("\t")[4], "1747")
-#         with open("tests/test_gff2gtf/eukarya_test.gtf") as pg:
-#             lines=pg.readlines()
-#         self.assertEqual(lines[5].split("\t")[4], "3007")
-
-#     def tearDown(self):
-#         """Remove created files and directories."""
-#         shutil.rmtree("tests/test_gff2gtf/")
+    assert os.stat(os.path.join("test_hisat2", "prok_index.8.ht2")).st_size > 1
 
 
-# class TestCreateSplice(unittest.TestCase):
-#     """Unittest testcase."""
+def test_hisat2_multindexing():
+    """Test hisat2."""
+    hisat2_path = os.path.join("test_hisat2")
+    if os.path.exists(hisat2_path) is False:
+        os.makedirs(hisat2_path)
+    build([hisat2.HisatIndex(fasta="tests/data/test_prok.fna,tests/data/test_euk.fna",
+                             hi_index="test_hisat2/prok_index",
+                             num_cpus=1)],
+          local_scheduler=True, workers=1)
 
-#     def setUp(self):
-#         """Setting up the directory."""
-#         if os.path.exists("tests/test_createsplice") is False:
-#             os.makedirs("tests/test_createsplice")
-
-#     def test_splice_creation(self):
-#         """Test if CreateSplice works."""
-#         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok.gff",
-#                                            workdir="tests/test_createsplice"),
-#                                Map.CreateSplice(gff_file="tests/data/test_prok.gff",
-#                                                 workdir="tests/test_createsplice")],
-#                               local_scheduler=True)
-#         self.assertTrue(os.path.exists("tests/test_createsplice/test_prok.splice"))
-
-#     def test_splices_creation(self):
-#         """Test if GFF2GTF works for multiple gffs."""
-#         luigi.interface.build([Map.GFF2GTF(gff_file="tests/data/test_prok1.1.gff,tests/data/eukarya_test.gff3",
-#                                            workdir="tests/test_createsplice"),
-#                                Map.CreateSplice(gff_file="tests/data/test_prok1.1.gff,tests/data/eukarya_test.gff3",
-#                                                 workdir="tests/test_createsplice")],
-#                               local_scheduler=True)
-
-#         self.assertTrue(os.path.exists("tests/test_createsplice/test_prok1.1.splice"))
-#         self.assertTrue(os.path.exists("tests/test_createsplice/eukarya_test.splice"))
+    assert os.stat(os.path.join("test_hisat2", "prok_index.8.ht2")).st_size > 1
 
 
-#     def tearDown(self):
-#         """Remove created files and directories."""
-#         shutil.rmtree("tests/test_createsplice/")
-
-
-class TestHisatMapping(unittest.TestCase):
-    """Unittest testcase."""
-
-    def setUp(self):
-        """Setting up the working directory."""
-        if os.path.exists("tests/test_hisatmapping") is False:
-            os.makedirs("tests/test_hisatmapping/mapping_results")
-
-    @classmethod
-    def tearDownClass(cls):
-        rm["-rf", 'tests/test_hisatmapping']()
-
-    def test_hisat(self):
-        """Test hisat index creation, FaQC, and mapping."""
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        bindir = os.path.abspath(os.path.join(dir_path, '..', 'bin'))
-        luigi.interface.build([
-            hisat2.HisatIndex(fasta="tests/data/test_prok.fna",
-                           hi_index="tests/test_hisatmapping/prok_index",
-                           num_cpus=1),
-            hisat2.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
-                              "tests/data/BTT_test15_R2.1000.fastq"],
-                              min_introlen=500,
-                              max_introlen=5000,
-                              rna_strandness=0,
-                              kingdom="prokarya",
-                      num_cpus=1,
-                      sample="samp1",
-                      map_dir="tests/test_hisatmapping/mapping_results",                      
-                      indexfile="tests/test_hisatmapping/prok_index",
-                      outsam="tests/test_hisatmapping/samp1.sam",
-                      workdir="tests/test_hisatmapping/")], local_scheduler=True)
-
-        self.assertTrue(os.path.exists("tests/test_hisatmapping/samp1.sam"))
-
-
-# class Test
-if __name__ == '__main__':
-    unittest.main()
+def test_hisat2_mapping():
+    """Test hisat2 mapping."""
+    hisat2_path = os.path.join("test_hisat2", "processes", "mapping", "samp1")
+    if os.path.exists(hisat2_path) is False:
+        os.makedirs(hisat2_path)
+    map_dir = os.path.join("test_hisat2", "processes", "mapping")
+    sam_file = os.path.join(hisat2_path, "samp1.sam")
+    build([hisat2.Hisat(fastqs=["tests/data/BTT_test15_R1.1000.fastq",
+                                "tests/data/BTT_test15_R2.1000.fastq"],
+                        min_introlen=500,
+                        max_introlen=5000,
+                        rna_strandness=0,
+                        kingdom="prokarya",
+                        num_cpus=1,
+                        sample="samp1",
+                        # map_dir=map_dir,
+                        indexfile="test_hisat2/prok_index",
+                        # outsam=os.path.join(hisat2_path, "samp1.sam"),
+                        workdir="test_hisat2")], local_scheduler=True)
+    assert os.path.exists(sam_file)
+    shutil.rmtree('test_hisat2')
