@@ -14,9 +14,10 @@ from piret.logger import create_logger
 from piret.checks.config import parse_config, check_input
 from piret.checks.aligner import check_aligner
 from piret.checks.gff3 import CheckGFF
-from piret.workflows import DualSeq, SingleSeq
+from piret.workflows import dual_seq as DualSeq
+from piret.workflows import single_seq as SingleSeq
 from piret.checks.dependencies import check_depen, check_pydepen
-from piret.checks import CheckDesign, CheckDependencies
+from piret.checks import CheckDesign
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
@@ -37,8 +38,6 @@ def cmdline_parser():
     class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter,
                           argparse.RawDescriptionHelpFormatter):
         """For multiple formatters of argparse."""
-
-        pass
 
     parser = argparse.ArgumentParser(formatter_class=CustomFormatter,
                                      prog='piret',
@@ -128,22 +127,22 @@ def main():
         elif paras["kingdom"] == "eukarya":
             fasta = paras["fasta_euk"]
             gff = paras["gff_euk"]
-        single_seq = SingleSeq(qc=paras["qc"],
-                               fastq_dic=samp_dic,
-                               aligner=paras["aligner"],
-                               ref_fasta=fasta,
-                               num_cpus=paras["threads"],
-                               local_scheduler=True,
-                               hisat_index=db,
-                               workdir=workdir,
-                               kingdom=paras["kingdom"],
-                               no_of_jobs=no_of_jobs,
-                               p_value=paras["q_value"],
-                               exp_desn_file=args.EXPDSN,
-                               stardb_dir=db,
-                               emap_dir=paras["emap_db"],
-                               gff_file=gff,
-                               pathway=paras["pathway"])
+        single_seq = SingleSeq.SingleSeq(qc=paras["qc"],
+                                         fastq_dic=samp_dic,
+                                         aligner=paras["aligner"],
+                                         ref_fasta=fasta,
+                                         num_cpus=paras["threads"],
+                                         local_scheduler=True,
+                                         hisat_index=db,
+                                         workdir=workdir,
+                                         kingdom=paras["kingdom"],
+                                         no_of_jobs=no_of_jobs,
+                                         p_value=paras["q_value"],
+                                         exp_desn_file=args.EXPDSN,
+                                         stardb_dir=db,
+                                         emap_dir=paras["emap_db"],
+                                         gff_file=gff,
+                                         pathway=paras["pathway"])
 
         # step 1, run qc
         qc_dic = single_seq.run_faqc()
@@ -152,7 +151,7 @@ def main():
         single_seq.create_db()
 
         # step 3, map reads, hisat2 or stardb
-        single_seq.map_reads(qc_dic=qc_dic)
+        # single_seq.map_reads(qc_dic=qc_dic)
 
         # # step 4, summarize the mapped reads
         single_seq.map_summarize()
@@ -197,23 +196,23 @@ def main():
         prok_fasta = paras["fasta_prok"]
         prok_gff = paras["gff_prok"]
 
-        dual_seq = DualSeq(qc=paras["qc"],
-                           fastq_dic=samp_dic,
-                           kingdom=paras["kingdom"],
-                           aligner=paras["aligner"],
-                           euk_fasta=paras["fasta_euk"],
-                           prok_fasta=paras["fasta_prok"],
-                           prok_gff=paras["gff_prok"],
-                           euk_gff=paras["gff_euk"],
-                           workdir=workdir,
-                           p_value=paras["q_value"],
-                           exp_desn_file=args.EXPDSN,
-                           hisat_index=db,
-                           local_scheduler=True,
-                           pathway=paras["pathway"],
-                           num_cpus=paras["threads"],
-                           stardb_dir=paras["star_index"],
-                           emap_dir=paras["emap_db"])
+        dual_seq = DualSeq.DualSeq(qc=paras["qc"],
+                                   fastq_dic=samp_dic,
+                                   kingdom=paras["kingdom"],
+                                   aligner=paras["aligner"],
+                                   euk_fasta=paras["fasta_euk"],
+                                   prok_fasta=paras["fasta_prok"],
+                                   prok_gff=paras["gff_prok"],
+                                   euk_gff=paras["gff_euk"],
+                                   workdir=workdir,
+                                   p_value=paras["q_value"],
+                                   exp_desn_file=args.EXPDSN,
+                                   hisat_index=db,
+                                   local_scheduler=True,
+                                   pathway=paras["pathway"],
+                                   num_cpus=paras["threads"],
+                                   stardb_dir=paras["star_index"],
+                                   emap_dir=paras["emap_db"])
 
         # step 1, run qc
         qc_dic = dual_seq.run_faqc()
