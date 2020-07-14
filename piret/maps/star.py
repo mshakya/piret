@@ -5,24 +5,22 @@
 Mapping is done using hisat2 and counting is done using featurecounts
 and stringtie
 """
-
+import os
+import sys
+import logging
+import luigi
+import pandas as pd
 from piret.miscs import RefFile
 from collections import defaultdict as dd, Counter
-import logging
 from sys import stderr, exit
-import pandas as pd
 from plumbum.cmd import STAR
 from plumbum.cmd import samtools, stringtie, mv, awk
 from plumbum.cmd import hisat2
-import subprocess
 from luigi.util import inherits, requires
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi import LocalTarget
 from luigi import ExternalTask
 from luigi.contrib.external_program import ExternalProgramTask
-import os
-import luigi
-import sys
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
@@ -37,7 +35,7 @@ class STARindex(luigi.Task):
     kingdom = Parameter()
 
     def requires(self):
-        if self.kingdom == "both":
+        if ',' in self.fasta:
             return[RefFile(self.fasta.split(",")[1])]
         else:
             return[RefFile(self.fasta)]
@@ -49,25 +47,28 @@ class STARindex(luigi.Task):
     def run(self):
         if os.path.exists(self.stardb_dir) is False:
             os.makedirs(self.stardb_dir)
+        if ',' in self.fasta:
+            fnas = self.fasta.split(",")
+            gffs = self.gff_file.split(",")
+        else:
+            fnas = [self.fasta]
+            gffs = [self.gff_file]
+        fnas.insert(0, "--genomeFastaFiles")
+        gffs.insert(0, "--sjdbGTFfile")
         if self.kingdom == "eukarya":
             ind_opt = ["--runMode", "genomeGenerate",
                        "--runThreadN", self.num_cpus,
-                       "--genomeDir", self.stardb_dir,
-                       "--genomeFastaFiles", self.fasta,
-                       "--sjdbGTFfile", self.gff_file]
+                       "--genomeDir", self.stardb_dir]
         elif self.kingdom == "prokarya":
             ind_opt = ["--runMode", "genomeGenerate",
                        "--runThreadN", self.num_cpus,
-                       "--genomeDir", self.stardb_dir,
-                       "--genomeFastaFiles", self.fasta]
+                       "--genomeDir", self.stardb_dir]
         elif self.kingdom == "both":
             ind_opt = ["--runMode", "genomeGenerate",
                        "--runThreadN", self.num_cpus,
-                       "--genomeDir", self.stardb_dir,
-                       "--sjdbGTFfile", self.gff_file,
-                       "--genomeFastaFiles", self.fasta.split(",")[0],
-                       self.fasta.split(",")[1]]
-
+                       "--genomeDir", self.stardb_dir]
+        for f in fnas:
+            ind_opt.append(f)
         star_cmd = STAR[ind_opt]
         logger = logging.getLogger('luigi-interface')
         logger.info(star_cmd)
@@ -137,7 +138,7 @@ class map_starW(luigi.WrapperTask):
                            sample=samp, num_cpus=self.num_cpus)
 
 
-@requires(map_starW)
+@ requires(map_starW)
 class SummarizeStarMap(luigi.Task):
     """Summarizes mapping results of all samples into a table"""
 
