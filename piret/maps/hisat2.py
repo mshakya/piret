@@ -27,7 +27,7 @@ sys.path.append(lib_path)
 class HisatIndex(ExternalProgramTask):
     """Create Hisat Indices from given fasta file.
 
-    Note: Still using ExternalProgramtask as importing commands with - 
+    Note: Still using ExternalProgramtask as importing commands with -
     creates error in plumbum
 
     And, it automatically prints command in log file under INFO
@@ -61,14 +61,12 @@ class Hisat(luigi.Task):
 
     fastqs = ListParameter()
     indexfile = Parameter()
-    outsam = Parameter()
-    map_dir = Parameter()
     workdir = Parameter()
-    num_cpus = Parameter()
+    num_cpus = IntParameter()
     sample = Parameter()
     min_introlen = luigi.IntParameter()
     max_introlen = luigi.IntParameter()
-    rna_strandness = luigi.Parameter()
+    rna_strandness = Parameter()
     kingdom = luigi.Parameter()
 
     def requires(self):
@@ -77,62 +75,68 @@ class Hisat(luigi.Task):
 
     def output(self):
         """SAM file output of the mapping."""
-        bam_file = self.outsam.split(".sam")[0] + ".bam"
-        return luigi.LocalTarget(bam_file)
+        outbam = os.path.join(self.workdir, "processes",
+                              "mapping", self.sample, self.sample + ".bam")
+        return luigi.LocalTarget(outbam)
 
     def run(self):
         """Run hisat2."""
+        map_dir = os.path.join(self.workdir, "processes",
+                               "mapping", self.sample)
+        if os.path.isdir(map_dir) is False:
+            os.makedirs(map_dir)
+        outsam = os.path.join(map_dir, self.sample + ".sam")
         if self.kingdom == "prokarya":
             hisat2_nosplice_option = ["-p", self.num_cpus,
                                       "-x", self.indexfile,
                                       "-1", self.fastqs[0],
                                       "-2", self.fastqs[1],
-                                      "-S", self.outsam,
+                                      "-S", outsam,
                                       "--min-intronlen", self.min_introlen,
                                       "--max-intronlen", self.max_introlen,
                                       "--rna-strandness", self.rna_strandness,
                                       "--no-spliced-alignment",
                                       "--no-unal",
                                       "--un-conc",
-                                      os.path.join(self.map_dir,
+                                      os.path.join(map_dir,
                                                    "unaligned.fastq"),
-                                      "2>", os.path.join(self.map_dir,
+                                      "2>", os.path.join(map_dir,
                                                          "mapping.log")]
             hisat2_cmd = hisat2[hisat2_nosplice_option]
             hisat2_cmd()
-            self.sam2bam()
-            self.sort_bam()
+            self.sam2bam(outsam)
+            self.sort_bam(outsam)
         else:
             h2_splice_option = ["-p", self.num_cpus,
                                 "-x", self.indexfile,
                                 "-1", self.fastqs[0],
                                 "-2", self.fastqs[1],
-                                "-S", self.outsam,
+                                "-S", outsam,
                                 "--min-intronlen", self.min_introlen,
                                 "--max-intronlen", self.max_introlen,
                                 "--rna-strandness", self.rna_strandness,
                                 "--no-unal",
                                 "--un-conc",
-                                os.path.join(self.map_dir,
+                                os.path.join(map_dir,
                                              "unaligned.fastq"),
-                                "2>", os.path.join(self.map_dir,
+                                "2>", os.path.join(map_dir,
                                                    "mapping.log")]
             hisat2_cmd = hisat2[h2_splice_option]
             hisat2_cmd()
-            self.sam2bam()
-            self.sort_bam()
+            self.sam2bam(outsam)
+            self.sort_bam(outsam)
 
-    def sam2bam(self):
+    def sam2bam(self, outsam):
         """Convert SAM to BAM file."""
-        bam_file = self.outsam.split(".sam")[0] + ".bam"
+        bam_file = outsam.split(".sam")[0] + ".bam"
         options = ["view", "-bS", "-F",
-                   "4", self.outsam, "-o", bam_file]
+                   "4", outsam, "-o", bam_file]
         samtools_cmd = samtools[options]
         samtools_cmd()
 
-    def sort_bam(self):
+    def sort_bam(self, outsam):
         """Sort BAM file."""
-        bam_file = self.outsam.split(".sam")[0] + ".bam"
+        bam_file = outsam.split(".sam")[0] + ".bam"
         sorted_bam_file = bam_file.split(".bam")[0] + "_srt.bam"
         options = ["sort", bam_file,
                    "-o", sorted_bam_file]
@@ -161,16 +165,11 @@ class HisatMapW(luigi.WrapperTask):
             splice_file = ''
         for samp, fastq in self.fastq_dic.items():
             trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
-            map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
-            if os.path.isdir(map_dir) is False:
-                os.makedirs(map_dir)
             yield Hisat(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
                                 trim_dir + "/" + samp + ".2.trimmed.fastq"],
                         kingdom=self.kingdom,
                         num_cpus=self.num_cpus,
                         indexfile=self.indexfile,
-                        outsam=map_dir + "/" + samp + ".sam",
-                        map_dir=map_dir,
                         sample=samp,
                         workdir=self.workdir)
 
@@ -186,7 +185,7 @@ class SummarizeHisatMap(luigi.Task):
         return luigi.LocalTarget(out_file)
 
     def run(self):
-        """Parse the FaQC stats."""
+        """Parse the mapping stats."""
         summ_dic = {}
         for samp, fastq in self.fastq_dic.items():
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
@@ -201,9 +200,17 @@ class SummarizeHisatMap(luigi.Task):
                                   con_unaligned,
                                   con_aligned,
                                   multi_aligned]
-        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
-        summ_table.columns = ["Paired reads", "Concordantly unaligned",
-                              "Concordantly aligned", "Multi aligned"]
+        sm_tbl = pd.DataFrame.from_dict(summ_dic, orient='index')
+        sm_tbl.columns = ["pr_re", "concord_unaln",
+                          "Concordantly aligned", "Multi aligned"]
+        sm_tbl = sm_tbl.astype('int32')
+        sm_tbl["perc_unaln"] = (sm_tbl["concord_unaln"]/sm_tbl["pr_re"])*100
+        sm_tbl["perc_aln"] = 100-sm_tbl["perc_unaln"]
         out_file = os.path.join(self.workdir, "processes", "mapping",
                                 "MapSummary.csv")
-        summ_table.to_csv(out_file)
+        sm_tbl = sm_tbl.round(2)
+        sm_tbl = sm_tbl.rename(columns={'pr_re': 'Paired Reads',
+                                        'concord_unaln': 'Concordantly Unaligned',
+                                        'perc_unaln': "Percentage Unaligned",
+                                        'perc_aln': "Percentage Aligned"})
+        sm_tbl.to_csv(out_file)
