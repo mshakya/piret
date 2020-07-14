@@ -11,8 +11,8 @@ def parse_config(cfg_file):
     parses config file.
     """
 
-    #TODO: if a parameter is not present in config file, automatically assign a None to it
-    #TODO: read boolean parameter as boolean, not as strings
+    # TODO: if a parameter is not present in config file, automatically assign a None to it
+    # TODO: read boolean parameter as boolean, not as strings
     config = configparser.ConfigParser(allow_no_value=True)
     config.read(cfg_file)
     para_dic = {}
@@ -49,29 +49,51 @@ def check_input(para_dic, parser):
         if para_dic["fasta_prok"] is None:
             parser.error("""prokarya requires fasta file to be specified using
                         fasta_prok in config file""")
-        else:
-            if os.path.exists(para_dic["fasta_prok"]) is False:
-                parser.error("""reference genome doesnt exist""")
+        elif os.path.exists(para_dic["fasta_prok"]) is False:
+            parser.error("""reference genome doesnt exist""")
+        elif ',' in para_dic["fasta_prok"]:
+            if ',' in para_dic["gff_prok"]:
+                for fprok in para_dic["fasta_prok"].split(","):
+                    if os.path.exists(fprok) is False:
+                        parser.error("""reference genome doesnt exist""")
+                for gprok in para_dic["gff_prok"].split(","):
+                    if os.path.exists(gprok) is False:
+                        parser.error("""reference genome doesnt exist""")
+            else:
+                if len(para_dic["fasta_prok"].split(",")) != len(para_dic["gff_prok"].split(",")):
+                    parser.error("""Not all gff have """)
         if para_dic["gff_prok"] is None:
             parser.error("""prokarya requires gff file to be specified using
                         gff_prok in config file""")
         else:
             if os.path.exists(para_dic["gff_prok"]) is False:
                 parser.error("""reference genome gff doesnt exist""")
+
     # for eukarya
     elif para_dic['kingdom'] in ["eukarya", "both"]:
         if para_dic["fasta_euk"] is None:
             parser.error("""eukarya requires fasta file to be specified using
                         fasta_euk in config file""")
-        else:
-            if os.path.exists(para_dic["fasta_euk"]) is False:
-                parser.error("""eukaryotic reference genome doesnt exist""")
+        elif os.path.exists(para_dic["fasta_euk"]) is False:
+            parser.error("""eukaryotic reference genome doesnt exist""")
+        elif ',' in para_dic["fasta_euk"]:
+            if ',' in para_dic["gff_euk"]:
+                for fprok in para_dic["fasta_euk"].split(","):
+                    if os.path.exists(fprok) is False:
+                        parser.error("""reference genome doesnt exist""")
+                for gprok in para_dic["gff_euk"].split(","):
+                    if os.path.exists(gprok) is False:
+                        parser.error("""reference genome doesnt exist""")
+            else:
+                if len(para_dic["fasta_euk"].split(",")) != len(para_dic["gff_euk"].split(",")):
+                    parser.error("""Not all gff have """)
         if para_dic["gff_euk"] is None:
             parser.error("""eukarya requires gff file to be specified using
-                        gff_euk in config file""")  
+                        gff_euk in config file""")
         else:
             if os.path.exists(para_dic["gff_euk"]) is False:
-                parser.error("""eukaryotic reference genome gff doesnt exist""")
+                parser.error(
+                    """eukaryotic reference genome gff doesnt exist""")
 
     # if "ballgown" in para_dic['method'] and para_dic["kingdom"] == "prokarya":
     #     sys.exit("""Ballgown does not work for prokaryotic genomes,
@@ -96,7 +118,9 @@ def check_ref(ref_fasta=None, ref_gff=None):
                 return True
         else:
             if os.path.exists(ref_fasta) is False:
-                exit_message = ' '.join(("Reference FASTA", ref_fasta, "does not exist!"))
+                exit_message = ' '.join(
+                    ("Reference FASTA", ref_fasta, "does not exist!"))
                 sys.exit(exit_message)
             elif os.path.exists(ref_gff) is False:
-                exit_message = ' '.join(("Reference GFF", ref_gff, "does not exist!"))
+                exit_message = ' '.join(
+                    ("Reference GFF", ref_gff, "does not exist!"))
