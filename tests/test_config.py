@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 """A suite to test config reader."""
-import os
 import argparse
 import pytest
 from piret.checks.config import check_input, parse_config
@@ -14,6 +13,15 @@ def test_prok_incomp_fasta():
                                      description="""piret""")
     with pytest.raises(SystemExit):
         check_input(param_dicts, parser)
+
+
+def test_prok_comp_fasta():
+    """Test if it can detect configuration for a prok run."""
+    param_dicts = parse_config("tests/test_prok.cfg")
+    param_dicts["fasta_prok"] = "tests/data/test_prok.fna"
+    parser = argparse.ArgumentParser(prog='piret',
+                                     description="""piret""")
+    assert param_dicts["gff_prok"] == "tests/data/test_prok.gff"
 
 
 def test_prok_incomp_gff():
