@@ -138,13 +138,23 @@ class map_starW(luigi.WrapperTask):
                            sample=samp, num_cpus=self.num_cpus)
 
 
-@ requires(map_starW)
+# @ requires(map_starW)
 class SummarizeStarMap(luigi.Task):
     """Summarizes mapping results of all samples into a table"""
 
+    fastq_dic = luigi.DictParameter()
+    workdir = luigi.Parameter()
+
+    def requires(self):
+        for samp, fastq in self.fastq_dic.items():
+            out_file = os.path.join(
+                self.workdir, "processes", "mapping", samp, samp+"_Log.final.out")
+            return RefFile(out_file)
+
     def output(self):
         """Mapping Summary Output."""
-        out_file = self.workdir + "/" + "MapSummary.csv"
+        out_file = os.path.join(self.workdir, "processes",
+                                "mapping", "MapSummary.csv")
         return luigi.LocalTarget(out_file)
 
     def run(self):
@@ -157,14 +167,24 @@ class SummarizeStarMap(luigi.Task):
                 lines = file.readlines()
                 total_reads = lines[5].split("|")[1].strip()
                 unq_map_reads = lines[8].split("|")[1].strip()
-                multi_map_reads = lines[23].split("|")[1].strip()
-                multiX_map_reads = lines[25].split("|")[1].strip()
+                multi_map_reads = int(lines[23].split("|")[1].strip())
+                multix_map_reads = int(lines[25].split("|")[1].strip())
+                mm_reads = multi_map_reads + multix_map_reads
+                unmap_rds1 = int(lines[28].split("|")[1].strip())
+                unmap_rds2 = int(lines[30].split("|")[1].strip())
+                unmap_rds3 = int(lines[32].split("|")[1].strip())
+                unmap_rds = unmap_rds1 + unmap_rds2 + unmap_rds3
                 summ_dic[samp] = [total_reads,
                                   unq_map_reads,
-                                  multi_map_reads,
-                                  multiX_map_reads]
-        summ_table = pd.DataFrame.from_dict(summ_dic, orient='index')
-        summ_table.columns = ["Paired reads", "Uniquely mapped reads",
-                              "mapped to multiple loci", "mapped to too many loci"]
-        out_file = self.workdir + "/" + "MapSummary.csv"
-        summ_table.to_csv(out_file)
+                                  mm_reads, unmap_rds]
+        sm_tbl = pd.DataFrame.from_dict(summ_dic, orient='index')
+        sm_tbl.columns = ["Paired reads", "Uniquely mapped",
+                          "multi mapped",
+                          "Unmapped"]
+        sm_tbl = sm_tbl.astype('int32')
+        sm_tbl["perc_aln"] = (sm_tbl["Uniquely mapped"] /
+                              sm_tbl["Paired reads"])*100
+        sm_tbl["perc_unaln"] = 100-sm_tbl["perc_aln"]
+        out_file = os.path.join(self.workdir, "processes",
+                                "mapping", "MapSummary.csv")
+        sm_tbl.to_csv(out_file)
