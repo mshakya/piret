@@ -10,17 +10,11 @@ import sys
 import logging
 import luigi
 import pandas as pd
-from piret.miscs import RefFile
-from collections import defaultdict as dd, Counter
-from sys import stderr, exit
 from plumbum.cmd import STAR
-from plumbum.cmd import samtools, stringtie, mv, awk
-from plumbum.cmd import hisat2
-from luigi.util import inherits, requires
+from plumbum.cmd import mv
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi import LocalTarget
-from luigi import ExternalTask
-from luigi.contrib.external_program import ExternalProgramTask
+from piret.miscs import RefFile
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
@@ -36,9 +30,9 @@ class STARindex(luigi.Task):
 
     def requires(self):
         if ',' in self.fasta:
-            return[RefFile(self.fasta.split(",")[1])]
+            return RefFile(self.fasta.split(",")[1])
         else:
-            return[RefFile(self.fasta)]
+            return RefFile(self.fasta)
 
     def output(self):
         """Expected index output"""
@@ -67,8 +61,8 @@ class STARindex(luigi.Task):
             ind_opt = ["--runMode", "genomeGenerate",
                        "--runThreadN", self.num_cpus,
                        "--genomeDir", self.stardb_dir]
-        for f in fnas:
-            ind_opt.append(f)
+        for fna in fnas:
+            ind_opt.append(fna)
         star_cmd = STAR[ind_opt]
         logger = logging.getLogger('luigi-interface')
         logger.info(star_cmd)
@@ -85,14 +79,14 @@ class map_star(luigi.Task):
     align_intron_min = luigi.IntParameter()
     align_intron_max = luigi.IntParameter()
 
-    # def requires(self):
-    #     """See if input file exist."""
-    #     return [luigi.LocalTarget(self.fastqs[0]),
-    #             luigi.LocalTarget(self.fastqs[1])]
+    def requires(self):
+        """See if input file exist."""
+        for fastq in self.fastqs:
+            return RefFile(fastq)
 
     def output(self):
         """SAM file output of the mapping."""
-        bam_file = os.path.join(self.map_dir, self.sample) + "_srt.bam"
+        bam_file = os.path.join(self.map_dir, self.sample + "_srt.bam")
         return luigi.LocalTarget(bam_file)
 
     def run(self):
@@ -120,25 +114,29 @@ class map_star(luigi.Task):
 class map_starW(luigi.WrapperTask):
     """A wrapper task for mapping using star."""
 
-    fastq_dic = luigi.DictParameter()
+    fastq_dic = DictParameter()
     stardb_dir = luigi.Parameter()
     workdir = luigi.Parameter()
     num_cpus = luigi.IntParameter()
+    align_intron_min = luigi.IntParameter()
+    align_intron_max = luigi.IntParameter()
 
     def requires(self):
         """A wrapper task for mapping using STAR."""
-        for samp, fastq in self.fastq_dic.items():
-            trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
+        for samp, fastqs in self.fastq_dic.items():
+            print(samp)
+            print("urhsul")
+            # trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
-            yield map_star(fastqs=[trim_dir + "/" + samp + ".1.trimmed.fastq",
-                                   trim_dir + "/" + samp + ".2.trimmed.fastq"],
+            yield map_star(fastqs=fastqs,
                            stardb_dir=self.stardb_dir, map_dir=map_dir,
-                           sample=samp, num_cpus=self.num_cpus)
+                           sample=samp, num_cpus=self.num_cpus,
+                           align_intron_max=self.align_intron_max,
+                           align_intron_min=self.align_intron_min)
 
 
-# @ requires(map_starW)
 class SummarizeStarMap(luigi.Task):
     """Summarizes mapping results of all samples into a table"""
 
@@ -146,7 +144,7 @@ class SummarizeStarMap(luigi.Task):
     workdir = luigi.Parameter()
 
     def requires(self):
-        for samp, fastq in self.fastq_dic.items():
+        for samp, dummy_fastq in self.fastq_dic.items():
             out_file = os.path.join(
                 self.workdir, "processes", "mapping", samp, samp+"_Log.final.out")
             return RefFile(out_file)
@@ -160,7 +158,7 @@ class SummarizeStarMap(luigi.Task):
     def run(self):
         """Parse the mapping stats."""
         summ_dic = {}
-        for samp, fastq in self.fastq_dic.items():
+        for samp, dummy_fastq in self.fastq_dic.items():
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             filename = map_dir + "/" + samp + "_Log.final.out"
             with open(filename, 'r') as file:
