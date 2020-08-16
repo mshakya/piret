@@ -69,7 +69,7 @@ class STARindex(luigi.Task):
         star_cmd()
 
 
-class map_star(luigi.Task):
+class MapSTAR(luigi.Task):
     """Mapping the QCed sequences to reference using star aligner."""
     fastqs = ListParameter()
     stardb_dir = Parameter()
@@ -98,6 +98,7 @@ class map_star(luigi.Task):
                        "--outFileNamePrefix", os.path.join(
                            self.map_dir, self.sample + "_"),
                        "--outSAMtype", "BAM", "SortedByCoordinate",
+                       "--outSAMunmapped", "Fastx",
                        "--alignIntronMax", self.align_intron_max,
                        "alignIntronMin", self.align_intron_min,
                        "--readFilesIn", self.fastqs[0], self.fastqs[1]]
@@ -111,7 +112,7 @@ class map_star(luigi.Task):
         mv_cmd()
 
 
-class map_starW(luigi.WrapperTask):
+class MapSTARW(luigi.WrapperTask):
     """A wrapper task for mapping using star."""
 
     fastq_dic = DictParameter()
@@ -124,17 +125,14 @@ class map_starW(luigi.WrapperTask):
     def requires(self):
         """A wrapper task for mapping using STAR."""
         for samp, fastqs in self.fastq_dic.items():
-            print(samp)
-            print("urhsul")
-            # trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
             map_dir = os.path.join(self.workdir, "processes", "mapping", samp)
             if os.path.isdir(map_dir) is False:
                 os.makedirs(map_dir)
-            yield map_star(fastqs=fastqs,
-                           stardb_dir=self.stardb_dir, map_dir=map_dir,
-                           sample=samp, num_cpus=self.num_cpus,
-                           align_intron_max=self.align_intron_max,
-                           align_intron_min=self.align_intron_min)
+            yield MapSTAR(fastqs=fastqs,
+                          stardb_dir=self.stardb_dir, map_dir=map_dir,
+                          sample=samp, num_cpus=self.num_cpus,
+                          align_intron_max=self.align_intron_max,
+                          align_intron_min=self.align_intron_min)
 
 
 class SummarizeStarMap(luigi.Task):
@@ -183,6 +181,7 @@ class SummarizeStarMap(luigi.Task):
         sm_tbl["perc_aln"] = (sm_tbl["Uniquely mapped"] /
                               sm_tbl["Paired reads"])*100
         sm_tbl["perc_unaln"] = 100-sm_tbl["perc_aln"]
+        sm_tbl = sm_tbl.round(2)
         out_file = os.path.join(self.workdir, "processes",
                                 "mapping", "MapSummary.csv")
         sm_tbl.to_csv(out_file)
