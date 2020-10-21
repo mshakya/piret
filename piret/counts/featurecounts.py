@@ -14,6 +14,7 @@ from luigi import LocalTarget, Parameter, IntParameter
 import luigi
 import logging
 
+
 class FeatureCounts(luigi.Task):
     """Summarize mapped reads classificaion using FeatureCount."""
 
@@ -26,20 +27,18 @@ class FeatureCounts(luigi.Task):
     ref_file = luigi.Parameter()
     fid = luigi.Parameter()
     stranded = luigi.IntParameter()
+    feat2count = luigi.ListParameter()
 
     def output(self):
         """Expected output of featureCounts."""
         counts_dir = os.path.join(self.workdir, "processes", "featureCounts",
                                   self.kingdom)
         gff_fp = os.path.abspath(self.gff_file)
-        features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
-                                        comment='#')[2].tolist()))
-        features = [feat for feat in features if feat in ['CDS', 'rRNA',
-                                                          'tRNA', 'exon',
-                                                          'gene',
-                                                          'transcript']]
+        # features = list(set(pd.read_csv(gff_fp, sep="\t", header=None,
+        #                                 comment='#')[2].tolist()))
+        features = [feat for feat in self.feat2count]
         loc_target = LocalTarget(os.path.join(counts_dir, features[-1] +
-                                 "_count.tsv"))
+                                              "_count.tsv"))
         return loc_target
 
     def run(self):
@@ -60,8 +59,7 @@ class FeatureCounts(luigi.Task):
                                                sep="\t", header=None,
                                                comment='#')[2].tolist()))
                 for feat in feature:
-                    if feat in ['CDS', 'rRNA', 'tRNA', 'exon',
-                                'NovelRegion', 'transcript', 'mRNA']:
+                    if feat in self.feat2count:
                         fcount_cmd_opt = ["-a", self.gff_file,
                                           "-s", self.stranded,
                                           "-B",
@@ -71,6 +69,8 @@ class FeatureCounts(luigi.Task):
                                           "-T", self.num_cpus,
                                           "-o", counts_dir + "/" + feat +
                                           "_count.tsv"] + in_srtbam_list
+                        fcount_cmd = featureCounts[fcount_cmd_opt]
+                        fcount_cmd()
                     elif feat in ['gene']:
                         fcount_cmd_opt = ["-a", self.gff_file,
                                           "-s", self.stranded,
@@ -81,14 +81,15 @@ class FeatureCounts(luigi.Task):
                                           "-T", self.num_cpus,
                                           "-o", counts_dir + "/" + feat +
                                                 "_count.tsv"] + in_srtbam_list
-                    fcount_cmd = featureCounts[fcount_cmd_opt]
-                    fcount_cmd()
+                        fcount_cmd = featureCounts[fcount_cmd_opt]
+                        fcount_cmd()
+                    else:
+                        pass
         else:
             feature = list(set(pd.read_csv(self.gff_file, sep="\t", header=None,
                                            comment='#')[2].tolist()))
         for feat in feature:
-            if feat in ['CDS', 'rRNA', 'tRNA', 'exon', 'transcript',
-                        'NovelRegion']:
+            if feat in self.feat2count:
                 fcount_cmd_opt = ["-a", self.gff_file,
                                   "-s", self.stranded,
                                   "-B",
