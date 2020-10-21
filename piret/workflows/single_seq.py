@@ -62,8 +62,11 @@ class SingleSeq:
             qc_dic = {}
             for samp, path in self.fastq_dic.items():
                 trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
-                qc_dic[samp] = trim_dir + "/" + samp + ".1.trimmed.fastq" + ":" + \
-                    trim_dir + "/" + samp + ".2.trimmed.fastq"
+                read1 = os.path.join(
+                    self.workdir, "processes", "qc", samp, samp + ".1.trimmed.fastq")
+                read2 = os.path.join(
+                    self.workdir, "processes", "qc", samp, samp + ".2.trimmed.fastq")
+                qc_dic[samp] = [read1, read2]
             return qc_dic
 
         else:
@@ -92,8 +95,9 @@ class SingleSeq:
                                     kingdom=self.kingdom)],
                   local_scheduler=self.local_scheduler)
         elif self.aligner in ["STAR", "star"]:
-            build([star.map_starW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
-                                  stardb_dir=self.stardb_dir, workdir=self.workdir)],
+            build([star.MapSTARW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
+                                 stardb_dir=self.stardb_dir,
+                                 workdir=self.workdir)],
                   local_scheduler=self.local_scheduler)
 
     def map_summarize(self):
@@ -107,9 +111,7 @@ class SingleSeq:
                   local_scheduler=self.local_scheduler, workers=1)
         elif self.aligner in ["STAR", "star"]:
             build([star.SummarizeStarMap(fastq_dic=self.fastq_dic,
-                                         workdir=self.workdir,
-                                         stardb_dir=self.stardb_dir,
-                                         num_cpus=self.num_cpus)],
+                                         workdir=self.workdir)],
                   local_scheduler=self.local_scheduler, workers=1)
 
     def extract_pp(self):
