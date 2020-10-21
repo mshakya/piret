@@ -98,7 +98,7 @@ class MapSTAR(luigi.Task):
                        "--outFileNamePrefix", os.path.join(
                            self.map_dir, self.sample + "_"),
                        "--outSAMtype", "BAM", "SortedByCoordinate",
-                       "--outSAMunmapped", "Fastx",
+                       "--outReadsUnmapped", "Fastx",
                        "--alignIntronMax", self.align_intron_max,
                        "alignIntronMin", self.align_intron_min,
                        "--readFilesIn", self.fastqs[0], self.fastqs[1]]
