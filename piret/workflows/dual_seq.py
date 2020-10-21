@@ -59,9 +59,14 @@ class DualSeq:
             qc_dic = {}
             for samp, path in self.fastq_dic.items():
                 trim_dir = os.path.join(self.workdir, "processes", "qc", samp)
-                qc_dic[samp] = trim_dir + "/" + samp + ".1.trimmed.fastq" + ":" + \
-                    trim_dir + "/" + samp + ".2.trimmed.fastq"
+                read1 = os.path.join(
+                    self.workdir, "processes", "qc", samp, samp + ".1.trimmed.fastq")
+                read2 = os.path.join(
+                    self.workdir, "processes", "qc", samp, samp + ".2.trimmed.fastq")
+                qc_dic[samp] = [read1, read2]
             return qc_dic
+        else:
+            return self.fastq_dic
 
     def create_db(self):
         """Function to create hisat index."""
@@ -94,16 +99,17 @@ class DualSeq:
                    ],
                   local_scheduler=self.local_scheduler)
 
-    def map_reads(self):
+    def map_reads(self, qc_dic):
         """Function to map reads."""
         if self.aligner == "hisat2":
-            build([hisat2.HisatMapW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
+            build([hisat2.HisatMapW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
                                     indexfile=self.hisat_index, workdir=self.workdir,
                                     kingdom=self.kingdom)],
                   local_scheduler=self.local_scheduler)
         elif self.aligner in ["STAR", "star"]:
-            build([star.map_starW(fastq_dic=self.fastq_dic, num_cpus=self.num_cpus,
-                                  stardb_dir=self.stardb_dir, workdir=self.workdir)],
+            print(qc_dic)
+            build([star.MapSTARW(fastq_dic=qc_dic, num_cpus=self.num_cpus,
+                                 stardb_dir=self.stardb_dir, workdir=self.workdir)],
                   local_scheduler=self.local_scheduler)
 
     def map_summarize(self):
@@ -117,9 +123,7 @@ class DualSeq:
                   local_scheduler=self.local_scheduler, workers=1)
         elif self.aligner == "STAR":
             build([star.SummarizeStarMap(fastq_dic=self.fastq_dic,
-                                         workdir=self.workdir,
-                                         stardb_dir=self.stardb_dir,
-                                         num_cpus=self.num_cpus)],
+                                         workdir=self.workdir)],
                   local_scheduler=self.local_scheduler, workers=1)
 
     def split_prokeuk(self):
