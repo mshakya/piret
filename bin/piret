@@ -151,7 +151,7 @@ def main():
         single_seq.create_db()
 
         # step 3, map reads, hisat2 or stardb
-        # single_seq.map_reads(qc_dic=qc_dic)
+        single_seq.map_reads(qc_dic=qc_dic)
 
         # # step 4, summarize the mapped reads
         single_seq.map_summarize()
@@ -211,7 +211,7 @@ def main():
                                    local_scheduler=True,
                                    pathway=paras["pathway"],
                                    num_cpus=paras["threads"],
-                                   stardb_dir=paras["star_index"],
+                                   stardb_dir=db,
                                    emap_dir=paras["emap_db"])
 
         # step 1, run qc
@@ -221,7 +221,7 @@ def main():
         dual_seq.create_db()
 
         # step 3, map reads, hisat2 or stardb
-        dual_seq.map_reads()
+        dual_seq.map_reads(qc_dic=qc_dic)
 
         # step 4, summarize the mapped reads
         dual_seq.map_summarize()
