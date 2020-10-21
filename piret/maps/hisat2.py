@@ -4,7 +4,10 @@
 Mapping is done using hisat2 and counting is done using featurecounts
 and stringtie
 """
-
+import os
+import sys
+import luigi
+import pandas as pd
 from piret.miscs import RefFile
 from piret.qc import FaQC
 from collections import Counter
@@ -15,10 +18,7 @@ from luigi.util import inherits, requires
 from luigi import Parameter, IntParameter, DictParameter, ListParameter
 from luigi import LocalTarget
 from luigi.contrib.external_program import ExternalProgramTask
-import os
-import sys
-import luigi
-import pandas as pd
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(dir_path, '..'))
 sys.path.append(lib_path)
