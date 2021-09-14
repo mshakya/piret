@@ -240,7 +240,7 @@ if(nrow(read_counts_non0) < 2 ){
                        
                 # write summary table
                 print("Writing summary file")
-                out_file_summ <- file.path(DE_dir, paste(all_pairs[[n]][1], "over", all_pairs[[n]][2], feature_name, "summary.csv", sep = "__"))
+                out_file_summ <- file.path(DE_dir, paste(all_pairs[[n]][2], "over", all_pairs[[n]][1], feature_name, "summary.csv", sep = "__"))
                 summ_table <- summary(decideTests(edger_et))
                 colnames(summ_table) <- paste(colnames(summ_table), feature_name, sep="_")
                 write.csv(t(summ_table), out_file_summ)
