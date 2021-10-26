@@ -27,7 +27,7 @@ conda install -c bioconda diamond=0.9.24 -n $env --yes
 conda install -c bioconda perl-lwp-protocol-https -n $env --yes
 conda install -c bioconda perl-json -n $env --yes
 conda install -c conda-forge time -n $env --yes
-conda install -r r r-tidyverse r-reshape2 r-optparse r-pheatmap
+conda install -c r r-tidyverse r-reshape2 r-optparse r-pheatmap
 conda install -c bioconda bioconductor-deseq2 bioconductor-edger bioconductor-gage bioconductor-ballgown
 export PATH=/opt/conda/envs/piret_env/bin:$PATH
 source activate $env
