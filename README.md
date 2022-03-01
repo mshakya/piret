@@ -46,16 +46,10 @@ conda install -c bioconda diamond=0.9.24 -n piret_env --yes
 conda install -c bioconda perl-lwp-protocol-https -n piret_env --yes
 conda install -c bioconda perl-json -n piret_env --yes
 conda install -c conda-forge time -n piret_env --yes
+conda install -r r r-tidyverse r-reshape2 r-optparse r-pheatmap
+conda install -c bioconda bioconductor-deseq2 bioconductor-edger bioconductor-gage bioconductor-ballgown
 source activate piret_env
 echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
-echo "if('optparse' %in% rownames(installed.packages()) == FALSE) {install.packages('optparse',repos='https://cran.r-project.org')}"  | Rscript -
-echo "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}"  | Rscript -
-echo "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}"  | Rscript -
-echo "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}"  | Rscript -
-echo "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}"  | Rscript -
-echo "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}"  | Rscript -
-echo "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}"  | Rscript -
-echo "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}"  | Rscript -
 cd thirdparty
 rm -rf eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git
