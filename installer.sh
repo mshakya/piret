@@ -18,7 +18,34 @@ echo
 exec &> >(tee -a  install.log)
 exec 2>&1 # copies stderr onto stdout
 
-conda create -n $env python=3.6.6 --yes
+conda create -n $env python=3.6 --yes
+conda install -n $env -c conda-forge r-base=3.6.0 --yes
+# R packages
+echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
+echo "if('optparse' %in% rownames(installed.packages()) == TRUE) {packageVersion('optparse')}"  | Rscript -
+echo "if('optparse' %in% rownames(installed.packages()) == FALSE) {install.packages('optparse',repos='https://cran.r-project.org')}"  | Rscript -
+# install tidyverse
+echo "if('tidyverse' %in% rownames(installed.packages()) == TRUE){packageVersion('tidyverse')}"  | Rscript -
+echo "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}"  | Rscript -
+# install R reshape2 packages
+echo "if('reshape2' %in% rownames(installed.packages()) == TRUE){packageVersion('reshape2')}"  | Rscript -
+echo "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}"  | Rscript -
+# install R pheatmap packages
+# echo "if('pheatmap' %in% rownames(installed.packages()) == TRUE){packageVersion('pheatmap')}"  | Rscript -
+# echo "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}"  | Rscript -
+# install R edgeR packages
+echo "if('edgeR' %in% rownames(installed.packages()) == TRUE){packageVersion('edgeR')}"  | Rscript -
+echo "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}"  | Rscript -
+# install R deseq2 packages
+# echo "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2')}"  | Rscript -
+# echo "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}"  | Rscript -
+# install R gage package
+echo "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage')}"  | Rscript -
+echo "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}"  | Rscript -
+# install R ballgown package
+echo "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown')}"  | Rscript -
+echo "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}"  | Rscript -
+
 conda install -c bioconda faqcs -n $env --yes
 conda install -c bioconda star hisat2 subread -n $env --yes
 conda install -c bioconda subread stringtie -n $env --yes
@@ -31,31 +58,6 @@ export PATH=/opt/conda/envs/piret_env/bin:$PATH
 source activate $env
 rm -rf thirdparty/eggnog-mapper
 git clone https://github.com/mshakya/eggnog-mapper.git thirdparty/eggnog-mapper
-# R packages
-echo "if('BiocManager' %in% rownames(installed.packages()) == FALSE) {install.packages('BiocManager', repos='https://cran.r-project.org')}" | Rscript -
-echo "if('optparse' %in% rownames(installed.packages()) == TRUE) {packageVersion('optparse')}"  | Rscript -
-echo "if('optparse' %in% rownames(installed.packages()) == FALSE) {install.packages('optparse',repos='https://cran.r-project.org')}"  | Rscript -
-# install tidyverse
-echo "if('tidyverse' %in% rownames(installed.packages()) == TRUE){packageVersion('tidyverse')}"  | Rscript -
-echo "if('tidyverse' %in% rownames(installed.packages()) == FALSE){install.packages('tidyverse',repos='https://cran.r-project.org')}"  | Rscript -
-# install R reshape2 packages
-echo "if('reshape2' %in% rownames(installed.packages()) == TRUE){packageVersion('reshape2')}"  | Rscript -
-echo "if('reshape2' %in% rownames(installed.packages()) == FALSE){install.packages('reshape2',repos='https://cran.r-project.org')}"  | Rscript -
-# install R pheatmap packages
-echo "if('pheatmap' %in% rownames(installed.packages()) == TRUE){packageVersion('pheatmap')}"  | Rscript -
-echo "if('pheatmap' %in% rownames(installed.packages()) == FALSE){install.packages('pheatmap',repos='https://cran.r-project.org')}"  | Rscript -
-# install R edgeR packages
-echo "if('edgeR' %in% rownames(installed.packages()) == TRUE){packageVersion('edgeR')}"  | Rscript -
-echo "if('edgeR' %in% rownames(installed.packages()) == FALSE){BiocManager::install('edgeR')}"  | Rscript -
-# install R deseq2 packages
-echo "if('DESeq2' %in% rownames(installed.packages()) == TRUE){packageVersion('DESeq2')}"  | Rscript -
-echo "if('DESeq2' %in% rownames(installed.packages()) == FALSE){BiocManager::install('DESeq2')}"  | Rscript -
-# install R gage package
-echo "if('gage' %in% rownames(installed.packages()) == TRUE){packageVersion('gage')}"  | Rscript -
-echo "if('gage' %in% rownames(installed.packages()) == FALSE){BiocManager::install('gage')}"  | Rscript -
-# install R ballgown package
-echo "if('ballgown' %in% rownames(installed.packages()) == TRUE){packageVersion('ballgown')}"  | Rscript -
-echo "if('ballgown' %in% rownames(installed.packages()) == FALSE){BiocManager::install('ballgown')}"  | Rscript -
 python setup.py install
 pytest --cov=piret tests/
 
