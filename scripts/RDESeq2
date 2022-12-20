@@ -78,12 +78,12 @@ DESeq2_summary <- function(object, alpha, pair1, pair2, feature_name, outdir){
 }
 
 #=============================================================================#
-    read_counts <- utils::read.table(reads_file, sep = "\t", header = TRUE)
+    read_counts <- utils::read.table(reads_file, sep = "\t", header = TRUE, check.names=FALSE)
     names(read_counts) <- base::gsub(".*mapping.", "",
                                      names(read_counts),
                                      perl = TRUE)
     names(read_counts) <- base::gsub("_srt.bam", "", names(read_counts), perl = TRUE)
-    names(read_counts) <- base::gsub("^.*[.]", "", names(read_counts))
+    names(read_counts) <- base::gsub("^.*[./]", "", names(read_counts))
     read_counts$total <- rowSums(read_counts[, -c(1:6)])
     read_counts.non0 <- dplyr::filter(read_counts, total > 0)
     gene_info <- read_counts.non0[, c(1:6)]
