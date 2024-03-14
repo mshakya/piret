@@ -83,18 +83,18 @@ read_counts_sort$sum <- NULL
 write.csv(read_counts_sort, file=outfile )
 #==============================================================================#
 # # Reformat summary files for EDGE display
-# summary_file <- paste(reads_file, ".summary", sep="")
-# summary_outfile <- paste(strsplit(reads_file ,".summary"), "_summary.csv", sep="")
-# summary.counts <- read.table(summary_file, sep = "\t", header = TRUE, comment.char = "#", check.names=FALSE)
-# names(summary.counts) <- gsub(".*mapping.", "", names(summary.counts),
-#                            perl = TRUE)
-# names(summary.counts) <- gsub("_srt.bam", "", names(summary.counts), perl = TRUE)
-# names(summary.counts) <- base::gsub("^.*[./]", "", names(summary.counts))
-# summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
-# summary.counts.t <- as.data.frame(t(summary.counts))
-# colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
-# summary.counts.t = summary.counts.t[-1, ]
-# write.csv(summary.counts.t, file = summary_outfile )
+summary_file <- paste(reads_file, ".summary", sep="")
+summary_outfile <- paste(strsplit(reads_file ,".summary"), "_summary.csv", sep="")
+summary.counts <- read.table(summary_file, sep = "\t", header = TRUE, comment.char = "#", check.names=FALSE)
+names(summary.counts) <- gsub(".*mapping.", "", names(summary.counts),
+                            perl = TRUE)
+names(summary.counts) <- gsub("_srt.bam", "", names(summary.counts), perl = TRUE)
+names(summary.counts) <- base::gsub("^.*[./]", "", names(summary.counts))
+summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
+summary.counts.t <- as.data.frame(t(summary.counts))
+colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
+summary.counts.t = summary.counts.t[-1, ]
+write.csv(summary.counts.t, file = summary_outfile )
 #==============================================================================#
 if(nrow(read_counts_non0) < 2 ){
     print("Nothing was mapped to the feature!")
