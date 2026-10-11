@@ -47,8 +47,12 @@ class HisatIndex(ExternalProgramTask):
 
     def output(self):
         """Expected index output."""
-        hisat_index_ht8l = self.hi_index + ".8.ht2"
-        return LocalTarget(hisat_index_ht8l)
+        ht2l_file = f"{self.hi_index}.8.ht2l"
+        ht2_file = f"{self.hi_index}.8.ht2"
+        if os.path.exists(ht2l_file):
+            return LocalTarget(ht2l_file)
+        else:
+            return LocalTarget(ht2_file)
 
     def program_args(self):
         """Run hisat2-build command."""

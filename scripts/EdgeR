@@ -5,7 +5,7 @@ library(limma)
 library(edgeR)
 library(dplyr)
 library(ggplot2)
-# library(pheatmap)
+library(pheatmap)
 library(reshape2)
 
 
@@ -47,8 +47,10 @@ pair.comb <- function(exp_des){
     return(pairs)}
 #==============================================================================#
 # read the output of featureCounts
-read_counts <- read.table(reads_file, sep = "\t", header = TRUE, comment.char = "#")
+read_counts <- read.table(reads_file, sep = "\t", header = TRUE, comment.char = "#", check.names=FALSE)
 # read_counts_only <- read_counts[, -c(1:6)]
+# Convert count columns to numeric to avoid cumsum integer overflow
+read_counts[, -c(1:6)] <- lapply(read_counts[, -c(1:6)], as.numeric) 
 read_counts$total <- rowSums(read_counts[, -c(1:6)])
 read_counts_non0 <- dplyr::filter(read_counts, total > 0)
 read_counts_non0$total <- NULL
@@ -58,7 +60,7 @@ names(read_counts_non0) <- gsub(".*mapping.", "", names(read_counts_non0),
                            perl = TRUE)
 names(read_counts_non0) <- gsub("_srt.bam", "", names(read_counts_non0), perl = TRUE)
 
-names(read_counts_non0) <- base::gsub("^.*[.]", "", names(read_counts_non0))
+names(read_counts_non0) <- base::gsub("^.*[./]", "", names(read_counts_non0))
 #==============================================================================#
 # convert first column to row names
 row.names(read_counts_non0) <- read_counts_non0[, 1]
@@ -74,27 +76,29 @@ group_table <- select(group_table, Group)
 #TODO: move this piece of code to separate R code so that its done everytime
 #rearrange/clean the table and rewrite the column to display in EDGE
 outfile <- paste(strsplit(reads_file ,".tsv"), "_sorted.csv", sep="")
-read_counts_sort <- read_counts
-col_len <- ncol(read_counts_sort)
-read_counts_sort$sum <- rowSums(read_counts_sort[7:col_len])
-read_counts_sort <- dplyr::arrange(read_counts_sort, desc(sum))
-read_counts_sort$sum <- NULL
+if (!file.exists(outfile) || file.size(outfile) == 0) {
+ read_counts_sort <- read_counts
+ col_len <- ncol(read_counts_sort)
+ read_counts_sort$sum <- rowSums(read_counts_sort[7:col_len])
+ read_counts_sort <- dplyr::arrange(read_counts_sort, desc(sum))
+ read_counts_sort$sum <- NULL
 # read_counts_sort <- read_counts_sort[c(base::colnames(gene.info), base::row.names(group_table))]
-write.csv(read_counts_sort, file=outfile )
+ write.csv(read_counts_sort, file=outfile )
+}
 #==============================================================================#
-# # Reformat summary files for EDGE display
-# summary_file <- paste(reads_file, ".summary", sep="")
-# summary_outfile <- paste(strsplit(reads_file ,".summary"), "_summary.csv", sep="")
-# summary.counts <- read.table(summary_file, sep = "\t", header = TRUE, comment.char = "#")
-# names(summary.counts) <- gsub(".*mapping.", "", names(summary.counts),
-#                            perl = TRUE)
-# names(summary.counts) <- gsub("_srt.bam", "", names(summary.counts), perl = TRUE)
-# names(summary.counts) <- base::gsub("^.*[.]", "", names(summary.counts))
-# summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
-# summary.counts.t <- as.data.frame(t(summary.counts))
-# colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
-# summary.counts.t = summary.counts.t[-1, ]
-# write.csv(summary.counts.t, file = summary_outfile )
+# Reformat summary files for EDGE display
+summary_file <- paste(reads_file, ".summary", sep="")
+summary_outfile <- paste(strsplit(reads_file ,".summary"), "_summary.csv", sep="")
+summary.counts <- read.table(summary_file, sep = "\t", header = TRUE, comment.char = "#",check.names=FALSE)
+names(summary.counts) <- gsub(".*mapping.", "", names(summary.counts),
+                           perl = TRUE)
+names(summary.counts) <- gsub("_srt.bam", "", names(summary.counts), perl = TRUE)
+names(summary.counts) <- base::gsub("^.*[./]", "", names(summary.counts))
+summary.counts <- summary.counts[c("Status", base::row.names(group_table))]
+summary.counts.t <- as.data.frame(t(summary.counts))
+colnames(summary.counts.t) <- as.character(unlist(summary.counts.t[1,]))
+summary.counts.t = summary.counts.t[-1, ]
+write.csv(summary.counts.t, file = summary_outfile )
 #==============================================================================#
 if(nrow(read_counts_non0) < 2 ){
     print("Nothing was mapped to the feature!")
@@ -117,10 +121,19 @@ if(nrow(read_counts_non0) < 2 ){
         cpm_results <- edgeR::cpm(edger_dge)
         out_rpkm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_RPKM.csv", sep=""))
         out_cpm <- file.path(out_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_CPM.csv", sep=""))
-        write.csv(rpkm_results, file = out_rpkm)
-        write.csv(cpm_results, file = out_cpm)
+	if (!file.exists(out_rpkm) || file.size(out_rpkm) == 0) {
+        	write.csv(rpkm_results, file = out_rpkm)
+	} else {
+		message(paste("Skipping RPKM write - file exists with size:", file.size(out_rpkm), "bytes"))
+	}
+	if (!file.exists(out_cpm) || file.size(out_cpm) == 0) {
+        	write.csv(cpm_results, file = out_cpm)
+	} else {
+		message(paste("Skipping CPM write - file exists with size:", file.size(out_cpm), "bytes"))
+	}
         ################################################################################
 
+	sample_size<-10000
         ################ histogram of count per million ################################
         hist_dir = file.path(out_dir, "histograms")
         ifelse(!dir.exists(hist_dir), dir.create(hist_dir), print("already exist"))
@@ -128,7 +141,15 @@ if(nrow(read_counts_non0) < 2 ){
         out_cpm_hist_png <- file.path(hist_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_cpm_histogram.png", sep=""))
         cpm_results <- dplyr::filter_all(as.data.frame(cpm_results), any_vars(. > 1))
         cpm_data <- reshape2::melt(as.data.frame(cpm_results), variable.name="sample", value.name="CPM")
-        cpm_hist <- ggplot(data = cpm_data, mapping = aes(x = CPM)) +
+	#Ensure sample is factor or character
+	cpm_data$sample <- as.factor(cpm_data$sample)
+	# Sample up to 10,000 values per sample
+	set.seed(123)
+	cpm_data_sampled <- cpm_data %>%
+		group_by(sample) %>%
+		sample_n(size = min(sample_size, n()), replace = FALSE) %>%
+		ungroup()
+        cpm_hist <- ggplot(data = cpm_data_sampled, mapping = aes(x = CPM)) +
             theme_bw() + theme(axis.text.x=element_text(angle = -90, hjust = 0)) +
             geom_histogram(bins=50) + xlab("CPM") + ylab(feature_name) + facet_wrap(~sample)
         ggsave(out_cpm_hist_pdf, cpm_hist, device = "pdf")
@@ -150,10 +171,28 @@ if(nrow(read_counts_non0) < 2 ){
         ggsave(out_cpm_violin_png, cpm_violin, device = "png")
 
         ##############################histogram of rpkm ################################
+        library(data.table)
+        hist_dir = file.path(out_dir, "histograms")
+        ifelse(!dir.exists(hist_dir), dir.create(hist_dir), print("already exist"))
         out_rpkm_hist_pdf <- file.path(hist_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.pdf", sep=""))
         out_rpkm_hist_png <- file.path(hist_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_histogram.png", sep=""))
         rpkm_results <- dplyr::filter_all(as.data.frame(rpkm_results), any_vars(. != 0))
-        rpkm_data <- reshape2::melt(as.data.frame(rpkm_results), variable.name="sample", value.name="rpkm")
+	rpkm_results$feature <- rownames(rpkm_results)
+	rpkm_data <- reshape2::melt(rpkm_results, id.vars = "feature", variable.name = "sample", value.name = "rpkm") %>%
+  filter(is.finite(rpkm))
+	dt <- as.data.table(rpkm_data)
+	sample_counts <- dt[, .N, by = sample]  # N = number of rows per group
+	if (all(sample_counts$N >= sample_size)) {
+ 	  message("✅ All samples have at least 10,000 rows — proceeding with sampling.")
+  
+ 	  set.seed(123)
+	  rpkm_sampled <- dt[, .SD[sample(.N, sample_size)], by = sample]  # random 10k rows per sample
+  
+	} else {
+  	  message("⚠️ Not all samples have 10,000 rows — skipping sampling.")
+  	  rpkm_sampled <- dt
+	}
+	rpkm_data <- as.data.frame(rpkm_sampled)
         rpkm_hist <- ggplot(data=rpkm_data, mapping=aes(x=rpkm)) +  theme_bw() +
             geom_histogram(bins=50) + xlab("rpkm") + ylab(feature_name) + facet_wrap(~sample)
         ggsave(out_rpkm_hist_pdf, rpkm_hist, device = "pdf")
@@ -164,19 +203,30 @@ if(nrow(read_counts_non0) < 2 ){
         ifelse(!dir.exists(heat_dir), dir.create(heat_dir), print("already exist"))
         out_rpkm_heatmap_pdf <- file.path(heat_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.pdf", sep=""))
         out_rpkm_heatmap_png <- file.path(heat_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_heatmap.png", sep=""))
-        rpkm_results_sort <- rpkm_results
-        rpkm_results_sort$sum <- rowSums(rpkm_results_sort)
-        rpkm_results_sort <- dplyr::arrange(rpkm_results_sort, desc(sum))
-        rpkm_results_sort$sum <- NULL
-        # if (nrow(rpkm_results_sort) > 99) {
-        #     pheatmap(as.matrix(head(rpkm_results_sort, 100)), legend=TRUE, filename=out_rpkm_heatmap_pdf)
-        #     pheatmap(as.matrix(head(rpkm_results_sort, 100)), legend=TRUE, filename=out_rpkm_heatmap_png)
-        # }
-        # else
-        # {
-        #     pheatmap(as.matrix(rpkm_results_sort), legend=TRUE, filename=out_rpkm_heatmap_pdf)
-        #     pheatmap(as.matrix(rpkm_results_sort), legend=TRUE, filename=out_rpkm_heatmap_png)
-        # }
+	# Convert to data.frame in case it's a tibble or data.table
+	rpkm_df <- as.data.frame(rpkm_results)
+	# Optional sampling to speed things up if very large
+	max_rows_for_sorting <- sample_size
+	if (nrow(rpkm_df) > max_rows_for_sorting) {
+	     message("📉 Sampling ", max_rows_for_sorting, " rows from large RPKM matrix for heatmap...")
+	     set.seed(123)
+	     rpkm_df <- rpkm_df[sample(nrow(rpkm_df), max_rows_for_sorting), ]
+	}
+	# Remove non-numeric columns before rowSums
+	rpkm_numeric <- rpkm_df[, sapply(rpkm_df, is.numeric)]
+	# Add row sums to rank features
+	rpkm_df$sum <- rowSums(rpkm_numeric)
+	# Sort by descending expression 
+	rpkm_sorted <- rpkm_df %>%
+  			arrange(desc(sum)) %>%
+  			select(-sum)
+	# Subset for heatmap
+	heatmap_data <- if (nrow(rpkm_sorted) > 99) head(rpkm_sorted, 100) else rpkm_sorted
+	heatmap_data_numeric <- heatmap_data[, sapply(heatmap_data, is.numeric)]
+	# Remove rows with any NA or Inf values
+	heatmap_data_clean <- heatmap_data_numeric[apply(heatmap_data_numeric, 1, function(x) all(is.finite(x))), ]
+	pheatmap(as.matrix(heatmap_data_clean), legend = TRUE, filename = out_rpkm_heatmap_pdf)
+	pheatmap(as.matrix(heatmap_data_clean), legend = TRUE, filename = out_rpkm_heatmap_png)
         ################# boxplot of RPKM #############################################
         rpkm_data_boxplot <- merge(x=rpkm_data, y=group_table2)
         out_rpkm_violin_pdf <- file.path(violin_dir, paste(strsplit(basename(reads_file), ".tsv")[[1]], "_rpkm_violin.pdf", sep=""))
@@ -188,8 +238,8 @@ if(nrow(read_counts_non0) < 2 ){
         ggsave(out_rpkm_violin_pdf, rpkm_violin, device = "pdf")
         ggsave(out_rpkm_violin_png, rpkm_violin, device = "png")
 
-        if (feature_name %in% c("mRNA","CDS", "gene", "transcript", "NovelRegion", "miRNA")){
-                keep <- rowSums(edgeR::cpm(edger_dge)) >= nrow(group_table)
+        if (feature_name %in% c("CDS", "gene", "transcript", "NovelRegion")){
+                keep <- rowSums(cpm_results) >= nrow(group_table)
                 edger_dge <- edger_dge[keep, ]
                 if (nrow(edger_dge$counts) < 10 ) {
                     print("Not enough data to calculate dispersion factors!")
@@ -215,7 +265,7 @@ if(nrow(read_counts_non0) < 2 ){
 
                 # get all possible pairs
                 all_pairs <- pair.comb(group_file)
-                print("urshula")
+                # print("urshula")
                 print(all_pairs)
                 print(nrow(all_pairs))
 
@@ -228,9 +278,9 @@ if(nrow(read_counts_non0) < 2 ){
                 pairs <- c(pair1, pair2)
                 print(pairs)
                 # filename strings for each comparisons
-                filename <- paste(pair1, "over", pair2,
+                filename <- paste(pair2, "over", pair1,
                                   feature_name, "et.csv", sep = "__")
-                filename_sig <- paste(pair1, "over", pair2,
+                filename_sig <- paste(pair2, "over", pair1,
                                       feature_name,"sig.csv", sep = "__")
 
                 # exact test
@@ -247,7 +297,6 @@ if(nrow(read_counts_non0) < 2 ){
                 # plot
                 md_plot_dir = file.path(DE_dir, "md_plots")
                 ifelse(!dir.exists(md_plot_dir), dir.create(md_plot_dir), print("already exist"))
-                #TODO: change the title of the plot so that it matches with the file name
                 out_md_pdf <- file.path(md_plot_dir, paste(
                     pair1, "over", pair2, feature_name, "MD.pdf", sep = "__"))
                 out_md_png <- file.path(md_plot_dir, paste(

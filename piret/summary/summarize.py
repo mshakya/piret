@@ -20,12 +20,11 @@ from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna
 import re
 from functools import reduce
-from piret.miscs  import RefFile
-
+from piret.miscs import RefFile
 
 class conversions(luigi.Task):
     """Convert gene count, RPKM, fold change table to GeneID or locus tag
-        and also to ones that have EC# or KO# when available."""
+    and also to ones that have EC# or KO# when available."""
     gff_file = luigi.Parameter()
     gene_count_table = luigi.Parameter()
     gene_RPKM_table = luigi.Parameter()
@@ -52,30 +51,30 @@ class conversions(luigi.Task):
                               "-p", self.p_value,
                               "-n", name,
                               "-o", edger_dir]
-                # TODO: get the output that has locus tag
                 edger_cmd = EdgeR[edger_list]
                 logger = logging.getLogger('luigi-interface')
                 logger.info(edger_cmd)
                 edger_cmd()
                 if file == "gene_count.tsv":
-                    # TODO:convert the first column to locus tag
-                    if self.pathway is True:
-                        path_list = ["-d", edger_dir,
-                                     "-m", "edgeR", "-c",
-                                     self.org_code]  # get pathway information
-                        path_cmd = plot_pathway[path_list]
-                        logger.info(path_cmd)
-                        path_cmd()
-                    if self.GAGE is True:
-                        gage_list = ["-d", edger_dir, "-m",
-                                     "edgeR", "-c", self.org_code]
-                        gage_cmd = gage_analysis[gage_list]
-                        logger.info(gage_cmd)
-                        gage_cmd()
+                    pass
+        if self.pathway is True:
+            path_list = ["-d", edger_dir,
+                         "-m", "edgeR", "-c",
+                         self.org_code]
+            path_cmd = plot_pathway[path_list]
+            logger.info(path_cmd)
+            path_cmd()
+        if self.GAGE is True:
+            gage_list = ["-d", edger_dir, "-m",
+                         "edgeR", "-c", self.org_code]
+            gage_cmd = gage_analysis[gage_list]
+            logger.info(gage_cmd)
+            gage_cmd()
         self.summ_summ()
 
+
 class conver2json(luigi.Task):
-    """ Summarizes and converts all the results to one big JSON file."""
+    """Summarizes and converts all the results to one big JSON file."""
     gff_file = luigi.Parameter()
     fasta_file = luigi.Parameter()
     pathway = luigi.BoolParameter()
@@ -86,15 +85,15 @@ class conver2json(luigi.Task):
 
     def requires(self):
         flist = []
-        if "edgeR" in self.method: 
+        if "edgeR" in self.method:
             cpm_file = os.path.join(self.workdir, "processes", "edgeR",
-                                    self.kingdom,  "gene",
-                                    "gene" + "_count_CPM.csv")
+                                    self.kingdom, "gene",
+                                    "gene_count_CPM.csv")
             flist.append(cpm_file)
         elif "DESeq2" in self.method:
             fpm_file = os.path.join(self.workdir, "processes", "DESeq2",
-                                    self.kingdom,  "gene",
-                                    "gene" + "_count_FPKM.csv")
+                                    self.kingdom, "gene",
+                                    "gene_count_FPKM.csv")
             flist.append(fpm_file)
         return [RefFile(f) for f in flist]
 
@@ -108,31 +107,24 @@ class conver2json(luigi.Task):
             return LocalTarget(jfile)
 
     def run(self):
-        """ Create JSON files."""
-        if self.kingdom == "prokarya":    
+        """Create JSON files."""
+        if self.kingdom == "prokarya":
             jfile = os.path.join(self.workdir, "prokarya_out.json")
         elif self.kingdom == "eukarya":
             jfile = os.path.join(self.workdir, "eukarya_out.json")
-
         self.gff2json(jfile)
 
     def gff2json(self, out_json):
         """A function that converts a gff file to JSON file."""
-        # read in the gff file to a database
-        if os.path.exists(os.path.join(self.workdir, "processes",
-                                       "databases")) is False:
-            os.makedirs(os.path.join(self.workdir, "processes",
-                                     "databases"))
-        db_out = os.path.join(self.workdir, "processes", "databases",
-                              self.kingdom,
-                              "piret.db")
-        if os.path.exists(db_out) is False:
-            # create db if not already present
+        db_dir = os.path.join(self.workdir, "processes", "databases", self.kingdom)
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+        db_out = os.path.join(db_dir, "piret.db")
+        if not os.path.exists(db_out):
             db = gffutils.create_db(self.gff_file, dbfn=db_out, force=True,
                                     keep_order=True,
                                     merge_strategy="create_unique")
         else:
-            # read db if its already present
             db = gffutils.FeatureDB(db_out, keep_order=True)
 
         if "edgeR" in self.method:
@@ -145,6 +137,7 @@ class conver2json(luigi.Task):
             edger_summ_genes = ({}, {})
             dge_edger_cds = {}
             dge_edger_gene = {}
+
         if "DESeq2" in self.method:
             deseq_summ_cds = self.pm_summary("CDS", "DESeq2")
             deseq_summ_genes = self.pm_summary("gene", "DESeq2")
@@ -155,10 +148,12 @@ class conver2json(luigi.Task):
             deseq_summ_genes = ({}, {})
             dge_deseq_cds = {}
             dge_deseq_gene = {}
+
         if "ballgown" in self.method:
             ballgown_gene_pm = self.pm_summary_ballgown()
         else:
             ballgown_gene_pm = {}
+
         stringtie_tpms = self.stringtie_tpm()
         read_summ_cds = self.read_summary("CDS")
         read_summ_gene = self.read_summary("gene")
@@ -167,12 +162,17 @@ class conver2json(luigi.Task):
         read_summ_exon = self.read_summary("exon")
         if self.NovelRegions is True:
             read_summ_NovelRegion = self.read_summary("NovelRegion")
+        else:
+            read_summ_NovelRegion = {}
 
         emaps = self.get_emapper()
+
         with open(out_json, "w") as json_file:
-            json_list = []
+            json_file.write("[\n")
+            first = True
+
             for feat_obj in db.all_features():
-                feat_dic = {}  # an empty dictionary to append features
+                feat_dic = {}
                 feat_dic['seqid'] = feat_obj.seqid
                 feat_dic['id'] = feat_obj.id
                 feat_dic['source'] = feat_obj.source
@@ -180,7 +180,7 @@ class conver2json(luigi.Task):
                 feat_dic['featuretype'] = feat_type
                 feat_dic['start'] = feat_obj.start
                 feat_dic['end'] = feat_obj.end
-                feat_dic["length"] = abs(feat_obj.end - feat_obj.start) + 1
+                feat_dic['length'] = abs(feat_obj.end - feat_obj.start) + 1
                 feat_dic['strand'] = feat_obj.strand
                 feat_dic['frame'] = feat_obj.frame
                 try:
@@ -192,6 +192,8 @@ class conver2json(luigi.Task):
                 except KeyError:
                     pass
                 feat_dic['extra'] = feat_obj.extra
+
+                nt_obj = None
                 if feat_type != "region":
                     try:
                         nt_seqs = feat_obj.sequence(self.fasta_file)
@@ -199,101 +201,65 @@ class conver2json(luigi.Task):
                         feat_dic['nt_seq'] = nt_seqs
                     except KeyError:
                         pass
-# ============================================================================#
-                if feat_type == "CDS":
-                    # translate the CDS
-                    feat_dic['aa_seqs'] = self.translate(nt_obj, "CDS")
 
-                    # assign FPKMs and FPMs
+                if feat_type == "CDS":
+                    if nt_obj is not None:
+                        feat_dic['aa_seqs'] = self.translate(nt_obj, "CDS")
+
                     self.assign_scores(feat_dic=feat_dic,
                                        edger_sdic=edger_summ_cds,
                                        deseq_sdic=deseq_summ_cds,
                                        feat_id=feat_obj.id)
-                    # assign read numbers
-                    try:
-                        feat_dic["read_count"] = read_summ_cds[feat_obj.id]
-                    except KeyError:
-                        feat_dic["read_count"] = None
-                    # assign dge information
+                    feat_dic['read_count'] = read_summ_cds.get(feat_obj.id, None)
+
                     self.assign_dges(feat_type="CDS", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
                                      method="edgeR", dge_dict=dge_edger_cds)
                     self.assign_dges(feat_type="CDS", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
                                      method="DESeq2", dge_dict=dge_deseq_cds)
-                    # assign EC#s, KOs, etc.
-                    try:
-                        feat_dic["emapper"] = emaps[feat_obj.id]
-                    except KeyError:
-                        feat_dic["emapper"] = None
-# ============================================================================#
+
+                    if emaps is not None:
+                        feat_dic['emapper'] = emaps.get(feat_obj.id, None)
+                    else:
+                        feat_dic['emapper'] = None
+
                 elif feat_type == "NovelRegion":
-                    try:
-                        feat_dic["read_count"] = read_summ_NovelRegion[feat_obj.id]
-                    except KeyError:
-                        feat_dic["read_count"] = None
-# ============================================================================#
-                elif feat_type == 'rRNA':
-                    try:
-                        feat_dic["read_count"] = read_summ_rRNA[feat_obj.id]
-                    except KeyError:
-                        feat_dic["read_count"] = None
-# ============================================================================#
-                elif feat_type == 'tRNA':
-                    try:
-                        feat_dic["read_count"] = read_summ_tRNA[feat_obj.id]
-                    except KeyError:
-                        feat_dic["read_count"] = None
-# ============================================================================#
-                elif feat_type == 'exon':
-                    try:
-                        feat_dic["read_count"] = read_summ_exon[feat_obj.id]
-                    except KeyError:
-                        feat_dic["read_count"] = None
-# ============================================================================#
+                    feat_dic['read_count'] = read_summ_NovelRegion.get(feat_obj.id, None)
+
+                elif feat_type == "rRNA":
+                    feat_dic['read_count'] = read_summ_rRNA.get(feat_obj.id, None)
+
+                elif feat_type == "tRNA":
+                    feat_dic['read_count'] = read_summ_tRNA.get(feat_obj.id, None)
+
+                elif feat_type == "exon":
+                    feat_dic['read_count'] = read_summ_exon.get(feat_obj.id, None)
+
                 elif feat_type == "gene":
-                    # assign scores
                     self.assign_scores(feat_dic=feat_dic,
                                        edger_sdic=edger_summ_genes,
                                        deseq_sdic=deseq_summ_genes,
                                        feat_id=feat_obj.id)
-                    # assign read numbers
-                    try:
-                        feat_dic["read_count"] = read_summ_gene[feat_obj.id]
-                    except KeyError:
-                        feat_dic["read_count"] = None
-                    # assign ballgown info
-                    try:
-                        feat_dic["ballgown_values"] = ballgown_gene_pm[feat_obj.id]
-                    except KeyError:
-                        feat_dic["ballgown_values"] = None
-                    
-                    # assign stringtie
-                    try:
-                        feat_dic["stringtie_values"] = stringtie_tpms[feat_obj.id]
-                    except KeyError:
-                        feat_dic["stringtie_values"] = None
-                    # assign dge information
+                    feat_dic['read_count'] = read_summ_gene.get(feat_obj.id, None)
+                    feat_dic['ballgown_values'] = ballgown_gene_pm.get(feat_obj.id, None)
+                    feat_dic['stringtie_values'] = stringtie_tpms.get(feat_obj.id, None)
+
                     self.assign_dges(feat_type="gene", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
                                      method="edgeR", dge_dict=dge_edger_gene)
                     self.assign_dges(feat_type="gene", feat_dic=feat_dic,
                                      feat_id=feat_obj.id,
                                      method="DESeq2", dge_dict=dge_deseq_gene)
+
+                if not first:
+                    json_file.write(",\n")
                 else:
-                    pass
-                # just to make sure that keys are strings, else json dump fails
-                feat_dic_str = {}
-                for key, value in feat_dic.items():
-                    feat_dic_str[str(key)] = value
+                    first = False
 
-                json_list.append(feat_dic_str)
-            json.dump(json_list, json_file, indent=4)
-            # meta_list = ["seqid", "id", "source", "featuretype", "start",
-            #              "end", "length", "strand", "frame", "locus_tag",
-            #              "extra"]
-            # df = pd.io.json.json_normalize(json_list, errors="ignore")
+                json.dump(feat_dic, json_file)
 
+            json_file.write("\n]\n")
 
     def assign_scores(self, feat_dic, edger_sdic, deseq_sdic, feat_id):
         """Assign scores from edger and deseq to summary dic."""
@@ -315,60 +281,58 @@ class conver2json(luigi.Task):
             feat_dic["deseq_fpkm"] = None
 
     def get_emapper(self):
-        """get emapper result as a dataframe."""
-        emapper_files = os.path.join(self.workdir, "processes", "emapper",
-                                     self.kingdom,
-                                     "emapper.emapper.annotations")
-        if os.path.exists(emapper_files) is True:
-            emap = pd.read_csv(emapper_files, sep='\t', skiprows=[0,1,2],
-                               skipinitialspace=True, skipfooter=3,
-                               header=None, engine='python')
-            emap1 = emap.reset_index()
-            emap1.columns = emap1.iloc[0]
-            emap2 = emap1.drop(0).drop([0], axis=1).set_index('#query_name').to_dict(orient="index")
-            return emap2
-        else:
+        """Get emapper result as a dictionary."""
+        emapper_file = os.path.join(self.workdir, "processes", "emapper",
+                                    self.kingdom,
+                                    "emapper.emapper.annotations")
+        if os.path.exists(emapper_file) is not True:
             return None
+
+        emap = pd.read_csv(emapper_file, sep='\t', skiprows=[0, 1, 2],
+                           skipinitialspace=True, skipfooter=3,
+                           header=None, engine='python')
+
+        # Set column names to the first row
+        emap.columns = emap.iloc[0]
+        # Drop the first row (since it's now the header) and set index
+        emap = emap.drop(index=0).set_index('#query_name')
+
+        result = emap.to_dict(orient="index")
+        del emap
+        return result
 
     def read_summary(self, feat_type):
         """Get read values as a dictionary."""
         read_file = os.path.join(self.workdir, "processes", "featureCounts",
                                  self.kingdom, feat_type + "_count_sorted.csv")
+        if os.path.exists(read_file) is not True:
+            return {}
 
-        if os.path.exists(read_file) is True:
-            read_data = pd.read_csv(read_file, sep=",",
-                                    index_col="Geneid")
-            # use regular expression to get rid of the whole path
-            read_data.columns = [x.split(".mapping.")[-1].split(".")[0] for x in read_data.columns]
-            read_dict = read_data.drop(["Unnamed: 0", "Chr", "Start", "End",
-                                        "Strand", "Length", "total"], axis=1).to_dict(orient="index")
-            
-        else:
-            read_dict = {}
-        for feat, count_dic in read_dict.items():
-            int_read = {}
-            feat_read = {}
-            for samp, count in count_dic.items():
-                int_read[samp] = int(count)
-            feat_read[feat] = int_read
-            read_dict.update(feat_read)# print(read_dict)
+        read_data = pd.read_csv(read_file, sep=",", index_col="Geneid")
+        read_data.columns = [x.split(".mapping.")[-1].split(".")[0] for x in read_data.columns]
+        cols_to_drop = [c for c in ["Unnamed: 0", "Chr", "Start", "End",
+                                    "Strand", "Length", "total"]
+                        if c in read_data.columns]
+        read_data = read_data.drop(cols_to_drop, axis=1).astype(int)
+        read_dict = read_data.to_dict(orient="index")
+        del read_data
         return read_dict
 
     def dge_summary(self, feat_type, method):
-        """summarize SGE results from edgeR of DESeq2"""
+        """Summarize SGE results from edgeR or DESeq2."""
         dge_dir = os.path.join(self.workdir, "processes", method,
-                                self.kingdom, feat_type)
+                               self.kingdom, feat_type)
         dge_files = [f for f in glob.glob(dge_dir + "**/*et.csv", recursive=True)]
         dge_dicts = {}
         for file in dge_files:
             dge_df = pd.read_csv(file, sep=",", index_col=0)
             if method == "edgeR":
-                dge_dict = dge_df.drop(["Geneid", "Chr", "Start", "End",
-                                        "Strand", "Length"],
-                                       axis=1).to_dict(orient="index")
-            elif method == "DESeq2":
-                dge_dict = dge_df.to_dict(orient="index")
-            dge_dicts[str(os.path.basename(file).replace(".csv", ""))] = dge_dict
+                cols_to_drop = [c for c in ["Geneid", "Chr", "Start", "End",
+                                            "Strand", "Length"]
+                                if c in dge_df.columns]
+                dge_df = dge_df.drop(cols_to_drop, axis=1)
+            dge_dicts[str(os.path.basename(file).replace(".csv", ""))] = dge_df.to_dict(orient="index")
+            del dge_df
         return dge_dicts
 
     def assign_dges(self, feat_type, feat_dic, feat_id, method, dge_dict):
@@ -376,81 +340,93 @@ class conver2json(luigi.Task):
         dge_dir = os.path.join(self.workdir, "processes", method,
                                self.kingdom, feat_type)
         dge_files = [os.path.basename(f).replace(".csv", "")
-                     for f in glob.glob(dge_dir + "**/*et.csv",
-                     recursive=True)]
+                     for f in glob.glob(dge_dir + "**/*et.csv", recursive=True)]
         if len(dge_files) < 1:
-            pass
-        else:
-            for key, value in dge_dict.items():
-                try:
-                    feat_dic[key + "__" + method] = dge_dict[key][feat_id]
-                except KeyError:
-                    feat_dic[key + "__" + method] = None
+            return
+        for key in dge_dict:
+            try:
+                feat_dic[key + "__" + method] = dge_dict[key][feat_id]
+            except KeyError:
+                feat_dic[key + "__" + method] = None
 
     def pm_summary(self, feat_type, method):
-        """Get FPKM values."""
+        """Get CPM/FPM and RPKM/FPKM values."""
         if method == "edgeR":
             cpm_file = os.path.join(self.workdir, "processes", method,
-                                    self.kingdom,  feat_type,
+                                    self.kingdom, feat_type,
                                     feat_type + "_count_CPM.csv")
             rpkm_file = os.path.join(self.workdir, "processes", method,
-                                     self.kingdom,  feat_type,
+                                     self.kingdom, feat_type,
                                      feat_type + "_count_RPKM.csv")
         elif method == "DESeq2":
             cpm_file = os.path.join(self.workdir, "processes", method,
-                                    self.kingdom,  feat_type,
+                                    self.kingdom, feat_type,
                                     feat_type + "_count_FPM.csv")
             rpkm_file = os.path.join(self.workdir, "processes", method,
-                                     self.kingdom,  feat_type,
+                                     self.kingdom, feat_type,
                                      feat_type + "_count_FPKM.csv")
-        if all([os.path.exists(cpm_file), os.path.exists(rpkm_file)]) is False:
+        else:
             return ({}, {})
-        elif all([os.path.exists(cpm_file), os.path.exists(rpkm_file)]) is True:
-            cpm_dict = pd.read_csv(cpm_file, sep=",", engine='python',
-                                   index_col=0).to_dict(orient="index")
-            rpkm_dict = pd.read_csv(rpkm_file, sep=",", engine='python',
-                                    index_col=0).to_dict(orient="index")
-            return(cpm_dict, rpkm_dict)
-        elif os.path.exists(cpm_file) is True and os.path.exists(rpkm_file) is False:
-            cpm_dict = pd.read_csv(cpm_file, sep=",", engine='python',
-                                   index_col=0).to_dict(orient="index")
-            return(cpm_dict, {})
-        elif os.path.exists(rpkm_file) is True and os.path.exists(rpkm_file) is False:
-            rpkm_dict = pd.read_csv(rpkm_file, sep=",", engine='python',
-                                    index_col=0).to_dict(orient="index")
-            return({}, rpkm_dict)
+
+        cpm_dict = {}
+        rpkm_dict = {}
+
+        if os.path.exists(cpm_file):
+            cpm_df = pd.read_csv(cpm_file, sep=",", engine='python', index_col=0)
+            cpm_dict = cpm_df.to_dict(orient="index")
+            del cpm_df
+
+        if os.path.exists(rpkm_file):
+            rpkm_df = pd.read_csv(rpkm_file, sep=",", engine='python', index_col=0)
+            rpkm_dict = rpkm_df.to_dict(orient="index")
+            del rpkm_df
+
+        return (cpm_dict, rpkm_dict)
 
     def pm_summary_ballgown(self):
         pm_file = os.path.join(self.workdir, "processes", "ballgown",
                                self.kingdom, "summpary_PMs.csv")
-        if os.path.exists(pm_file) is True:
-            pm_dict = pd.read_csv(pm_file, sep=",",
-                                  index_col=6).drop(["t_id", "chr", "strand",
-                                                      "start", "end",
-                                                      "num_exons", "length",
-                                                      "gene_id", "gene_name"],
-                                                      axis=1).to_dict(orient="index")
-            return pm_dict
-        else:
+        if os.path.exists(pm_file) is not True:
             return {}
+        pm_df = pd.read_csv(pm_file, sep=",", index_col=6)
+        cols_to_drop = [c for c in ["t_id", "chr", "strand", "start", "end",
+                                    "num_exons", "length", "gene_id", "gene_name"]
+                        if c in pm_df.columns]
+        pm_df = pm_df.drop(cols_to_drop, axis=1)
+        pm_dict = pm_df.to_dict(orient="index")
+        del pm_df
+        return pm_dict
 
     def stringtie_tpm(self):
-        """get TPMs from stringtie."""
+        """Get TPMs from stringtie."""
         stie_dir = os.path.join(self.workdir, "processes", "stringtie")
-        stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab",
-                      recursive=True)]
+        stie_files = [f for f in glob.glob(stie_dir + "/**/*sTie.tab", recursive=True)]
         dflist = []
         for f in stie_files:
-            df = pd.read_csv(f, sep="\t").drop(["Gene Name", "Strand",
-                                               "Start", "End"], axis=1)
+            df = pd.read_csv(f, sep="\t")
+            cols_to_drop = [c for c in ["Gene Name", "Strand", "Start", "End"] if c in df.columns]
+            df = df.drop(cols_to_drop, axis=1)
             samp_name = os.path.basename(f)
             samp = re.sub("_sTie.tab", "", samp_name)
             df.columns = ["GeneID", "Reference", samp + "_cov",
                           samp + "_FPKM", samp + "_TPM"]
+
+            # CRITICAL FIX: Deduplicate BEFORE joining to prevent memory explosion
+            df = df.drop_duplicates(subset=['GeneID', 'Reference'])
+            # Set the index to allow efficient horizontal concatenation
+            df = df.set_index(['GeneID', 'Reference'])
+
             dflist.append(df)
-            
-        finaldf = reduce(lambda df1, df2: pd.merge(df1, df2, on=['GeneID', 'Reference']), dflist).drop_duplicates()
-        finaldic = finaldf.set_index(['GeneID', 'Reference']).to_dict(orient="index")
+
+        if not dflist:
+            return {}
+
+        # Efficiently concatenate all dataframes horizontally instead of chaining merges
+        finaldf = pd.concat(dflist, axis=1)
+        del dflist
+
+        finaldic = finaldf.to_dict(orient="index")
+        del finaldf
         return finaldic
 
     def translate(self, nucleotide, type):
